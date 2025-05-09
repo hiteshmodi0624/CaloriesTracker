@@ -8,58 +8,180 @@ if (!validateEnv()) {
   console.warn('OpenAI API key not properly configured. AI features will not work.');
 }
 console.log(ENV.EXPO_PUBLIC_OPENAI_API_KEY);
+
 const openai = new OpenAI({
   apiKey: ENV.EXPO_PUBLIC_OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
 });
 
-export async function fetchNutritionForIngredient(
+export const fetchNutritionForIngredient = async (
   name: string,
   unit: string,
   quantity: number
-): Promise<NutritionInfo> {
+): Promise<NutritionInfo> => {
   try {
-    const prompt = `Provide the nutritional information (calories, protein in grams, carbs in grams, fat in grams) for ${quantity} ${unit} of ${name} in JSON format as { "calories": number, "protein": number, "carbs": number, "fat": number }. Only output the JSON.`;
-    
-    console.log(`Requesting nutrition for: ${quantity} ${unit} of ${name}`);
+    const prompt = `What are the nutritional values for ${quantity} ${unit} of ${name}? Please provide calories, protein, carbs, and fat in JSON format.`;
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o',
-      messages: [{ role: 'user', content: prompt }],
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system" as const,
+          content: "You are a nutrition expert. Provide nutritional information in JSON format with calories, protein, carbs, and fat values. Return ONLY the JSON object with no markdown or explanation."
+        },
+        {
+          role: "user" as const,
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
     });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('No response from OpenAI');
+
+    // Extract JSON from potential markdown code blocks
+    let jsonString = content;
     
-    const content = response.choices[0].message?.content || '';
-    console.log('OpenAI response:', content);
-    
-    // Try to extract JSON from the response which might contain other text
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      console.error('No JSON found in response');
-      return { calories: 100, protein: 0, carbs: 0, fat: 0 }; // Default fallback
+    // Handle markdown code blocks (```json { ... } ```)
+    const codeBlockMatch = content.match(/```(?:json)?([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1].trim();
     }
     
+    // Handle any extra text before or after JSON object
+    const jsonObjectMatch = jsonString.match(/{[\s\S]*}/);
+    if (jsonObjectMatch) {
+      jsonString = jsonObjectMatch[0];
+    }
+    
+    console.log('Extracted JSON string:', jsonString);
+    
     try {
-      const jsonStr = jsonMatch[0];
-      console.log('Extracted JSON:', jsonStr);
-      const data = JSON.parse(jsonStr);
-      
-      // Ensure all values are numbers, with fallbacks
+      const nutrition = JSON.parse(jsonString);
       return {
-        calories: typeof data.calories === 'number' ? data.calories : 100,
-        protein: typeof data.protein === 'number' ? data.protein : 0,
-        carbs: typeof data.carbs === 'number' ? data.carbs : 0,
-        fat: typeof data.fat === 'number' ? data.fat : 0,
+        calories: nutrition.calories || 0,
+        protein: nutrition.protein || 0,
+        carbs: nutrition.carbs || 0,
+        fat: nutrition.fat || 0,
       };
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
-      return { calories: 100, protein: 0, carbs: 0, fat: 0 }; // Default fallback
+      // Fallback values if parsing fails
+      return {
+        calories: 100,
+        protein: 5,
+        carbs: 15,
+        fat: 3,
+      };
     }
   } catch (error) {
     console.error('Error fetching nutrition:', error);
     // Return default values instead of throwing
-    return { calories: 100, protein: 0, carbs: 0, fat: 0 };
+    return {
+      calories: 100,
+      protein: 5,
+      carbs: 15,
+      fat: 3,
+    };
   }
-}
+};
+
+export const fetchChatResponse = async (
+  userMessage: string,
+  messageHistory: { text: string; isUser: boolean }[]
+): Promise<string> => {
+  try {
+    const messages = [
+      {
+        role: "system" as const,
+        content: `You are a nutrition assistant that can help users with:
+1. Setting nutrition goals
+2. Adding meals and ingredients
+3. Providing nutrition advice
+
+When setting goals, calculate and provide:
+- Daily calorie target
+- Protein, carbs, and fat requirements
+- Activity level recommendations
+
+FORMAT FOR GOAL SETTING:
+When you calculate nutrition goals, use the following template to ensure the app can correctly extract the data:
+
+Setting your nutrition goals:
+Calories: [calories]
+Protein: [protein]g
+Carbs: [carbs]g
+Fat: [fat]g
+
+For example: "Setting your nutrition goals:
+Calories: 2200
+Protein: 150g
+Carbs: 220g
+Fat: 70g"
+
+When adding meals or ingredients, provide detailed nutrition information.
+
+Format your responses clearly and include all necessary information for the app to process.`
+      },
+      ...messageHistory.map(msg => ({
+        role: msg.isUser ? "user" as const : "assistant" as const,
+        content: msg.text
+      })),
+      {
+        role: "user" as const,
+        content: userMessage
+      }
+    ];
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages,
+      temperature: 0.7,
+    });
+
+    return response.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
+  } catch (error) {
+    console.error('Error getting chat response:', error);
+    throw error;
+  }
+};
+
+export const fetchImageCalories = async (imageUri: string): Promise<number> => {
+  try {
+    const base64 = await FileSystem.readAsStringAsync(imageUri, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-vision-preview",
+      messages: [
+        {
+          role: "user" as const,
+          content: [
+            {
+              type: "text" as const,
+              text: "What is the estimated calorie content of this meal? Please provide only the number."
+            },
+            {
+              type: "text" as const,
+              text: `data:image/jpeg;base64,${base64}`
+            }
+          ]
+        }
+      ],
+      max_tokens: 10
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('No response from OpenAI');
+
+    return parseInt(content) || 0;
+  } catch (error) {
+    console.error('Error analyzing image:', error);
+    throw error;
+  }
+};
 
 export async function extractNutritionFromLabel(imageUri: string): Promise<NutritionInfo> {
   try {
@@ -79,7 +201,7 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
     console.log('Extracting nutrition from label image');
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o',
       messages: [{ role: 'user', content: prompt }],
     });
     
@@ -113,40 +235,5 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
     console.error('Error extracting nutrition from label:', error);
     // Return default values instead of throwing
     return { calories: 100, protein: 0, carbs: 0, fat: 0 };
-  }
-}
-
-export async function fetchImageCalories(imageUri: string): Promise<number> {
-  try {
-    const base64 = await FileSystem.readAsStringAsync(imageUri, {
-      encoding: FileSystem.EncodingType.Base64,
-    });
-    
-    const prompt = `This is a meal image in base64: ${base64}. Estimate the total calorie content in this image. Only respond with a single number representing calories.`;
-    
-    console.log('Estimating calories from meal image');
-    
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
-    });
-    
-    const content = response.choices[0].message?.content || '';
-    console.log('OpenAI calorie estimation response:', content);
-    
-    // Try to extract just the number from the response
-    const numberMatch = content.match(/\d+/);
-    if (numberMatch) {
-      const calories = parseInt(numberMatch[0], 10);
-      if (!isNaN(calories)) {
-        return calories;
-      }
-    }
-    
-    console.warn('Could not extract calories number, using default value');
-    return 500; // Default fallback
-  } catch (error) {
-    console.error('Error estimating calories from image:', error);
-    return 500; // Default fallback
   }
 } 

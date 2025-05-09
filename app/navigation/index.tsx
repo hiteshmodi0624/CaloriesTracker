@@ -37,22 +37,22 @@ const Navigation: React.FC = () => {
           }} 
         />
         <Tab.Screen 
+          name="AIChat" 
+          component={require('../screens/AIChatScreen').default} 
+          options={{ 
+            title: 'AI Chat',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="chatbubble" size={size} color={color} />
+            ),
+          }} 
+        />
+        <Tab.Screen 
           name="Upload" 
           component={require('../screens/Upload').default} 
           options={{ 
             title: 'Upload Meal',
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="camera" size={size} color={color} />
-            ),
-          }} 
-        />
-        <Tab.Screen 
-          name="Ingredients" 
-          component={require('../screens/Ingredients').default} 
-          options={{ 
-            title: 'Ingredients',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="nutrition" size={size} color={color} />
             ),
           }} 
         />

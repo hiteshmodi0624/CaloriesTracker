@@ -1,214 +1,499 @@
-import React, { useContext, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal } from 'react-native';
+import React, { useContext, useMemo, useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Modal, 
+  FlatList,
+  TextInput,
+  Platform 
+} from 'react-native';
 import { AppContext } from '../context/AppContext';
 import { Meal } from '../../types';
 import { Ionicons } from '@expo/vector-icons';
+import { Picker } from '@react-native-picker/picker';
+
+// Activity level types
+type ActivityLevel = 'sedentary' | 'lightly active' | 'moderately active' | 'very active' | 'extra active';
+type GoalType = 'lose weight' | 'maintain' | 'gain weight' | 'build muscle';
+
+// Define NutritionGoals type locally to match AppContext
+type NutritionGoals = {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  activityLevel: ActivityLevel;
+  goal: GoalType;
+  weight: number;
+  height: number;
+  age: number;
+  gender: 'male' | 'female';
+};
+
+// Constants for activity levels and goals
+const ACTIVITY_LEVELS = [
+  { label: 'Sedentary', value: 'sedentary' as ActivityLevel },
+  { label: 'Lightly Active', value: 'lightly active' as ActivityLevel },
+  { label: 'Moderately Active', value: 'moderately active' as ActivityLevel },
+  { label: 'Very Active', value: 'very active' as ActivityLevel },
+  { label: 'Extra Active', value: 'extra active' as ActivityLevel },
+];
+
+const GOALS = [
+  { label: 'Lose Weight', value: 'lose weight' as GoalType },
+  { label: 'Maintain Weight', value: 'maintain' as GoalType },
+  { label: 'Gain Weight', value: 'gain weight' as GoalType },
+  { label: 'Build Muscle', value: 'build muscle' as GoalType },
+];
 
 const Dashboard: React.FC = () => {
-  const { meals } = useContext(AppContext);
-  const [selectedMeal, setSelectedMeal] = React.useState<Meal | null>(null);
+  const { meals, goals, setGoals } = useContext(AppContext);
+  const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
+  const [showGoalsModal, setShowGoalsModal] = useState(false);
+  
+  // Goal setting state
+  const [weight, setWeight] = useState(goals?.weight ? goals.weight.toString() : '70');
+  const [height, setHeight] = useState(goals?.height ? goals.height.toString() : '170');
+  const [age, setAge] = useState(goals?.age ? goals.age.toString() : '30');
+  const [gender, setGender] = useState<'male' | 'female'>(goals?.gender || 'male');
+  const [activityLevel, setActivityLevel] = useState<ActivityLevel>(
+    (goals?.activityLevel as ActivityLevel) || 'moderately active'
+  );
+  const [goalType, setGoalType] = useState<GoalType>(
+    (goals?.goal as GoalType) || 'maintain'
+  );
+  
+  const [calculatedGoals, setCalculatedGoals] = useState({
+    calories: goals?.calories || 0,
+    protein: goals?.protein || 0,
+    carbs: goals?.carbs || 0,
+    fat: goals?.fat || 0,
+  });
 
   const today = new Date().toISOString().split('T')[0];
   
   const todayMeals = useMemo(() => meals.filter(meal => meal.date === today), [meals]);
   
-  const nutritionSummary = useMemo(() => {
-    return todayMeals.reduce((sum, meal) => {
-      // Calculate meal nutrition based on ingredients
-      let mealProtein = 0;
-      let mealCarbs = 0;
-      let mealFat = 0;
-      
-      meal.ingredients.forEach(ing => {
-        mealProtein += ing.nutrition.protein || 0;
-        mealCarbs += ing.nutrition.carbs || 0;
-        mealFat += ing.nutrition.fat || 0;
-      });
-      
-      return {
-        calories: sum.calories + meal.totalCalories,
-        protein: sum.protein + mealProtein,
-        carbs: sum.carbs + mealCarbs,
-        fat: sum.fat + mealFat,
-      };
-    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-  }, [todayMeals]);
+  const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalCalories, 0);
+  const totalProtein = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.protein || 0), 0), 0);
+  const totalCarbs = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.carbs || 0), 0), 0);
+  const totalFat = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.fat || 0), 0), 0);
 
-  const groupedMeals = useMemo(() => {
-    const groups: { [key: string]: typeof meals } = {};
-    meals.forEach(meal => {
-      if (!groups[meal.date]) {
-        groups[meal.date] = [];
-      }
-      groups[meal.date].push(meal);
+  // Calculate goals when inputs change
+  useEffect(() => {
+    calculateGoals();
+  }, [weight, height, age, gender, activityLevel, goalType]);
+
+  // Improved calculation formula for nutrition goals
+  const calculateGoals = () => {
+    // Parse inputs
+    const weightKg = parseFloat(weight) || 70;
+    const heightCm = parseFloat(height) || 170;
+    const ageYears = parseFloat(age) || 30;
+    
+    // Calculate BMR using Mifflin-St Jeor Equation (more accurate than Harris-Benedict)
+    let bmr;
+    if (gender === 'male') {
+      bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5;
+    } else {
+      bmr = 10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161;
+    }
+    
+    // Apply activity multiplier (reduced multipliers to avoid overestimation)
+    const activityMultipliers: Record<ActivityLevel, number> = {
+      'sedentary': 1.2,
+      'lightly active': 1.35, // Adjusted from 1.375
+      'moderately active': 1.5, // Adjusted from 1.55
+      'very active': 1.65, // Adjusted from 1.725
+      'extra active': 1.8, // Adjusted from 1.9
+    };
+    
+    const tdee = bmr * activityMultipliers[activityLevel];
+    
+    // Adjust based on goal
+    let calories = Math.round(tdee);
+    if (goalType === 'lose weight') {
+      calories = Math.round(tdee * 0.85); // 15% deficit instead of fixed 500
+    } else if (goalType === 'gain weight') {
+      calories = Math.round(tdee * 1.1); // 10% surplus instead of fixed 500
+    } else if (goalType === 'build muscle') {
+      calories = Math.round(tdee * 1.15); // 15% surplus for muscle building
+    }
+    
+    // Calculate macros based on body weight and goals
+    let proteinPerKg = 1.6; // Base protein
+    let fatPercent = 0.3; // Base fat percentage of calories
+    
+    // Adjust macros for specific goals
+    if (goalType === 'build muscle') {
+      proteinPerKg = 2.0; // Higher protein for muscle building
+      fatPercent = 0.25; // Lower fat
+    } else if (goalType === 'lose weight') {
+      proteinPerKg = 2.2; // Higher protein for muscle preservation
+      fatPercent = 0.35; // Higher fat for satiety
+    }
+    
+    // Calculate macros
+    const protein = Math.round(weightKg * proteinPerKg);
+    const fat = Math.round((calories * fatPercent) / 9);
+    const carbs = Math.round((calories - (protein * 4) - (fat * 9)) / 4);
+    
+    setCalculatedGoals({
+      calories,
+      protein,
+      carbs,
+      fat,
     });
-    return Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
-  }, [meals]);
+  };
 
-  // Calculate total nutrition for a meal
-  const calculateMealNutrition = (meal: Meal) => {
-    return meal.ingredients.reduce((sum, ing) => {
-      return {
-        protein: sum.protein + (ing.nutrition.protein || 0),
-        carbs: sum.carbs + (ing.nutrition.carbs || 0),
-        fat: sum.fat + (ing.nutrition.fat || 0),
+  const saveGoals = async () => {
+    try {
+      const weightNum = parseFloat(weight);
+      const heightNum = parseFloat(height);
+      const ageNum = parseFloat(age);
+      
+      if (isNaN(weightNum) || isNaN(heightNum) || isNaN(ageNum)) {
+        alert('Please enter valid numbers for weight, height, and age');
+        return;
+      }
+      
+      const newGoals = {
+        ...calculatedGoals,
+        weight: weightNum,
+        height: heightNum,
+        age: ageNum,
+        gender,
+        activityLevel,
+        goal: goalType,
       };
-    }, { protein: 0, carbs: 0, fat: 0 });
+      
+      await setGoals(newGoals);
+      setShowGoalsModal(false);
+      alert('Your nutrition goals have been updated!');
+    } catch (error) {
+      console.error('Error saving goals:', error);
+      alert('Failed to save your goals. Please try again.');
+    }
+  };
+
+  const renderGoalProgress = () => {
+    if (!goals) {
+      return (
+        <View style={styles.goalCard}>
+          <Text style={styles.goalTitle}>No Goals Set</Text>
+          <Text style={styles.goalSubtitle}>
+            Set your nutrition goals to track your progress
+          </Text>
+          <TouchableOpacity 
+            style={styles.setGoalsButton} 
+            onPress={() => setShowGoalsModal(true)}
+          >
+            <Text style={styles.setGoalsButtonText}>Set Goals</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    const calorieProgress = (totalCalories / goals.calories) * 100;
+    const proteinProgress = (totalProtein / goals.protein) * 100;
+    const carbsProgress = (totalCarbs / goals.carbs) * 100;
+    const fatProgress = (totalFat / goals.fat) * 100;
+
+    return (
+      <View style={styles.goalCard}>
+        <View style={styles.goalHeaderRow}>
+          <Text style={styles.goalTitle}>Today's Progress</Text>
+          <TouchableOpacity 
+            style={styles.editGoalsButton} 
+            onPress={() => setShowGoalsModal(true)}
+          >
+            <Text style={styles.editGoalsText}>Edit Goals</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.progressContainer}>
+          <View style={styles.progressItem}>
+            <Text style={styles.progressLabel}>Calories</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(calorieProgress, 100)}%`, backgroundColor: '#FF9500' }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {Math.round(totalCalories)} / {goals.calories} kcal
+            </Text>
+          </View>
+
+          <View style={styles.progressItem}>
+            <Text style={styles.progressLabel}>Protein</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(proteinProgress, 100)}%`, backgroundColor: '#34C759' }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {Math.round(totalProtein)} / {goals.protein}g
+            </Text>
+          </View>
+
+          <View style={styles.progressItem}>
+            <Text style={styles.progressLabel}>Carbs</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(carbsProgress, 100)}%`, backgroundColor: '#007AFF' }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {Math.round(totalCarbs)} / {goals.carbs}g
+            </Text>
+          </View>
+
+          <View style={styles.progressItem}>
+            <Text style={styles.progressLabel}>Fat</Text>
+            <View style={styles.progressBar}>
+              <View 
+                style={[
+                  styles.progressFill, 
+                  { width: `${Math.min(fatProgress, 100)}%`, backgroundColor: '#FF3B30' }
+                ]} 
+              />
+            </View>
+            <Text style={styles.progressText}>
+              {Math.round(totalFat)} / {goals.fat}g
+            </Text>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Dashboard</Text>
-
-      <View style={styles.todayContainer}>
-        <Text style={styles.subtitle}>Today's Summary</Text>
-        <View style={styles.nutritionCard}>
-          <View style={styles.mainNutrient}>
-            <Text style={styles.mainNutrientValue}>{nutritionSummary.calories.toFixed(0)}</Text>
-            <Text style={styles.mainNutrientLabel}>Calories</Text>
-          </View>
-          
-          <View style={styles.nutrientRow}>
-            <View style={styles.nutrient}>
-              <Text style={styles.nutrientValue}>{nutritionSummary.protein.toFixed(1)}g</Text>
-              <Text style={styles.nutrientLabel}>Protein</Text>
-            </View>
-            <View style={styles.nutrient}>
-              <Text style={styles.nutrientValue}>{nutritionSummary.carbs.toFixed(1)}g</Text>
-              <Text style={styles.nutrientLabel}>Carbs</Text>
-            </View>
-            <View style={styles.nutrient}>
-              <Text style={styles.nutrientValue}>{nutritionSummary.fat.toFixed(1)}g</Text>
-              <Text style={styles.nutrientLabel}>Fat</Text>
-            </View>
-          </View>
-        </View>
-        <Text style={styles.mealCountText}>Meals Today: {todayMeals.length}</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>Today's Summary</Text>
+        <Text style={styles.date}>{new Date().toLocaleDateString()}</Text>
       </View>
 
-      <Text style={styles.subtitle}>Meal History</Text>
-      {groupedMeals.map(([date, dateMeals]) => (
-        <View key={date} style={styles.dateGroup}>
-          <Text style={styles.dateText}>{new Date(date).toLocaleDateString()}</Text>
-          {dateMeals.map(meal => {
-            const mealNutrition = calculateMealNutrition(meal);
-            
-            return (
-              <TouchableOpacity 
-                key={meal.id} 
-                style={styles.mealItem}
-                onPress={() => setSelectedMeal(meal)}
-              >
-                <View style={styles.mealHeader}>
-                  <Text style={styles.mealName}>{meal.name}</Text>
-                  {meal.imageUri && (
-                    <Text style={styles.mealType}>Photo Meal</Text>
-                  )}
+      {renderGoalProgress()}
+
+      <View style={styles.summaryCard}>
+        <Text style={styles.summaryTitle}>Meals</Text>
+        {todayMeals.length === 0 ? (
+          <Text style={styles.emptyText}>No meals logged today</Text>
+        ) : (
+          todayMeals.map(meal => (
+            <TouchableOpacity
+              key={meal.id}
+              style={styles.mealItem}
+              onPress={() => setSelectedMeal(meal)}
+            >
+              <View style={styles.mealInfo}>
+                <Text style={styles.mealName}>{meal.name}</Text>
+                <Text style={styles.mealCalories}>{meal.totalCalories} calories</Text>
+                <View style={styles.macroRow}>
+                  <Text style={styles.macroText}>P: {Math.round(meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.protein || 0), 0))}g</Text>
+                  <Text style={styles.macroText}>C: {Math.round(meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.carbs || 0), 0))}g</Text>
+                  <Text style={styles.macroText}>F: {Math.round(meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.fat || 0), 0))}g</Text>
                 </View>
-                
-                <View style={styles.mealNutrition}>
-                  <View style={styles.mealCalories}>
-                    <Text style={styles.calorieValue}>{meal.totalCalories.toFixed(0)}</Text>
-                    <Text style={styles.calorieLabel}>calories</Text>
-                  </View>
-                  
-                  <View style={styles.macroNutrients}>
-                    <Text style={styles.macroText}>P: {mealNutrition.protein.toFixed(1)}g</Text>
-                    <Text style={styles.macroText}>C: {mealNutrition.carbs.toFixed(1)}g</Text>
-                    <Text style={styles.macroText}>F: {mealNutrition.fat.toFixed(1)}g</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      ))}
+              </View>
+              <Ionicons name="chevron-forward" size={24} color="#999" />
+            </TouchableOpacity>
+          ))
+        )}
+      </View>
 
       {/* Meal Detail Modal */}
       <Modal
-        visible={!!selectedMeal}
+        visible={selectedMeal !== null}
         animationType="slide"
         transparent={true}
         onRequestClose={() => setSelectedMeal(null)}
       >
-        {selectedMeal && (
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
-                <TouchableOpacity onPress={() => setSelectedMeal(null)}>
-                  <Ionicons name="close" size={24} color="#007AFF" />
-                </TouchableOpacity>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            {selectedMeal && (
+              <>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setSelectedMeal(null)}
+                  >
+                    <Ionicons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={styles.modalSubtitle}>Ingredients:</Text>
+                <FlatList
+                  data={selectedMeal.ingredients}
+                  keyExtractor={item => item.id}
+                  renderItem={({ item }) => (
+                    <View style={styles.ingredientItem}>
+                      <Text style={styles.ingredientName}>
+                        {item.quantity} {item.unit} {item.name}
+                      </Text>
+                      <Text style={styles.ingredientNutrition}>
+                        {item.nutrition.calories} cal | P: {item.nutrition.protein || 0}g | C: {item.nutrition.carbs || 0}g | F: {item.nutrition.fat || 0}g
+                      </Text>
+                    </View>
+                  )}
+                />
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Goals Setting Modal */}
+      <Modal
+        visible={showGoalsModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowGoalsModal(false)}
+      >
+        <View style={styles.goalModalContainer}>
+          <View style={styles.goalModalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Set Nutrition Goals</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowGoalsModal(false)}
+              >
+                <Ionicons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Weight (kg)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={weight}
+                  onChangeText={setWeight}
+                  keyboardType="numeric"
+                  placeholder="Enter your weight"
+                />
               </View>
               
-              <Text style={styles.modalDate}>
-                {new Date(selectedMeal.date).toLocaleDateString()}
-              </Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Height (cm)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={height}
+                  onChangeText={setHeight}
+                  keyboardType="numeric"
+                  placeholder="Enter your height"
+                />
+              </View>
               
-              <View style={styles.nutritionCard}>
-                <View style={styles.mainNutrient}>
-                  <Text style={styles.mainNutrientValue}>{selectedMeal.totalCalories.toFixed(0)}</Text>
-                  <Text style={styles.mainNutrientLabel}>Calories</Text>
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Age</Text>
+                <TextInput
+                  style={styles.input}
+                  value={age}
+                  onChangeText={setAge}
+                  keyboardType="numeric"
+                  placeholder="Enter your age"
+                />
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Gender</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={gender}
+                    onValueChange={(value: 'male' | 'female') => setGender(value)}
+                    style={styles.picker}
+                  >
+                    <Picker.Item label="Male" value="male" />
+                    <Picker.Item label="Female" value="female" />
+                  </Picker>
+                </View>
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Activity Level</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={activityLevel}
+                    onValueChange={(value: ActivityLevel) => setActivityLevel(value)}
+                    style={styles.picker}
+                  >
+                    {ACTIVITY_LEVELS.map(level => (
+                      <Picker.Item 
+                        key={level.value} 
+                        label={level.label} 
+                        value={level.value} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Goal</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={goalType}
+                    onValueChange={(value: GoalType) => setGoalType(value)}
+                    style={styles.picker}
+                  >
+                    {GOALS.map(goal => (
+                      <Picker.Item 
+                        key={goal.value} 
+                        label={goal.label} 
+                        value={goal.value} 
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+              
+              <View style={styles.resultsContainer}>
+                <Text style={styles.resultsTitle}>Calculated Targets</Text>
+                
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Calories:</Text>
+                  <Text style={styles.resultValue}>{calculatedGoals.calories} kcal</Text>
                 </View>
                 
-                {selectedMeal.ingredients.length > 0 && (
-                  <View style={styles.nutrientRow}>
-                    <View style={styles.nutrient}>
-                      <Text style={styles.nutrientValue}>
-                        {calculateMealNutrition(selectedMeal).protein.toFixed(1)}g
-                      </Text>
-                      <Text style={styles.nutrientLabel}>Protein</Text>
-                    </View>
-                    <View style={styles.nutrient}>
-                      <Text style={styles.nutrientValue}>
-                        {calculateMealNutrition(selectedMeal).carbs.toFixed(1)}g
-                      </Text>
-                      <Text style={styles.nutrientLabel}>Carbs</Text>
-                    </View>
-                    <View style={styles.nutrient}>
-                      <Text style={styles.nutrientValue}>
-                        {calculateMealNutrition(selectedMeal).fat.toFixed(1)}g
-                      </Text>
-                      <Text style={styles.nutrientLabel}>Fat</Text>
-                    </View>
-                  </View>
-                )}
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Protein:</Text>
+                  <Text style={styles.resultValue}>{calculatedGoals.protein}g</Text>
+                </View>
+                
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Carbs:</Text>
+                  <Text style={styles.resultValue}>{calculatedGoals.carbs}g</Text>
+                </View>
+                
+                <View style={styles.resultItem}>
+                  <Text style={styles.resultLabel}>Fat:</Text>
+                  <Text style={styles.resultValue}>{calculatedGoals.fat}g</Text>
+                </View>
               </View>
               
-              {selectedMeal.ingredients.length > 0 ? (
-                <>
-                  <Text style={styles.ingredientsTitle}>Ingredients</Text>
-                  {selectedMeal.ingredients.map((ingredient) => (
-                    <View key={ingredient.id} style={styles.ingredientItem}>
-                      <View style={styles.ingredientHeader}>
-                        <Text style={styles.ingredientName}>{ingredient.name}</Text>
-                        <Text style={styles.ingredientAmount}>
-                          {ingredient.quantity} {ingredient.unit}
-                        </Text>
-                      </View>
-                      <View style={styles.ingredientNutrition}>
-                        <Text style={styles.ingredientNutrientText}>
-                          {ingredient.nutrition.calories.toFixed(0)} cal
-                        </Text>
-                        <Text style={styles.ingredientNutrientText}>
-                          P: {(ingredient.nutrition.protein || 0).toFixed(1)}g
-                        </Text>
-                        <Text style={styles.ingredientNutrientText}>
-                          C: {(ingredient.nutrition.carbs || 0).toFixed(1)}g
-                        </Text>
-                        <Text style={styles.ingredientNutrientText}>
-                          F: {(ingredient.nutrition.fat || 0).toFixed(1)}g
-                        </Text>
-                      </View>
-                    </View>
-                  ))}
-                </>
-              ) : (
-                <Text style={styles.noIngredientsText}>No ingredients data available</Text>
-              )}
-            </View>
+              <TouchableOpacity style={styles.saveGoalsButton} onPress={saveGoals}>
+                <Text style={styles.saveGoalsText}>Save Goals</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
-        )}
+        </View>
       </Modal>
     </ScrollView>
   );
@@ -217,139 +502,150 @@ const Dashboard: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#f8f8f8',
+  },
+  header: {
+    padding: 20,
+    backgroundColor: 'white',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 20,
     color: '#333',
   },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginVertical: 10,
-    color: '#333',
-  },
-  todayContainer: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 15,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  nutritionCard: {
-    marginTop: 10,
-    marginBottom: 15,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 10,
-    padding: 15,
-  },
-  mainNutrient: {
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  mainNutrientValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  mainNutrientLabel: {
-    fontSize: 14,
-    color: '#666',
-  },
-  nutrientRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  nutrient: {
-    alignItems: 'center',
-  },
-  nutrientValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  nutrientLabel: {
-    fontSize: 12,
-    color: '#666',
-  },
-  mealCountText: {
+  date: {
     fontSize: 16,
     color: '#666',
+    marginTop: 5,
   },
-  dateGroup: {
-    marginBottom: 20,
-  },
-  dateText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
-  },
-  mealItem: {
-    backgroundColor: 'white',
+  goalCard: {
+    margin: 15,
     padding: 15,
+    backgroundColor: 'white',
     borderRadius: 10,
-    marginBottom: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  mealHeader: {
+  goalHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
+  },
+  goalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  goalSubtitle: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 15,
+  },
+  setGoalsButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  setGoalsButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  editGoalsButton: {
+    padding: 5,
+  },
+  editGoalsText: {
+    color: '#007AFF',
+    fontWeight: '500',
+  },
+  progressContainer: {
+    marginTop: 10,
+  },
+  progressItem: {
+    marginBottom: 15,
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 5,
+  },
+  summaryCard: {
+    margin: 15,
+    padding: 15,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 10,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+  },
+  mealItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  mealInfo: {
+    flex: 1,
   },
   mealName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
     color: '#333',
   },
-  mealType: {
-    fontSize: 12,
-    color: '#007AFF',
-  },
-  mealNutrition: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   mealCalories: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  calorieValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  calorieLabel: {
     fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
+    color: '#FF9500',
+    marginTop: 2,
   },
-  macroNutrients: {
+  macroRow: {
     flexDirection: 'row',
+    marginTop: 5,
   },
   macroText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#666',
-    marginLeft: 8,
+    marginRight: 10,
   },
-  // Modal styles
   modalContainer: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
     backgroundColor: 'white',
@@ -362,59 +658,121 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
-  modalDate: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 15,
+  closeButton: {
+    padding: 5,
   },
-  ingredientsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-    color: '#333',
-  },
-  ingredientItem: {
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  ingredientHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 5,
-  },
-  ingredientName: {
+  modalSubtitle: {
     fontSize: 16,
     fontWeight: '500',
     color: '#333',
+    marginBottom: 10,
   },
-  ingredientAmount: {
+  ingredientItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  ingredientName: {
     fontSize: 14,
-    color: '#666',
+    color: '#333',
   },
   ingredientNutrition: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  // Goal modal styles
+  goalModalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  goalModalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '500',
+    color: '#333',
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+  },
+  pickerContainer: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
+  resultsContainer: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    padding: 16,
+    marginTop: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  resultsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    textAlign: 'center',
+    color: '#333',
+  },
+  resultItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
   },
-  ingredientNutrientText: {
-    fontSize: 13,
-    color: '#666',
+  resultLabel: {
+    fontSize: 16,
+    color: '#555',
   },
-  noIngredientsText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#999',
-    fontStyle: 'italic',
-  }
+  resultValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+  },
+  saveGoalsButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  saveGoalsText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
 });
 
 export default Dashboard; 
