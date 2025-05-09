@@ -1,7 +1,7 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { v4 as uuidv4 } from 'uuid';
-import { Meal, MealIngredient, NutritionInfo, Ingredient } from '../../types';
+import { Meal, MealIngredient, NutritionInfo, Ingredient, Dish } from '../../types';
 import { fetchNutritionForIngredient, fetchImageCalories } from '../services/openai';
 
 // Define NutritionGoals type locally if not available in types.ts
@@ -21,31 +21,43 @@ type NutritionGoals = {
 interface AppContextData {
   meals: Meal[];
   ingredients: Ingredient[];
+  savedDishes: Dish[];
   goals: NutritionGoals | null;
-  addMeal: (meal: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[] }) => Promise<void>;
+  addMeal: (meal: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[], dishes?: Dish[] }) => Promise<void>;
   addPhotoMeal: (imageUri: string, date: string, calories: number) => Promise<void>;
   addCustomIngredient: (ingredient: Omit<Ingredient, 'id'>) => Promise<boolean>;
   updateIngredientNutrition: (id: string, nutrition: NutritionInfo) => Promise<void>;
   deleteIngredient: (id: string) => Promise<void>;
+  saveDish: (dish: Omit<Dish, 'id'>) => Promise<boolean>;
+  getSavedDishes: () => Dish[];
+  deleteSavedDish: (dishId: string) => Promise<boolean>;
   setGoals: (goals: NutritionGoals) => Promise<void>;
   resetIngredientsStorage: () => Promise<boolean>;
   getPastMeals: (limit?: number) => Meal[];
   duplicateMeal: (mealId: string, newDate?: string) => Promise<boolean>;
+  deleteMeal: (mealId: string) => Promise<boolean>;
+  updateMeal: (mealId: string, updatedMeal: Partial<Omit<Meal, 'id'>>) => Promise<boolean>;
 }
 
 export const AppContext = createContext<AppContextData>({
   meals: [],
   ingredients: [],
+  savedDishes: [],
   goals: null,
   addMeal: async () => {},
   addPhotoMeal: async () => {},
   addCustomIngredient: async () => false,
   updateIngredientNutrition: async () => {},
   deleteIngredient: async () => {},
+  saveDish: async () => false,
+  getSavedDishes: () => [],
+  deleteSavedDish: async () => false,
   setGoals: async () => {},
   resetIngredientsStorage: async () => false,
   getPastMeals: () => [],
   duplicateMeal: async () => false,
+  deleteMeal: async () => false,
+  updateMeal: async () => false,
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -53,6 +65,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   const [meals, setMeals] = useState<Meal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [savedDishes, setSavedDishes] = useState<Dish[]>([]);
   const [goals, setGoalsState] = useState<NutritionGoals | null>(null);
 
   useEffect(() => {
@@ -111,6 +124,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setIngredients([]);
         }
         
+        // Load saved dishes
+        const dishesJson = await AsyncStorage.getItem('savedDishes');
+        if (dishesJson) {
+          try {
+            const loadedDishes = JSON.parse(dishesJson);
+            if (Array.isArray(loadedDishes)) {
+              console.log(`Loaded ${loadedDishes.length} saved dishes from storage`);
+              setSavedDishes(loadedDishes);
+            } else {
+              console.error('Loaded dishes is not an array:', typeof loadedDishes);
+              setSavedDishes([]);
+            }
+          } catch (parseError) {
+            console.error('Error parsing dishes JSON:', parseError);
+            await AsyncStorage.removeItem('savedDishes');
+            setSavedDishes([]);
+          }
+        } else {
+          console.log('No saved dishes found in storage');
+          setSavedDishes([]);
+        }
+        
         // Load goals
         const goalsJson = await AsyncStorage.getItem('goals');
         if (goalsJson) {
@@ -127,6 +162,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // Set default values in case of error
         setMeals([]);
         setIngredients([]);
+        setSavedDishes([]);
         setGoalsState(null);
       }
     })();
@@ -196,9 +232,24 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const addMeal = async (mealData: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[] }) => {
-    const totalCalories = mealData.ingredients.reduce((sum, ing) => sum + ing.nutrition.calories, 0);
-    const newMeal: Meal = { id: uuidv4(), ...mealData, totalCalories };
+  const addMeal = async (mealData: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[], dishes?: Dish[] }) => {
+    // Calculate total calories from ingredients
+    const ingredientsCalories = mealData.ingredients.reduce((sum, ing) => sum + ing.nutrition.calories, 0);
+    
+    // Calculate total calories from dishes
+    const dishesCalories = mealData.dishes 
+      ? mealData.dishes.reduce((sum, dish) => sum + dish.totalCalories, 0)
+      : 0;
+      
+    const totalCalories = ingredientsCalories + dishesCalories;
+    
+    const newMeal: Meal = { 
+      id: uuidv4(), 
+      ...mealData, 
+      totalCalories,
+      dishes: mealData.dishes || []
+    };
+    
     await saveMeals([...meals, newMeal]);
   };
 
@@ -326,14 +377,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       
       // Create a new meal with the same properties but a new ID
       const today = new Date().toISOString().split('T')[0];
+      
+      // Create new IDs for ingredients to avoid conflicts
+      const newIngredients = mealToDuplicate.ingredients.map(ing => ({
+        ...ing,
+        id: uuidv4() // Generate new IDs for each ingredient
+      }));
+      
+      // Create new IDs for dishes and their ingredients
+      const newDishes = mealToDuplicate.dishes ? mealToDuplicate.dishes.map(dish => ({
+        ...dish,
+        id: uuidv4(),
+        ingredients: dish.ingredients.map(ing => ({
+          ...ing,
+          id: uuidv4()
+        }))
+      })) : [];
+      
       const newMeal: Meal = {
         id: uuidv4(),
         name: `${mealToDuplicate.name} (copy)`,
         date: newDate || today,
-        ingredients: mealToDuplicate.ingredients.map(ing => ({
-          ...ing,
-          id: uuidv4() // Generate new IDs for each ingredient
-        })),
+        ingredients: newIngredients,
+        dishes: newDishes,
         totalCalories: mealToDuplicate.totalCalories,
         imageUri: mealToDuplicate.imageUri
       };
@@ -349,21 +415,151 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteMeal = async (mealId: string): Promise<boolean> => {
+    try {
+      console.log(`Attempting to delete meal with ID: ${mealId}`);
+      
+      // Check if the meal exists
+      const mealToDelete = meals.find(meal => meal.id === mealId);
+      if (!mealToDelete) {
+        console.error(`Cannot delete: Meal with ID ${mealId} not found`);
+        return false;
+      }
+      
+      // Filter out the meal to delete
+      const updatedMeals = meals.filter(meal => meal.id !== mealId);
+      
+      // Save the updated meals list
+      await saveMeals(updatedMeals);
+      
+      console.log(`Successfully deleted meal "${mealToDelete.name}" with ID ${mealId}`);
+      return true;
+    } catch (error) {
+      console.error('Error deleting meal:', error);
+      return false;
+    }
+  };
+
+  const updateMeal = async (mealId: string, updatedMealData: Partial<Omit<Meal, 'id'>>): Promise<boolean> => {
+    try {
+      console.log(`Attempting to update meal with ID: ${mealId}`);
+      
+      // Find the meal to update
+      const mealIndex = meals.findIndex(meal => meal.id === mealId);
+      if (mealIndex === -1) {
+        console.error(`Cannot update: Meal with ID ${mealId} not found`);
+        return false;
+      }
+      
+      // Get the existing meal
+      const existingMeal = meals[mealIndex];
+      
+      // Create the updated meal
+      const updatedMeal: Meal = {
+        ...existingMeal,
+        ...updatedMealData,
+      };
+      
+      // Recalculate total calories if ingredients or dishes were updated
+      if (updatedMealData.ingredients || updatedMealData.dishes) {
+        const ingredientsCalories = (updatedMealData.ingredients || existingMeal.ingredients).reduce(
+          (sum, ing) => sum + ing.nutrition.calories, 
+          0
+        );
+        
+        const dishesCalories = (updatedMealData.dishes || existingMeal.dishes || []).reduce(
+          (sum, dish) => sum + dish.totalCalories,
+          0
+        );
+        
+        updatedMeal.totalCalories = ingredientsCalories + dishesCalories;
+      }
+      
+      // Create a new array with the updated meal
+      const updatedMeals = [...meals];
+      updatedMeals[mealIndex] = updatedMeal;
+      
+      // Save the updated meals list
+      await saveMeals(updatedMeals);
+      
+      console.log(`Successfully updated meal with ID ${mealId}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating meal:', error);
+      return false;
+    }
+  };
+
+  // Add function to save dishes
+  const saveDishes = async (newDishes: Dish[]) => {
+    try {
+      console.log(`Saving ${newDishes.length} dishes to AsyncStorage`);
+      setSavedDishes(newDishes);
+      await AsyncStorage.setItem('savedDishes', JSON.stringify(newDishes));
+      return true;
+    } catch (error) {
+      console.error('Error saving dishes:', error);
+      return false;
+    }
+  };
+
+  // Add function to save a single dish
+  const saveDish = async (dishData: Omit<Dish, 'id'>) => {
+    try {
+      // Create a new dish with ID
+      const newDish: Dish = {
+        id: uuidv4(),
+        ...dishData
+      };
+      
+      // Add to saved dishes and save to storage
+      const updatedDishes = [...savedDishes, newDish];
+      const result = await saveDishes(updatedDishes);
+      
+      return result;
+    } catch (error) {
+      console.error('Error saving dish:', error);
+      return false;
+    }
+  };
+
+  // Add function to get saved dishes
+  const getSavedDishes = (): Dish[] => {
+    return savedDishes;
+  };
+
+  // Add function to delete a saved dish
+  const deleteSavedDish = async (dishId: string): Promise<boolean> => {
+    try {
+      const updatedDishes = savedDishes.filter(dish => dish.id !== dishId);
+      return await saveDishes(updatedDishes);
+    } catch (error) {
+      console.error('Error deleting saved dish:', error);
+      return false;
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
         meals,
         ingredients,
+        savedDishes,
         goals,
         addMeal,
         addPhotoMeal,
         addCustomIngredient,
         updateIngredientNutrition,
         deleteIngredient,
+        saveDish,
+        getSavedDishes,
+        deleteSavedDish,
         setGoals,
         resetIngredientsStorage,
         getPastMeals,
         duplicateMeal,
+        deleteMeal,
+        updateMeal,
       }}
     >
       {children}

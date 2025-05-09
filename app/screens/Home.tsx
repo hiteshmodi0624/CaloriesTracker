@@ -15,18 +15,27 @@ type RootTabParamList = {
 
 type NavigationProp = BottomTabNavigationProp<RootTabParamList>;
 
-const DAILY_CALORIE_GOAL = 2000; // This could come from user settings later
-
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { meals } = useContext(AppContext);
+  const { meals, goals } = useContext(AppContext);
 
   // Calculate today's stats
   const today = new Date().toISOString().split('T')[0];
   const todayMeals = meals.filter(meal => meal.date === today);
   const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalCalories, 0);
-  const caloriePercentage = Math.min(100, Math.round((totalCalories / DAILY_CALORIE_GOAL) * 100));
-  const remainingCalories = DAILY_CALORIE_GOAL - totalCalories;
+  
+  // Use goals from context if available, otherwise use default values
+  const calorieGoal = goals?.calories || 2000;
+  const caloriePercentage = Math.min(100, Math.round((totalCalories / calorieGoal) * 100));
+  const remainingCalories = calorieGoal - totalCalories;
+
+  // Calculate macros for today
+  const totalProtein = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.protein || 0), 0), 0);
+  const totalCarbs = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.carbs || 0), 0), 0);
+  const totalFat = todayMeals.reduce((sum, meal) => 
+    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.fat || 0), 0), 0);
 
   const renderCalorieProgress = () => {
     return (
@@ -42,7 +51,7 @@ const Home: React.FC = () => {
         </View>
         <View style={styles.progressLabels}>
           <Text style={styles.progressLabel}>{totalCalories} cal</Text>
-          <Text style={styles.progressLabel}>{DAILY_CALORIE_GOAL} cal</Text>
+          <Text style={styles.progressLabel}>{calorieGoal} cal</Text>
         </View>
       </View>
     );
@@ -85,6 +94,59 @@ const Home: React.FC = () => {
           </View>
         </View>
       </View>
+
+      {goals && (
+        <View style={styles.macroCard}>
+          <Text style={styles.macroTitle}>Macronutrients</Text>
+          <View style={styles.macroItem}>
+            <View style={styles.macroLabelRow}>
+              <Text style={styles.macroLabel}>Protein</Text>
+              <Text style={styles.macroValue}>{Math.round(totalProtein)}g / {goals.protein}g</Text>
+            </View>
+            <View style={styles.macroProgressBar}>
+              <View 
+                style={[
+                  styles.macroProgressFill, 
+                  styles.proteinFill,
+                  { width: `${Math.min(100, (totalProtein / goals.protein) * 100)}%` }
+                ]} 
+              />
+            </View>
+          </View>
+          
+          <View style={styles.macroItem}>
+            <View style={styles.macroLabelRow}>
+              <Text style={styles.macroLabel}>Carbs</Text>
+              <Text style={styles.macroValue}>{Math.round(totalCarbs)}g / {goals.carbs}g</Text>
+            </View>
+            <View style={styles.macroProgressBar}>
+              <View 
+                style={[
+                  styles.macroProgressFill, 
+                  styles.carbsFill,
+                  { width: `${Math.min(100, (totalCarbs / goals.carbs) * 100)}%` }
+                ]} 
+              />
+            </View>
+          </View>
+          
+          <View style={styles.macroItem}>
+            <View style={styles.macroLabelRow}>
+              <Text style={styles.macroLabel}>Fat</Text>
+              <Text style={styles.macroValue}>{Math.round(totalFat)}g / {goals.fat}g</Text>
+            </View>
+            <View style={styles.macroProgressBar}>
+              <View 
+                style={[
+                  styles.macroProgressFill, 
+                  styles.fatFill,
+                  { width: `${Math.min(100, (totalFat / goals.fat) * 100)}%` }
+                ]} 
+              />
+            </View>
+          </View>
+        </View>
+      )}
 
       <Text style={styles.sectionTitle}>Quick Actions</Text>
       
@@ -268,6 +330,63 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginRight: 5,
   },
+  macroCard: {
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    marginBottom: 20,
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  macroTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 15,
+  },
+  macroItem: {
+    marginBottom: 15,
+  },
+  macroLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  macroLabel: {
+    fontSize: 14,
+    color: '#666',
+  },
+  macroValue: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#333',
+  },
+  macroProgressBar: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  macroProgressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  proteinFill: {
+    backgroundColor: '#5D9CEC', // Blue for protein
+  },
+  carbsFill: {
+    backgroundColor: '#A0D468', // Green for carbs
+  },
+  fatFill: {
+    backgroundColor: '#FFCE54', // Yellow for fat
+  },
 });
 
-export default Home; 
+export default Home;

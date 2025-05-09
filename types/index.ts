@@ -21,10 +21,18 @@ export interface MealIngredient {
   nutrition: NutritionInfo;
 }
 
+export interface Dish {
+  id: string;
+  name: string;
+  ingredients: MealIngredient[];
+  totalCalories: number;
+}
+
 export interface Meal {
   id: string;
   name: string;
   date: string; // ISO date string YYYY-MM-DD
+  dishes?: Dish[];
   ingredients: MealIngredient[];
   totalCalories: number;
   imageUri?: string;

@@ -8,11 +8,13 @@ import {
   Modal, 
   FlatList,
   TextInput,
-  Platform 
+  Platform,
+  Alert
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { AppContext } from '../context/AppContext';
 import { Meal } from '../../types';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
 
 // Activity level types
@@ -50,7 +52,7 @@ const GOALS = [
 ];
 
 const Dashboard: React.FC = () => {
-  const { meals, goals, setGoals } = useContext(AppContext);
+  const { meals, goals, setGoals, deleteMeal, updateMeal } = useContext(AppContext);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [showGoalsModal, setShowGoalsModal] = useState(false);
   
@@ -78,12 +80,53 @@ const Dashboard: React.FC = () => {
   const todayMeals = useMemo(() => meals.filter(meal => meal.date === today), [meals]);
   
   const totalCalories = todayMeals.reduce((sum, meal) => sum + meal.totalCalories, 0);
-  const totalProtein = todayMeals.reduce((sum, meal) => 
-    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.protein || 0), 0), 0);
-  const totalCarbs = todayMeals.reduce((sum, meal) => 
-    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.carbs || 0), 0), 0);
-  const totalFat = todayMeals.reduce((sum, meal) => 
-    sum + meal.ingredients.reduce((mealSum, ing) => mealSum + (ing.nutrition.fat || 0), 0), 0);
+  const totalProtein = todayMeals.reduce((sum, meal) => {
+    // Get protein from individual ingredients
+    const ingredientsProtein = meal.ingredients.reduce(
+      (mealSum, ing) => mealSum + (ing.nutrition.protein || 0), 0
+    );
+    
+    // Get protein from dishes
+    const dishesProtein = (meal.dishes || []).reduce((dishesSum, dish) => {
+      return dishesSum + dish.ingredients.reduce(
+        (dishSum, ing) => dishSum + (ing.nutrition.protein || 0), 0
+      );
+    }, 0);
+    
+    return sum + ingredientsProtein + dishesProtein;
+  }, 0);
+  
+  const totalCarbs = todayMeals.reduce((sum, meal) => {
+    // Get carbs from individual ingredients
+    const ingredientsCarbs = meal.ingredients.reduce(
+      (mealSum, ing) => mealSum + (ing.nutrition.carbs || 0), 0
+    );
+    
+    // Get carbs from dishes
+    const dishesCarbs = (meal.dishes || []).reduce((dishesSum, dish) => {
+      return dishesSum + dish.ingredients.reduce(
+        (dishSum, ing) => dishSum + (ing.nutrition.carbs || 0), 0
+      );
+    }, 0);
+    
+    return sum + ingredientsCarbs + dishesCarbs;
+  }, 0);
+  
+  const totalFat = todayMeals.reduce((sum, meal) => {
+    // Get fat from individual ingredients
+    const ingredientsFat = meal.ingredients.reduce(
+      (mealSum, ing) => mealSum + (ing.nutrition.fat || 0), 0
+    );
+    
+    // Get fat from dishes
+    const dishesFat = (meal.dishes || []).reduce((dishesSum, dish) => {
+      return dishesSum + dish.ingredients.reduce(
+        (dishSum, ing) => dishSum + (ing.nutrition.fat || 0), 0
+      );
+    }, 0);
+    
+    return sum + ingredientsFat + dishesFat;
+  }, 0);
 
   // Calculate goals when inputs change
   useEffect(() => {
@@ -179,6 +222,82 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error saving goals:', error);
       alert('Failed to save your goals. Please try again.');
+    }
+  };
+
+  // Add new state for editing
+  const [isEditingMeal, setIsEditingMeal] = useState(false);
+  const [editMealName, setEditMealName] = useState('');
+  const [editMealDate, setEditMealDate] = useState(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  
+  // Add new functions for meal management
+  const handleDeleteMeal = async (mealId: string) => {
+    Alert.alert(
+      "Delete Meal",
+      "Are you sure you want to delete this meal? This action cannot be undone.",
+      [
+        { 
+          text: "Cancel", 
+          style: "cancel" 
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            const success = await deleteMeal(mealId);
+            if (success) {
+              setSelectedMeal(null);
+              // Show feedback
+              Alert.alert("Success", "Meal deleted successfully");
+            } else {
+              Alert.alert("Error", "Failed to delete the meal");
+            }
+          }
+        }
+      ]
+    );
+  };
+  
+  const startEditingMeal = (meal: Meal) => {
+    setEditMealName(meal.name);
+    setEditMealDate(new Date(meal.date));
+    setIsEditingMeal(true);
+  };
+  
+  const cancelEditingMeal = () => {
+    setIsEditingMeal(false);
+    setEditMealName('');
+  };
+  
+  const handleEditDateChange = (event: any, selectedDate?: Date) => {
+    setShowEditDatePicker(false);
+    if (selectedDate) {
+      setEditMealDate(selectedDate);
+    }
+  };
+  
+  const saveMealEdits = async () => {
+    if (!selectedMeal) return;
+    
+    if (!editMealName.trim()) {
+      Alert.alert("Error", "Meal name cannot be empty");
+      return;
+    }
+    
+    const updates = {
+      name: editMealName,
+      date: editMealDate.toISOString().split('T')[0],
+    };
+    
+    const success = await updateMeal(selectedMeal.id, updates);
+    
+    if (success) {
+      setIsEditingMeal(false);
+      setSelectedMeal(null);
+      Alert.alert("Success", "Meal updated successfully");
+    } else {
+      Alert.alert("Error", "Failed to update the meal");
     }
   };
 
@@ -322,37 +441,151 @@ const Dashboard: React.FC = () => {
         visible={selectedMeal !== null}
         animationType="slide"
         transparent={true}
-        onRequestClose={() => setSelectedMeal(null)}
+        onRequestClose={() => {
+          setIsEditingMeal(false);
+          setSelectedMeal(null);
+        }}
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             {selectedMeal && (
               <>
                 <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setSelectedMeal(null)}
-                  >
-                    <Ionicons name="close" size={24} color="#333" />
-                  </TouchableOpacity>
+                  {!isEditingMeal ? (
+                    <>
+                      <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
+                      <View style={styles.modalActions}>
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          onPress={() => startEditingMeal(selectedMeal)}
+                        >
+                          <MaterialIcons name="edit" size={24} color="#007AFF" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.deleteButton}
+                          onPress={() => handleDeleteMeal(selectedMeal.id)}
+                        >
+                          <MaterialIcons name="delete" size={24} color="#FF3B30" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.closeButton}
+                          onPress={() => setSelectedMeal(null)}
+                        >
+                          <Ionicons name="close" size={24} color="#333" />
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={styles.modalTitle}>Edit Meal</Text>
+                      <View style={styles.modalActions}>
+                        <TouchableOpacity
+                          style={styles.closeButton}
+                          onPress={cancelEditingMeal}
+                        >
+                          <Ionicons name="close" size={24} color="#333" />
+                        </TouchableOpacity>
+                      </View>
+                    </>
+                  )}
                 </View>
 
-                <Text style={styles.modalSubtitle}>Ingredients:</Text>
-                <FlatList
-                  data={selectedMeal.ingredients}
-                  keyExtractor={item => item.id}
-                  renderItem={({ item }) => (
-                    <View style={styles.ingredientItem}>
-                      <Text style={styles.ingredientName}>
-                        {item.quantity} {item.unit} {item.name}
-                      </Text>
-                      <Text style={styles.ingredientNutrition}>
-                        {item.nutrition.calories} cal | P: {item.nutrition.protein || 0}g | C: {item.nutrition.carbs || 0}g | F: {item.nutrition.fat || 0}g
-                      </Text>
-                    </View>
-                  )}
-                />
+                {!isEditingMeal ? (
+                  <>
+                    <Text style={styles.mealDate}>
+                      {new Date(selectedMeal.date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.mealCalories}>
+                      {selectedMeal.totalCalories} calories
+                    </Text>
+                    
+                    {selectedMeal.dishes && selectedMeal.dishes.length > 0 && (
+                      <>
+                        <Text style={styles.modalSubtitle}>Dishes:</Text>
+                        {selectedMeal.dishes.map(dish => (
+                          <View key={dish.id} style={styles.dishItem}>
+                            <Text style={styles.dishName}>{dish.name}</Text>
+                            <Text style={styles.dishCalories}>{dish.totalCalories} calories</Text>
+                            <View style={styles.dishIngredients}>
+                              {dish.ingredients.map(ingredient => (
+                                <View key={ingredient.id} style={styles.ingredientItem}>
+                                  <Text style={styles.ingredientName}>
+                                    {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                                  </Text>
+                                  <Text style={styles.ingredientNutrition}>
+                                    {ingredient.nutrition.calories} cal | P: {ingredient.nutrition.protein || 0}g | C: {ingredient.nutrition.carbs || 0}g | F: {ingredient.nutrition.fat || 0}g
+                                  </Text>
+                                </View>
+                              ))}
+                            </View>
+                          </View>
+                        ))}
+                      </>
+                    )}
+                    
+                    {selectedMeal.ingredients.length > 0 && (
+                      <>
+                        <Text style={styles.modalSubtitle}>
+                          {selectedMeal.dishes && selectedMeal.dishes.length > 0 
+                            ? "Additional Ingredients:" 
+                            : "Ingredients:"}
+                        </Text>
+                        <FlatList
+                          data={selectedMeal.ingredients}
+                          keyExtractor={item => item.id}
+                          renderItem={({ item }) => (
+                            <View style={styles.ingredientItem}>
+                              <Text style={styles.ingredientName}>
+                                {item.quantity} {item.unit} {item.name}
+                              </Text>
+                              <Text style={styles.ingredientNutrition}>
+                                {item.nutrition.calories} cal | P: {item.nutrition.protein || 0}g | C: {item.nutrition.carbs || 0}g | F: {item.nutrition.fat || 0}g
+                              </Text>
+                            </View>
+                          )}
+                        />
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <View style={styles.editForm}>
+                    <Text style={styles.editLabel}>Meal Name:</Text>
+                    <TextInput
+                      style={styles.editInput}
+                      value={editMealName}
+                      onChangeText={setEditMealName}
+                      placeholder="Enter meal name"
+                    />
+                    
+                    <Text style={styles.editLabel}>Date:</Text>
+                    <TouchableOpacity 
+                      style={styles.dateButton}
+                      onPress={() => setShowEditDatePicker(true)}
+                    >
+                      <Text>{editMealDate.toDateString()}</Text>
+                    </TouchableOpacity>
+                    
+                    {showEditDatePicker && (
+                      <DateTimePicker
+                        value={editMealDate}
+                        mode="date"
+                        display="default"
+                        onChange={handleEditDateChange}
+                      />
+                    )}
+                    
+                    <Text style={styles.editNote}>
+                      Note: To edit ingredients, please use the Meal Creation screen.
+                    </Text>
+                    
+                    <TouchableOpacity
+                      style={styles.saveEditButton}
+                      onPress={saveMealEdits}
+                    >
+                      <Text style={styles.saveEditButtonText}>Save Changes</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </>
             )}
           </View>
@@ -658,15 +891,32 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 10,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#333',
   },
+  modalActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+  deleteButton: {
+    padding: 8,
+    marginRight: 8,
+  },
   closeButton: {
-    padding: 5,
+    padding: 8,
+  },
+  mealDate: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
   },
   modalSubtitle: {
     fontSize: 16,
@@ -772,6 +1022,69 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  editForm: {
+    marginTop: 10,
+  },
+  editLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 5,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  dateButton: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  editNote: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
+    marginVertical: 10,
+  },
+  saveEditButton: {
+    backgroundColor: '#34C759',
+    borderRadius: 8,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  saveEditButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  dishItem: {
+    backgroundColor: '#f7f7f7',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 15,
+  },
+  dishName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 5,
+  },
+  dishCalories: {
+    fontSize: 14,
+    color: '#FF9500',
+    marginBottom: 8,
+  },
+  dishIngredients: {
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+    paddingTop: 8,
   },
 });
 

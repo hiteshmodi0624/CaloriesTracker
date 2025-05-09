@@ -236,4 +236,76 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
     // Return default values instead of throwing
     return { calories: 100, protein: 0, carbs: 0, fat: 0 };
   }
-} 
+}
+
+export const fetchNutritionForDish = async (
+  dishName: string,
+  servingSize: number = 1
+): Promise<NutritionInfo> => {
+  try {
+    const prompt = `What are the nutritional values for ${servingSize} serving(s) of ${dishName}? Please provide calories, protein, carbs, and fat in JSON format.`;
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system" as const,
+          content: "You are a nutrition expert. Provide nutritional information for complete dishes in JSON format with calories, protein, carbs, and fat values. Make a reasonable estimate based on standard restaurant or homemade recipes. Return ONLY the JSON object with no markdown or explanation."
+        },
+        {
+          role: "user" as const,
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error('No response from OpenAI');
+
+    // Extract JSON from potential markdown code blocks
+    let jsonString = content;
+    
+    // Handle markdown code blocks (```json { ... } ```)
+    const codeBlockMatch = content.match(/```(?:json)?([\s\S]*?)```/);
+    if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1].trim();
+    }
+    
+    // Handle any extra text before or after JSON object
+    const jsonObjectMatch = jsonString.match(/{[\s\S]*}/);
+    if (jsonObjectMatch) {
+      jsonString = jsonObjectMatch[0];
+    }
+    
+    console.log('Extracted JSON string for dish:', jsonString);
+    
+    try {
+      const nutrition = JSON.parse(jsonString);
+      return {
+        calories: nutrition.calories || 0,
+        protein: nutrition.protein || 0,
+        carbs: nutrition.carbs || 0,
+        fat: nutrition.fat || 0,
+      };
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      // Fallback values if parsing fails
+      return {
+        calories: 350,
+        protein: 15,
+        carbs: 30,
+        fat: 15,
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching nutrition for dish:', error);
+    // Return default values instead of throwing
+    return {
+      calories: 350,
+      protein: 15,
+      carbs: 30,
+      fat: 15,
+    };
+  }
+}; 
