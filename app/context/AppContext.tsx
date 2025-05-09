@@ -11,6 +11,7 @@ interface AppContextData {
   addPhotoMeal: (imageUri: string, date: string, calories: number) => Promise<void>;
   addCustomIngredient: (ingredient: Omit<Ingredient, 'id'>) => Promise<void>;
   updateIngredientNutrition: (id: string, nutrition: NutritionInfo) => Promise<void>;
+  deleteIngredient: (id: string) => Promise<void>;
 }
 
 export const AppContext = createContext<AppContextData>({
@@ -20,6 +21,7 @@ export const AppContext = createContext<AppContextData>({
   addPhotoMeal: async () => {},
   addCustomIngredient: async () => {},
   updateIngredientNutrition: async () => {},
+  deleteIngredient: async () => {},
 });
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -45,6 +47,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const saveIngredients = async (newIngredients: Ingredient[]) => {
+    console.log('Saving ingredients:', newIngredients);
     setIngredients(newIngredients);
     await AsyncStorage.setItem('ingredients', JSON.stringify(newIngredients));
   };
@@ -61,7 +64,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   const addCustomIngredient = async (ingredientData: Omit<Ingredient, 'id'>) => {
+    console.log('Adding custom ingredient:', ingredientData);
     const newIngredient: Ingredient = { id: uuidv4(), ...ingredientData };
+    console.log('New ingredient with ID:', newIngredient);
     await saveIngredients([...ingredients, newIngredient]);
   };
 
@@ -70,8 +75,25 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await saveIngredients(updated);
   };
 
+  const deleteIngredient = async (id: string) => {
+    console.log('Deleting ingredient with ID:', id);
+    const updatedIngredients = ingredients.filter(ingredient => ingredient.id !== id);
+    console.log('Updated ingredients after deletion:', updatedIngredients);
+    await saveIngredients(updatedIngredients);
+  };
+
   return (
-    <AppContext.Provider value={{ meals, ingredients, addMeal, addPhotoMeal, addCustomIngredient, updateIngredientNutrition }}>
+    <AppContext.Provider
+      value={{
+        meals,
+        ingredients,
+        addMeal,
+        addPhotoMeal,
+        addCustomIngredient,
+        updateIngredientNutrition,
+        deleteIngredient,
+      }}
+    >
       {children}
     </AppContext.Provider>
   );

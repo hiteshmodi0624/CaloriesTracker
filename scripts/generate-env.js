@@ -23,7 +23,7 @@ rl.question('Enter your OpenAI API key: ', (openaiKey) => {
 # Generated on ${new Date().toISOString()}
 # DO NOT COMMIT THIS FILE TO VERSION CONTROL
 
-OPENAI_API_KEY=${openaiKey}
+EXPO_PUBLIC_OPENAI_API_KEY=${openaiKey}
 `;
 
   fs.writeFileSync(ENV_FILE_PATH, envContent);

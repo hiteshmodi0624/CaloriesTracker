@@ -29,7 +29,7 @@ To use this app, you'll need an OpenAI API key. For security reasons, we don't h
 
 1. Create a `.env` file in the project root with:
    ```
-   OPENAI_API_KEY=your_actual_openai_key_here
+   EXPO_PUBLIC_OPENAI_API_KEY=your_actual_openai_key_here
    ```
 
 2. Make sure not to commit this file to version control

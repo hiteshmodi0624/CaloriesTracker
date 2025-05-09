@@ -2,26 +2,26 @@ import Constants from 'expo-constants';
 
 // Load environment variables
 const getEnvVariable = (name: string): string => {
-  // Use expo-constants first
-  if (Constants.expoConfig?.extra?.[name]) {
-    return Constants.expoConfig.extra[name];
-  }
-  
-  // Fallback to process.env if available
+
+  console.log(Constants.expoConfig?.extra?.[name]);
+  console.log(process.env[name],process.env);
   if (process.env[name]) {
     return process.env[name] as string;
+  }
+  if (Constants.expoConfig?.extra?.[name]) {
+    return Constants.expoConfig.extra[name];
   }
   
   return '';
 };
 
 export const ENV = {
-  OPENAI_API_KEY: getEnvVariable('OPENAI_API_KEY'),
+  EXPO_PUBLIC_OPENAI_API_KEY: getEnvVariable('EXPO_PUBLIC_OPENAI_API_KEY'),
 };
 
 // Validate that required variables are set
 export const validateEnv = (): boolean => {
-  const requiredVars = ['OPENAI_API_KEY'];
+  const requiredVars = ['EXPO_PUBLIC_OPENAI_API_KEY'];
   
   for (const varName of requiredVars) {
     if (!ENV[varName as keyof typeof ENV]) {
