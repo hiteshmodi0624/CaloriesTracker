@@ -2,6 +2,9 @@ import OpenAI from 'openai';
 import * as FileSystem from 'expo-file-system';
 import { NutritionInfo } from '../../types';
 import { ENV, validateEnv } from '../config/env';
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
+import { v4 as uuidv4 } from 'uuid';
 
 // Validate environment variables at startup
 if (!validateEnv()) {
@@ -13,6 +16,22 @@ const openai = new OpenAI({
   apiKey: ENV.EXPO_PUBLIC_OPENAI_API_KEY,
   dangerouslyAllowBrowser: true,
 });
+
+// Error tracking
+let consecutiveFailures = 0;
+const FAILURE_THRESHOLD = 3; // Number of consecutive failures before suggesting update
+export const APP_VERSION = Constants.expoConfig?.version || '1.0.0';
+export const OPENAI_SERVICE_VERSION = '1.0'; // Track service version for potential updates
+
+// Function to check if app update might be needed
+export const isUpdateRecommended = (): boolean => {
+  return consecutiveFailures >= FAILURE_THRESHOLD;
+};
+
+// Function to reset the failure counter
+export const resetFailureCounter = (): void => {
+  consecutiveFailures = 0;
+};
 
 export const fetchNutritionForIngredient = async (
   name: string,
@@ -38,7 +57,10 @@ export const fetchNutritionForIngredient = async (
     });
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('No response from OpenAI');
+    if (!content) {
+      consecutiveFailures++;
+      throw new Error('No response from OpenAI');
+    }
 
     // Extract JSON from potential markdown code blocks
     let jsonString = content;
@@ -59,6 +81,8 @@ export const fetchNutritionForIngredient = async (
     
     try {
       const nutrition = JSON.parse(jsonString);
+      // Success! Reset failure counter
+      consecutiveFailures = 0;
       return {
         calories: nutrition.calories || 0,
         protein: nutrition.protein || 0,
@@ -67,6 +91,8 @@ export const fetchNutritionForIngredient = async (
       };
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
+      // Count as a failure
+      consecutiveFailures++;
       // Fallback values if parsing fails
       return {
         calories: 100,
@@ -77,6 +103,8 @@ export const fetchNutritionForIngredient = async (
     }
   } catch (error) {
     console.error('Error fetching nutrition:', error);
+    // Count as a failure
+    consecutiveFailures++;
     // Return default values instead of throwing
     return {
       calories: 100,
@@ -140,10 +168,19 @@ Format your responses clearly and include all necessary information for the app 
       temperature: 0.7,
     });
 
-    return response.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
+    const content = response.choices[0]?.message?.content;
+    if (!content) {
+      consecutiveFailures++;
+      return "I'm sorry, I couldn't process that request.";
+    }
+    
+    // Reset failure counter on success
+    consecutiveFailures = 0;
+    return content;
   } catch (error) {
     console.error('Error getting chat response:', error);
-    throw error;
+    consecutiveFailures++;
+    return "I'm sorry, I encountered an error. Please try again later.";
   }
 };
 
@@ -206,12 +243,19 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
     });
     
     const content = response.choices[0].message?.content || '';
+    if (!content) {
+      consecutiveFailures++;
+      console.error('No content in OpenAI response');
+      return { calories: 100, protein: 0, carbs: 0, fat: 0 };
+    }
+    
     console.log('OpenAI label response:', content.substring(0, 100) + '...');
     
     // Try to extract JSON from the response which might contain other text
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       console.error('No JSON found in label response');
+      consecutiveFailures++;
       return { calories: 100, protein: 0, carbs: 0, fat: 0 }; // Default fallback
     }
     
@@ -219,6 +263,9 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
       const jsonStr = jsonMatch[0];
       console.log('Extracted JSON from label:', jsonStr);
       const data = JSON.parse(jsonStr);
+      
+      // Reset failure counter on success
+      consecutiveFailures = 0;
       
       // Ensure all values are numbers, with fallbacks
       return {
@@ -229,10 +276,13 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
       };
     } catch (parseError) {
       console.error('Label JSON parse error:', parseError);
+      consecutiveFailures++;
       return { calories: 100, protein: 0, carbs: 0, fat: 0 }; // Default fallback
     }
   } catch (error) {
     console.error('Error extracting nutrition from label:', error);
+    // Count as a failure
+    consecutiveFailures++;
     // Return default values instead of throwing
     return { calories: 100, protein: 0, carbs: 0, fat: 0 };
   }
@@ -261,7 +311,10 @@ export const fetchNutritionForDish = async (
     });
 
     const content = response.choices[0]?.message?.content;
-    if (!content) throw new Error('No response from OpenAI');
+    if (!content) {
+      consecutiveFailures++;
+      throw new Error('No response from OpenAI');
+    }
 
     // Extract JSON from potential markdown code blocks
     let jsonString = content;
@@ -282,6 +335,8 @@ export const fetchNutritionForDish = async (
     
     try {
       const nutrition = JSON.parse(jsonString);
+      // Reset failure counter on success
+      consecutiveFailures = 0;
       return {
         calories: nutrition.calories || 0,
         protein: nutrition.protein || 0,
@@ -290,6 +345,8 @@ export const fetchNutritionForDish = async (
       };
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
+      // Count as a failure
+      consecutiveFailures++;
       // Fallback values if parsing fails
       return {
         calories: 350,
@@ -300,6 +357,8 @@ export const fetchNutritionForDish = async (
     }
   } catch (error) {
     console.error('Error fetching nutrition for dish:', error);
+    // Count as a failure
+    consecutiveFailures++;
     // Return default values instead of throwing
     return {
       calories: 350,

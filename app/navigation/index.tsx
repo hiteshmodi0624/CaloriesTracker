@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { AppContext } from '../context/AppContext';
+import UpdateModal from '../components/UpdateModal';
 
 const Tab = createBottomTabNavigator();
 
 const Navigation: React.FC = () => {
+  const { showUpdateModal, setShowUpdateModal } = useContext(AppContext);
+  
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -28,7 +32,7 @@ const Navigation: React.FC = () => {
         />
         <Tab.Screen 
           name="CreateMeal" 
-          component={require('../screens/CreateMeal').default} 
+          component={require('../components/meals/CreateMealScreen').default} 
           options={{ 
             title: 'Create Meal',
             tabBarIcon: ({ color, size }) => (
@@ -66,6 +70,12 @@ const Navigation: React.FC = () => {
           }}
         />
       </Tab.Navigator>
+      
+      {/* Update Modal */}
+      <UpdateModal 
+        visible={showUpdateModal} 
+        onDismiss={() => setShowUpdateModal(false)}
+      />
     </NavigationContainer>
   );
 };

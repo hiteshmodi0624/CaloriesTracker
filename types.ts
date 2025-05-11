@@ -5,7 +5,7 @@ export type NutritionInfo = {
   fat?: number;
 };
 
-export type IngredientType = {
+export type Ingredient = {
   id: string;
   name: string;
   unit: string;
@@ -14,10 +14,18 @@ export type IngredientType = {
 
 export type MealIngredient = {
   id: string;
+  ingredientId?: string;
   name: string;
   unit: string;
   quantity: number;
   nutrition: NutritionInfo;
+};
+
+export type Dish = {
+  id: string;
+  name: string;
+  ingredients: MealIngredient[];
+  totalCalories: number;
 };
 
 export type Meal = {
@@ -25,6 +33,7 @@ export type Meal = {
   name: string;
   date: string;
   ingredients: MealIngredient[];
+  dishes?: Dish[];
   totalCalories: number;
   imageUri?: string;
 };

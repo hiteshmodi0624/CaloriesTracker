@@ -2,7 +2,7 @@ import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { v4 as uuidv4 } from 'uuid';
 import { Meal, MealIngredient, NutritionInfo, Ingredient, Dish } from '../../types';
-import { fetchNutritionForIngredient, fetchImageCalories } from '../services/openai';
+import { fetchNutritionForIngredient, fetchImageCalories, isUpdateRecommended, resetFailureCounter } from '../services/openai';
 
 // Define NutritionGoals type locally if not available in types.ts
 type NutritionGoals = {
@@ -23,6 +23,11 @@ interface AppContextData {
   ingredients: Ingredient[];
   savedDishes: Dish[];
   goals: NutritionGoals | null;
+  updateAvailable: boolean;
+  showUpdateModal: boolean;
+  setShowUpdateModal: (show: boolean) => void;
+  checkForUpdates: () => void;
+  dismissUpdateRecommendation: () => void;
   addMeal: (meal: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[], dishes?: Dish[] }) => Promise<void>;
   addPhotoMeal: (imageUri: string, date: string, calories: number) => Promise<void>;
   addCustomIngredient: (ingredient: Omit<Ingredient, 'id'>) => Promise<boolean>;
@@ -44,6 +49,11 @@ export const AppContext = createContext<AppContextData>({
   ingredients: [],
   savedDishes: [],
   goals: null,
+  updateAvailable: false,
+  showUpdateModal: false,
+  setShowUpdateModal: () => {},
+  checkForUpdates: () => {},
+  dismissUpdateRecommendation: () => {},
   addMeal: async () => {},
   addPhotoMeal: async () => {},
   addCustomIngredient: async () => false,
@@ -63,6 +73,8 @@ export const AppContext = createContext<AppContextData>({
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   console.log('========== INITIALIZING APP PROVIDER ==========');
 
+  const [updateAvailable, setUpdateAvailable] = useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
   const [meals, setMeals] = useState<Meal[]>([]);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [savedDishes, setSavedDishes] = useState<Dish[]>([]);
@@ -539,6 +551,35 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  // Add function to check for updates
+  const checkForUpdates = () => {
+    const needsUpdate = isUpdateRecommended();
+    console.log('Checking for update recommendations:', needsUpdate);
+    setUpdateAvailable(needsUpdate);
+    if (needsUpdate) {
+      setShowUpdateModal(true);
+    }
+  };
+
+  // Add function to dismiss update recommendation
+  const dismissUpdateRecommendation = () => {
+    setShowUpdateModal(false);
+    resetFailureCounter();
+  };
+
+  // Set up periodic update checks
+  useEffect(() => {
+    // Check for updates when app starts
+    checkForUpdates();
+    
+    // Also set up a periodic check every 10 minutes while app is running
+    const updateCheckInterval = setInterval(() => {
+      checkForUpdates();
+    }, 10 * 60 * 1000); // 10 minutes
+    
+    return () => clearInterval(updateCheckInterval);
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -546,6 +587,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         ingredients,
         savedDishes,
         goals,
+        updateAvailable,
+        showUpdateModal,
+        setShowUpdateModal,
+        checkForUpdates,
+        dismissUpdateRecommendation,
         addMeal,
         addPhotoMeal,
         addCustomIngredient,

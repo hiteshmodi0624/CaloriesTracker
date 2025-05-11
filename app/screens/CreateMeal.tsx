@@ -675,6 +675,17 @@ const CreateMeal: React.FC = () => {
       // Log nutrition data for debugging
       console.log('Quick dish nutrition from API:', JSON.stringify(dishNutrition));
       
+      // Check if we got default fallback values, which might indicate an API failure
+      const isDefaultNutrition = dishNutrition.calories === 350 && 
+        dishNutrition.protein === 15 && 
+        dishNutrition.carbs === 30 && 
+        dishNutrition.fat === 15;
+      
+      if (isDefaultNutrition) {
+        // Check for update recommendations if we got default values
+        checkForUpdates();
+      }
+      
       // Validate that calories are present and not zero
       if (!dishNutrition || typeof dishNutrition.calories !== 'number' || dishNutrition.calories <= 0) {
         console.warn('Invalid calories in dish nutrition. Using default value.', dishNutrition);
@@ -712,6 +723,8 @@ const CreateMeal: React.FC = () => {
     } catch (error) {
       console.error('Error creating quick dish:', error);
       showSnackbar('Failed to create dish with estimated ingredients');
+      // Check for update recommendations on error
+      checkForUpdates();
     } finally {
       setIsAddingQuickDish(false);
     }
