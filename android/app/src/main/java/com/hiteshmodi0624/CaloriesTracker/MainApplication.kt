@@ -1,4 +1,4 @@
-package com.hiteshmodi0624.CaloriesTracker
+package com.hiteshmodi0624.Fynko
 
 import android.app.Application
 import android.content.res.Configuration

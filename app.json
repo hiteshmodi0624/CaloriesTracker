@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "CaloriesTracker",
-    "slug": "CaloriesTracker",
+    "name": "Fynko",
+    "slug": "Fynko",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hiteshmodi0624.CaloriesTracker"
+      "bundleIdentifier": "com.hiteshmodi0624.Fynko"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +22,7 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.hiteshmodi0624.CaloriesTracker"
+      "package": "com.hiteshmodi0624.Fynko"
     },
     "web": {
       "favicon": "./assets/favicon.png"

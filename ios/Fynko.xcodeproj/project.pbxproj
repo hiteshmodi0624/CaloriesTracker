@@ -8,28 +8,28 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		29B0E98C824833DD344E61AE /* libPods-CaloriesTracker.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8978B549CD11C5CD2041EA44 /* libPods-CaloriesTracker.a */; };
+		324333777731239F1CA2B55B /* libPods-Fynko.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BE70A91359862E0256F09723 /* libPods-Fynko.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		6080E39F4F06C1B488538080 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E3C91AD923ADC9DD3C67D162 /* PrivacyInfo.xcprivacy */; };
-		A7F052A8DA2DF7A7ADDEB83A /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E75699086895ED2951C7FF50 /* ExpoModulesProvider.swift */; };
+		3F723DBF6CBDF896127D992D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 77BB880E903A0DF744AE16DB /* PrivacyInfo.xcprivacy */; };
+		81DBA8625C9B7402C91FA6C3 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3650342F442DF34BE350B319 /* ExpoModulesProvider.swift */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* CaloriesTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CaloriesTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = CaloriesTracker/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = CaloriesTracker/Info.plist; sourceTree = "<group>"; };
-		88A4653C353F6E56302D474C /* Pods-CaloriesTracker.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CaloriesTracker.release.xcconfig"; path = "Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker.release.xcconfig"; sourceTree = "<group>"; };
-		8978B549CD11C5CD2041EA44 /* libPods-CaloriesTracker.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-CaloriesTracker.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = CaloriesTracker/SplashScreen.storyboard; sourceTree = "<group>"; };
+		05972252F12264D703498C57 /* Pods-Fynko.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fynko.debug.xcconfig"; path = "Target Support Files/Pods-Fynko/Pods-Fynko.debug.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* Fynko.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Fynko.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Fynko/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Fynko/Info.plist; sourceTree = "<group>"; };
+		3650342F442DF34BE350B319 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Fynko/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		5FF372C218729C1D7C38A2D3 /* Pods-Fynko.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Fynko.release.xcconfig"; path = "Target Support Files/Pods-Fynko/Pods-Fynko.release.xcconfig"; sourceTree = "<group>"; };
+		77BB880E903A0DF744AE16DB /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Fynko/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Fynko/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		E3C91AD923ADC9DD3C67D162 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = CaloriesTracker/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		E75699086895ED2951C7FF50 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-CaloriesTracker/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		E758E641FC2EB342D41821D9 /* Pods-CaloriesTracker.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-CaloriesTracker.debug.xcconfig"; path = "Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker.debug.xcconfig"; sourceTree = "<group>"; };
+		BE70A91359862E0256F09723 /* libPods-Fynko.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Fynko.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CaloriesTracker/AppDelegate.swift; sourceTree = "<group>"; };
-		F11748442D0722820044C1D9 /* CaloriesTracker-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "CaloriesTracker-Bridging-Header.h"; path = "CaloriesTracker/CaloriesTracker-Bridging-Header.h"; sourceTree = "<group>"; };
+		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Fynko/AppDelegate.swift; sourceTree = "<group>"; };
+		F11748442D0722820044C1D9 /* Fynko-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Fynko-Bridging-Header.h"; path = "Fynko/Fynko-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,42 +37,34 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				29B0E98C824833DD344E61AE /* libPods-CaloriesTracker.a in Frameworks */,
+				324333777731239F1CA2B55B /* libPods-Fynko.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* CaloriesTracker */ = {
+		13B07FAE1A68108700A75B9A /* Fynko */ = {
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
-				F11748442D0722820044C1D9 /* CaloriesTracker-Bridging-Header.h */,
+				F11748442D0722820044C1D9 /* Fynko-Bridging-Header.h */,
 				BB2F792B24A3F905000567C9 /* Supporting */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				E3C91AD923ADC9DD3C67D162 /* PrivacyInfo.xcprivacy */,
+				77BB880E903A0DF744AE16DB /* PrivacyInfo.xcprivacy */,
 			);
-			name = CaloriesTracker;
+			name = Fynko;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				8978B549CD11C5CD2041EA44 /* libPods-CaloriesTracker.a */,
+				BE70A91359862E0256F09723 /* libPods-Fynko.a */,
 			);
 			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		61728CFA3195A5EA041DF4D5 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				85849FFFAFA27EC8B815BCCE /* CaloriesTracker */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -85,12 +77,12 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* CaloriesTracker */,
+				13B07FAE1A68108700A75B9A /* Fynko */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				DA9C878F9A3BB4684CCC7FF8 /* Pods */,
-				61728CFA3195A5EA041DF4D5 /* ExpoModulesProviders */,
+				F9058A7D96040AA34ABAFD14 /* Pods */,
+				E8AED9C378AD55D70150E825 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -100,17 +92,17 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* CaloriesTracker.app */,
+				13B07F961A680F5B00A75B9A /* Fynko.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		85849FFFAFA27EC8B815BCCE /* CaloriesTracker */ = {
+		AC42AB92965672869FC06E7C /* Fynko */ = {
 			isa = PBXGroup;
 			children = (
-				E75699086895ED2951C7FF50 /* ExpoModulesProvider.swift */,
+				3650342F442DF34BE350B319 /* ExpoModulesProvider.swift */,
 			);
-			name = CaloriesTracker;
+			name = Fynko;
 			sourceTree = "<group>";
 		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
@@ -119,14 +111,22 @@
 				BB2F792C24A3F905000567C9 /* Expo.plist */,
 			);
 			name = Supporting;
-			path = CaloriesTracker/Supporting;
+			path = Fynko/Supporting;
 			sourceTree = "<group>";
 		};
-		DA9C878F9A3BB4684CCC7FF8 /* Pods */ = {
+		E8AED9C378AD55D70150E825 /* ExpoModulesProviders */ = {
 			isa = PBXGroup;
 			children = (
-				E758E641FC2EB342D41821D9 /* Pods-CaloriesTracker.debug.xcconfig */,
-				88A4653C353F6E56302D474C /* Pods-CaloriesTracker.release.xcconfig */,
+				AC42AB92965672869FC06E7C /* Fynko */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
+		F9058A7D96040AA34ABAFD14 /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				05972252F12264D703498C57 /* Pods-Fynko.debug.xcconfig */,
+				5FF372C218729C1D7C38A2D3 /* Pods-Fynko.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
@@ -135,26 +135,26 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* CaloriesTracker */ = {
+		13B07F861A680F5B00A75B9A /* Fynko */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CaloriesTracker" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Fynko" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				12A8CD33005F860EA1A78C12 /* [Expo] Configure project */,
+				1408430BC0F1C1D11AF4259D /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				8C50F9BB70A957317C66603A /* [CP] Embed Pods Frameworks */,
+				819326EDF0F158CC5E61316B /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = CaloriesTracker;
-			productName = CaloriesTracker;
-			productReference = 13B07F961A680F5B00A75B9A /* CaloriesTracker.app */;
+			name = Fynko;
+			productName = Fynko;
+			productReference = 13B07F961A680F5B00A75B9A /* Fynko.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -166,13 +166,13 @@
 				LastUpgradeCheck = 1130;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
-						DevelopmentTeam = KA5HX86552;
 						LastSwiftMigration = 1250;
+						DevelopmentTeam = "KA5HX86552";
 						ProvisioningStyle = Automatic;
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CaloriesTracker" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Fynko" */;
 			compatibilityVersion = "Xcode 3.2";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -185,7 +185,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* CaloriesTracker */,
+				13B07F861A680F5B00A75B9A /* Fynko */,
 			);
 		};
 /* End PBXProject section */
@@ -198,7 +198,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				6080E39F4F06C1B488538080 /* PrivacyInfo.xcprivacy in Resources */,
+				3F723DBF6CBDF896127D992D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -235,14 +235,14 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-CaloriesTracker-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-Fynko-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		12A8CD33005F860EA1A78C12 /* [Expo] Configure project */ = {
+		1408430BC0F1C1D11AF4259D /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -259,7 +259,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-CaloriesTracker/expo-configure-project.sh\"\n";
+			shellScript = "# This script configures Expo modules and generates the modules provider file.\nbash -l -c \"./Pods/Target\\ Support\\ Files/Pods-Fynko/expo-configure-project.sh\"\n";
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -267,7 +267,7 @@
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker-resources.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-Fynko/Pods-Fynko-resources.sh",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/EXConstants.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/EXConstants/ExpoConstants_privacy.bundle",
 				"${PODS_CONFIGURATION_BUILD_DIR}/ExpoFileSystem/ExpoFileSystem_privacy.bundle",
@@ -294,16 +294,16 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Fynko/Pods-Fynko-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		8C50F9BB70A957317C66603A /* [CP] Embed Pods Frameworks */ = {
+		819326EDF0F158CC5E61316B /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker-frameworks.sh",
+				"${PODS_ROOT}/Target Support Files/Pods-Fynko/Pods-Fynko-frameworks.sh",
 				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
 			);
 			name = "[CP] Embed Pods Frameworks";
@@ -312,7 +312,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-CaloriesTracker/Pods-CaloriesTracker-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Fynko/Pods-Fynko-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -323,7 +323,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				A7F052A8DA2DF7A7ADDEB83A /* ExpoModulesProvider.swift in Sources */,
+				81DBA8625C9B7402C91FA6C3 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,21 +332,18 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E758E641FC2EB342D41821D9 /* Pods-CaloriesTracker.debug.xcconfig */;
+			baseConfigurationReference = 05972252F12264D703498C57 /* Pods-Fynko.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = CaloriesTracker/CaloriesTracker.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = Fynko/Fynko.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KA5HX86552;
 				ENABLE_BITCODE = NO;
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"$(inherited)",
 					"FB_SONARKIT_ENABLED=1",
 				);
-				INFOPLIST_FILE = CaloriesTracker/Info.plist;
+				INFOPLIST_FILE = Fynko/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -359,28 +356,28 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_DEBUG";
-				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshmodi0624.CaloriesTracker;
-				PRODUCT_NAME = CaloriesTracker;
-				SWIFT_OBJC_BRIDGING_HEADER = "CaloriesTracker/CaloriesTracker-Bridging-Header.h";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshmodi0624.Fynko;
+				PRODUCT_NAME = Fynko;
+				SWIFT_OBJC_BRIDGING_HEADER = "Fynko/Fynko-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				DEVELOPMENT_TEAM = "KA5HX86552";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Debug;
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 88A4653C353F6E56302D474C /* Pods-CaloriesTracker.release.xcconfig */;
+			baseConfigurationReference = 5FF372C218729C1D7C38A2D3 /* Pods-Fynko.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CODE_SIGN_ENTITLEMENTS = CaloriesTracker/CaloriesTracker.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_ENTITLEMENTS = Fynko/Fynko.entitlements;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = KA5HX86552;
-				INFOPLIST_FILE = CaloriesTracker/Info.plist;
+				INFOPLIST_FILE = Fynko/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -393,12 +390,15 @@
 					"-lc++",
 				);
 				OTHER_SWIFT_FLAGS = "$(inherited) -D EXPO_CONFIGURATION_RELEASE";
-				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshmodi0624.CaloriesTracker;
-				PRODUCT_NAME = CaloriesTracker;
-				SWIFT_OBJC_BRIDGING_HEADER = "CaloriesTracker/CaloriesTracker-Bridging-Header.h";
+				PRODUCT_BUNDLE_IDENTIFIER = com.hiteshmodi0624.Fynko;
+				PRODUCT_NAME = Fynko;
+				SWIFT_OBJC_BRIDGING_HEADER = "Fynko/Fynko-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
+				DEVELOPMENT_TEAM = "KA5HX86552";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
 			};
 			name = Release;
 		};
@@ -529,7 +529,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "CaloriesTracker" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Fynko" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -538,7 +538,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "CaloriesTracker" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "Fynko" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

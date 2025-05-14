@@ -87,9 +87,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.hiteshmodi0624.CaloriesTracker'
+    namespace 'com.hiteshmodi0624.Fynko'
     defaultConfig {
-        applicationId 'com.hiteshmodi0624.CaloriesTracker'
+        applicationId 'com.hiteshmodi0624.Fynko'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

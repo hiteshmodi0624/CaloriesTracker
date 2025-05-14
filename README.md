@@ -1,4 +1,4 @@
-# CaloriesTracker
+# Fynko
 
 A mobile app to track your meals and calories using OpenAI to analyze food and calculate nutritional information.
 
@@ -38,8 +38,8 @@ To use this app, you'll need an OpenAI API key. For security reasons, we don't h
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/CaloriesTracker.git
-   cd CaloriesTracker
+   git clone https://github.com/yourusername/Fynko.git
+   cd Fynko
    ```
 
 2. Install dependencies

@@ -6,8 +6,8 @@
       "type": "lldb",
       "request": "launch",
       "args": [],
-      "cwd": "/Users/hiteshmodi/Documents/GitHub/CaloriesTracker",
-      "program": "/Users/hiteshmodi/Documents/GitHub/CaloriesTracker/build/Debug/outDebug"
+      "cwd": "/Users/hiteshmodi/Documents/GitHub/Fynko",
+      "program": "/Users/hiteshmodi/Documents/GitHub/Fynko/build/Debug/outDebug"
     }
   ]
 }

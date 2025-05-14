@@ -10,7 +10,7 @@ const rl = readline.createInterface({
 
 const ENV_FILE_PATH = path.join(__dirname, '../.env');
 
-console.log('🔐 Setting up secure environment variables for CaloriesTracker');
+console.log('🔐 Setting up secure environment variables for Fynko');
 
 rl.question('Enter your OpenAI API key: ', (openaiKey) => {
   if (!openaiKey) {
@@ -19,7 +19,7 @@ rl.question('Enter your OpenAI API key: ', (openaiKey) => {
     return;
   }
 
-  const envContent = `# CaloriesTracker Environment Variables
+  const envContent = `# Fynko Environment Variables
 # Generated on ${new Date().toISOString()}
 # DO NOT COMMIT THIS FILE TO VERSION CONTROL
 

@@ -22,7 +22,7 @@ const FeedbackScreen = () => {
   const [subject, setSubject] = useState('Feedback for Calories Tracker App');
   
   const sendFeedback = async () => {
-    const email = 'support@caloriestracker.com'; // Replace with your support email
+    const email = 'support@fynko.com'; // Replace with your support email
     
     try {
       let url = '';
@@ -42,7 +42,7 @@ const FeedbackScreen = () => {
       } else {
         Alert.alert(
           'No Email App',
-          'We could not open your email app. Please send your feedback to support@caloriestracker.com',
+          'We could not open your email app. Please send your feedback to support@fynko.com',
           [{ text: 'OK' }]
         );
       }
@@ -103,9 +103,9 @@ const FeedbackScreen = () => {
         <View style={styles.alternativeContainer}>
           <Text style={styles.alternativeText}>Alternatively, you can email us directly at:</Text>
           <TouchableOpacity
-            onPress={() => Linking.openURL('mailto:support@caloriestracker.com')}
+            onPress={() => Linking.openURL('mailto:support@fynko.com')}
           >
-            <Text style={styles.emailLink}>support@caloriestracker.com</Text>
+            <Text style={styles.emailLink}>support@fynko.com</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

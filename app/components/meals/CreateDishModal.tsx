@@ -440,7 +440,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={onClose}
     >

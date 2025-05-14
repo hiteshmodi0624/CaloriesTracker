@@ -17,7 +17,7 @@ interface UpdateModalProps {
 }
 
 const APP_STORE_URL = 'https://apps.apple.com/app/calories-tracker/id123456789';
-const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.caloriestracker';
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.fynko';
 
 const UpdateModal: React.FC<UpdateModalProps> = ({ visible, onDismiss }) => {
   const handleUpdate = () => {
