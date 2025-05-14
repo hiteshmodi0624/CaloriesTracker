@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Modal, 
   View, 
@@ -36,6 +36,16 @@ const IngredientSelectionModal: React.FC<IngredientSelectionModalProps> = ({
 }) => {
   // State for custom ingredient modal
   const [showAddCustomModal, setShowAddCustomModal] = useState(false);
+  const [recentlyUsedIngredients, setRecentlyUsedIngredients] = useState<Ingredient[]>([]);
+
+  // Use effect to get recently used ingredients from the full list
+  // This is a simple implementation that just shows the first 5 ingredients
+  // In a real app, you'd track usage and sort by most frequently used
+  useEffect(() => {
+    if (ingredients.length > 0) {
+      setRecentlyUsedIngredients(ingredients.slice(0, 5));
+    }
+  }, [ingredients]);
 
   // Filter ingredients based on search term
   const filteredIngredients = searchTerm 
@@ -66,6 +76,7 @@ const IngredientSelectionModal: React.FC<IngredientSelectionModalProps> = ({
       </View>
       <View style={styles.ingredientAction}>
         <Ionicons name="add-circle" size={22} color="#34C759" />
+        <Text style={styles.actionText}>Add</Text>
       </View>
     </TouchableOpacity>
   );
@@ -111,15 +122,44 @@ const IngredientSelectionModal: React.FC<IngredientSelectionModalProps> = ({
               <Text style={styles.addCustomButtonText}>Add Custom Ingredient</Text>
             </TouchableOpacity>
             
+            {/* Flow Instructions */}
+            <View style={styles.flowInstructions}>
+              <Text style={styles.flowInstructionsText}>
+                1. Search or select an ingredient
+              </Text>
+              <Text style={styles.flowInstructionsText}>
+                2. You'll be prompted to enter the quantity
+              </Text>
+              <Text style={styles.flowInstructionsText}>
+                3. Ingredient will be added to your meal or dish
+              </Text>
+            </View>
+            
+            {/* Recently Used Section */}
+            {!searchTerm && recentlyUsedIngredients.length > 0 && (
+              <View style={styles.recentSection}>
+                <Text style={styles.sectionTitle}>Recently Used</Text>
+                <FlatList
+                  data={recentlyUsedIngredients}
+                  renderItem={renderIngredientItem}
+                  keyExtractor={item => `recent-${item.id}`}
+                  style={styles.recentList}
+                />
+              </View>
+            )}
+            
             {filteredIngredients.length > 0 ? (
-              <FlatList
-                data={filteredIngredients}
-                renderItem={renderIngredientItem}
-                keyExtractor={item => item.id}
-                style={styles.ingredientsList}
-                contentContainerStyle={styles.ingredientsListContent}
-                keyboardShouldPersistTaps="handled"
-              />
+              <>
+                {searchTerm && <Text style={styles.sectionTitle}>Search Results</Text>}
+                <FlatList
+                  data={filteredIngredients}
+                  renderItem={renderIngredientItem}
+                  keyExtractor={item => item.id}
+                  style={styles.ingredientsList}
+                  contentContainerStyle={styles.ingredientsListContent}
+                  keyboardShouldPersistTaps="handled"
+                />
+              </>
             ) : (
               <View style={styles.noResultsContainer}>
                 {searchTerm ? (
@@ -294,6 +334,40 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#666',
     marginTop: 10,
+  },
+  actionText: {
+    fontSize: 12,
+    color: '#34C759',
+    marginTop: 2,
+  },
+  
+  flowInstructions: {
+    backgroundColor: '#f8f9fa',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+  },
+  
+  flowInstructionsText: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 3,
+  },
+  
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+    marginTop: 5,
+  },
+  
+  recentSection: {
+    marginBottom: 15,
+  },
+  
+  recentList: {
+    maxHeight: 200,
   },
 });
 

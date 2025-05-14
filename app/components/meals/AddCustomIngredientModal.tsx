@@ -296,7 +296,7 @@ const AddCustomIngredientModal: React.FC<AddCustomIngredientModalProps> = ({
 
               {imageUri && (
                 <TouchableOpacity 
-                  style={[styles.button, styles.labelButton, labelLoading && styles.disabledButton]} 
+                  style={[styles.button, styles.labelButton, labelLoading && styles.disabledBtn]} 
                   onPress={processNutritionLabel}
                   disabled={labelLoading}
                 >
@@ -315,7 +315,7 @@ const AddCustomIngredientModal: React.FC<AddCustomIngredientModalProps> = ({
               </View>
 
               <TouchableOpacity 
-                style={[styles.button, styles.fetchButton, loading && styles.disabledButton]} 
+                style={[styles.button, styles.fetchButton, loading && styles.disabledBtn]} 
                 onPress={handleFetchNutrition}
                 disabled={loading}
               >
@@ -378,22 +378,36 @@ const AddCustomIngredientModal: React.FC<AddCustomIngredientModalProps> = ({
             </View>
 
             <Text style={styles.requiredFieldsNote}>* Required fields</Text>
+            
+            <View style={styles.bottomPadding} />
           </ScrollView>
 
-          <TouchableOpacity 
-            style={[
-              styles.addButton,
-              (!isFormValid || loading) && styles.disabledButton
-            ]}
-            onPress={handleSubmit}
-            disabled={!isFormValid || loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text style={styles.addButtonText}>Add Ingredient</Text>
-            )}
-          </TouchableOpacity>
+          <View style={styles.footerContainer}>
+            <TouchableOpacity 
+              style={styles.cancelBtn}
+              onPress={onClose}
+            >
+              <Ionicons name="close-outline" size={24} color="#333" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[
+                styles.saveBtn,
+                (!isFormValid || loading) && styles.disabledBtn
+              ]}
+              onPress={handleSubmit}
+              disabled={!isFormValid || loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <>
+                  <Text style={styles.saveBtnText}>SAVE</Text>
+                  <Ionicons name="arrow-forward-outline" size={20} color="#fff" style={styles.saveBtnIcon} />
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -438,7 +452,8 @@ const styles = StyleSheet.create({
     padding: 5,
   },
   formContainer: {
-    marginBottom: 20,
+    flex: 1,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: 18,
@@ -632,19 +647,57 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginBottom: 15,
   },
-  addButton: {
-    backgroundColor: '#34C759',
-    paddingVertical: 15,
-    borderRadius: 10,
+  footerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#f7f7f7',
+    borderTopWidth: 1,
+    borderTopColor: '#eaeaea',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 5,
   },
-  addButtonText: {
-    color: 'white',
+  cancelBtn: {
+    height: 44,
+    width: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#e6e6e6',
+  },
+  saveBtn: {
+    height: 44,
+    backgroundColor: '#34C759',
+    borderRadius: 22,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+  },
+  saveBtnText: {
+    color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
+    marginRight: 4,
   },
-  disabledButton: {
-    backgroundColor: '#ccc',
+  saveBtnIcon: {
+    marginLeft: 4,
+  },
+  disabledBtn: {
+    backgroundColor: '#b8e5c7',
+  },
+  bottomPadding: {
+    height: 80,
   },
 });
 

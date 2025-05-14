@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Dish } from '../../../types';
 import { NutritionSummary, DishItem } from './index';
@@ -34,9 +34,42 @@ const DishManagement: React.FC<DishManagementProps> = ({
   setActiveTabInDishModal,
   setShowDishCreateModal
 }) => {
+  // Quick recipe ideas for empty state
+  const quickRecipeIdeas = [
+    {
+      name: "Breakfast Bowl",
+      description: "Yogurt, granola, and fresh fruit",
+      icon: "cafe-outline"
+    },
+    {
+      name: "Chicken Salad",
+      description: "Grilled chicken with mixed greens",
+      icon: "leaf-outline"
+    },
+    {
+      name: "Veggie Stir Fry",
+      description: "Mixed vegetables with tofu and rice",
+      icon: "restaurant-outline"
+    }
+  ];
+
+  const createNewDish = () => {
+    setCurrentDishName('');
+    setCurrentDishIngredients([]);
+    setActiveTabInDishModal('ingredients');
+    setShowDishCreateModal(true);
+  };
+
+  const createQuickDish = () => {
+    setCurrentDishName('');
+    setCurrentDishIngredients([]);
+    setActiveTabInDishModal('quickDish');
+    setShowDishCreateModal(true);
+  };
+
   return (
     <>
-      {/* Nutrition Summary */}
+      {/* Nutrition Summary - Only show if dishes exist */}
       {(dishes.length > 0) && (
         <NutritionSummary nutrition={mealNutrition} />
       )}
@@ -46,55 +79,105 @@ const DishManagement: React.FC<DishManagementProps> = ({
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Dishes</Text>
           
-          <View style={styles.dishHeaderButtons}>
-            <TouchableOpacity 
-              style={styles.browseSavedDishesButton}
-              onPress={() => setShowSavedDishesModal(true)}
-            >
-              <Ionicons name="book-outline" size={18} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.browseDishesButtonText}>Saved Dishes</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.addDishButton}
-              onPress={() => {
-                setCurrentDishName('');
-                setCurrentDishIngredients([]);
-                setActiveTabInDishModal('ingredients');
-                setShowDishCreateModal(true);
-              }}
-            >
-              <Ionicons name="add-circle" size={20} color="#fff" style={styles.buttonIcon} />
-              <Text style={styles.addDishButtonText}>Add Dish</Text>
-            </TouchableOpacity>
-          </View>
+          {dishes.length > 0 && (
+            <Text style={styles.dishCount}>
+              {dishes.length} {dishes.length === 1 ? 'dish' : 'dishes'}
+            </Text>
+          )}
         </View>
         
         {dishes.length > 0 ? (
-          <View style={styles.dishesList}>
-            {dishes.map(dish => (
-              <DishItem 
-                key={dish.id}
-                dish={dish}
-                onEdit={editDish}
-                onRemove={removeDishFromMeal}
-                onEditIngredientQuantity={editDishIngredientQuantity}
-              />
-            ))}
-          </View>
+          <>
+            <View style={styles.dishesList}>
+              {dishes.map(dish => (
+                <DishItem 
+                  key={dish.id}
+                  dish={dish}
+                  onEdit={editDish}
+                  onRemove={removeDishFromMeal}
+                  onEditIngredientQuantity={editDishIngredientQuantity}
+                />
+              ))}
+            </View>
+            
+            <View style={styles.actionButtonsContainer}>
+              <TouchableOpacity 
+                style={styles.actionButton}
+                onPress={createNewDish}
+              >
+                <Ionicons name="add-circle" size={20} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.actionButtonText}>Add New Dish</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.actionButton, styles.savedButton]}
+                onPress={() => setShowSavedDishesModal(true)}
+              >
+                <Ionicons name="bookmark" size={20} color="#fff" style={styles.buttonIcon} />
+                <Text style={styles.actionButtonText}>Saved Dishes</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         ) : (
           <View style={styles.emptyDishesContainer}>
+            <Ionicons name="restaurant-outline" size={60} color="#E0E0E0" />
             <Text style={styles.emptyDishesText}>
               No dishes added yet
             </Text>
             <Text style={styles.emptyDishesSubtext}>
-              Add dishes to your meal by tapping "Add Dish"
+              Create a dish by adding ingredients or using quick add
             </Text>
-            <View style={styles.emptyDishExamplesContainer}>
-              <Text style={styles.emptyDishExamplesTitle}>Examples:</Text>
-              <Text style={styles.emptyDishExample}>• Muesli with Milk</Text>
-              <Text style={styles.emptyDishExample}>• Turkey Sandwich</Text>
-              <Text style={styles.emptyDishExample}>• Mixed Salad</Text>
+            
+            <View style={styles.emptyActionButtonsContainer}>
+              <TouchableOpacity 
+                style={styles.emptyActionButton}
+                onPress={createNewDish}
+              >
+                <Ionicons name="add-circle" size={24} color="#5D5FEF" />
+                <Text style={styles.emptyActionButtonText}>Create Dish</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.emptyActionButton}
+                onPress={createQuickDish}
+              >
+                <Ionicons name="flash" size={24} color="#FF9551" />
+                <Text style={styles.emptyActionButtonText}>Quick Add</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.emptyActionButton}
+                onPress={() => setShowSavedDishesModal(true)}
+              >
+                <Ionicons name="bookmark" size={24} color="#00BA90" />
+                <Text style={styles.emptyActionButtonText}>Saved Dishes</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={styles.quickIdeasTitle}>Quick Ideas</Text>
+            
+            <View style={styles.quickIdeasContainer}>
+              {quickRecipeIdeas.map((idea, index) => (
+                <TouchableOpacity 
+                  key={index}
+                  style={styles.quickIdeaCard}
+                  onPress={() => {
+                    setCurrentDishName(idea.name);
+                    setCurrentDishIngredients([]);
+                    setActiveTabInDishModal('quickDish');
+                    setShowDishCreateModal(true);
+                  }}
+                >
+                  <View style={styles.quickIdeaIcon}>
+                    <Ionicons name={idea.icon as any} size={24} color="#5D5FEF" />
+                  </View>
+                  <View style={styles.quickIdeaContent}>
+                    <Text style={styles.quickIdeaName}>{idea.name}</Text>
+                    <Text style={styles.quickIdeaDescription}>{idea.description}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         )}
@@ -106,13 +189,13 @@ const DishManagement: React.FC<DishManagementProps> = ({
 const styles = StyleSheet.create({
   formSection: {
     backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 15,
+    padding: 20,
+    borderRadius: 20,
     marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
     elevation: 2,
   },
   sectionHeader: {
@@ -122,85 +205,121 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    color: '#333333',
+  },
+  dishCount: {
+    fontSize: 14,
+    color: '#666666',
+    backgroundColor: '#F5F5F7',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   buttonIcon: {
     marginRight: 8,
   },
-  addDishButton: {
+  dishesList: {
+    marginBottom: 20,
+  },
+  actionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#34C759',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    justifyContent: 'center',
+    backgroundColor: '#5D5FEF',
+    paddingVertical: 12,
+    borderRadius: 12,
+    flex: 0.48,
   },
-  addDishButtonText: {
+  savedButton: {
+    backgroundColor: '#4DDFFD',
+  },
+  actionButtonText: {
     color: 'white',
     fontWeight: '600',
-    fontSize: 14,
-  },
-  dishesList: {
-    marginBottom: 10,
+    fontSize: 16,
   },
   emptyDishesContainer: {
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f9f9f9',
-    borderRadius: 8,
   },
   emptyDishesText: {
-    fontSize: 14,
-    color: '#666',
-    fontStyle: 'italic',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333333',
+    marginTop: 15,
     textAlign: 'center',
-    padding: 15,
   },
   emptyDishesSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#666666',
     textAlign: 'center',
-    marginBottom: 15,
+    marginTop: 5,
+    marginBottom: 25,
   },
-  emptyDishExamplesContainer: {
-    alignSelf: 'stretch',
-    backgroundColor: 'white',
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#eee',
+  emptyActionButtonsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: 30,
   },
-  emptyDishExamplesTitle: {
-    fontSize: 14,
+  emptyActionButton: {
+    alignItems: 'center',
+    backgroundColor: '#F5F5F7',
+    padding: 15,
+    borderRadius: 12,
+    flex: 0.31,
+  },
+  emptyActionButtonText: {
+    color: '#333333',
     fontWeight: '500',
-    color: '#666',
-    marginBottom: 5,
-  },
-  emptyDishExample: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 3,
+    marginTop: 8,
   },
-  dishHeaderButtons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  browseSavedDishesButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#5856D6',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginRight: 10,
-  },
-  browseDishesButtonText: {
-    color: 'white',
+  quickIdeasTitle: {
+    fontSize: 16,
     fontWeight: '600',
-    fontSize: 14,
+    color: '#333333',
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  quickIdeasContainer: {
+    width: '100%',
+  },
+  quickIdeaCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9F9FB',
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
+  },
+  quickIdeaIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F0F0FF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  quickIdeaContent: {
+    flex: 1,
+  },
+  quickIdeaName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333333',
+    marginBottom: 2,
+  },
+  quickIdeaDescription: {
+    fontSize: 13,
+    color: '#666666',
   },
 });
 

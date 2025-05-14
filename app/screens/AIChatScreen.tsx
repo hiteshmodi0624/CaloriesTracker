@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, ReactNode } from 'react';
 import {
   View,
   Text,
@@ -10,15 +10,26 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  SafeAreaView,
+  StatusBar,
+  Animated,
+  Image,
+  Dimensions,
+  ViewStyle
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { fetchChatResponse, fetchNutritionForIngredient } from '../services/openai';
 import { AppContext } from '../context/AppContext';
+import Header from '../components/Header';
+import { NutritionGoals } from '../../types';
 
 interface Message {
   text: string;
   isUser: boolean;
 }
+
+const { width } = Dimensions.get('window');
+const MAX_BUBBLE_WIDTH = width * 0.75;
 
 export default function AIChatScreen() {
   const { addMeal, addCustomIngredient, setGoals } = useContext(AppContext);
@@ -26,6 +37,13 @@ export default function AIChatScreen() {
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  
+  // Move animation state and logic to component level
+  const dot1Opacity = useRef(new Animated.Value(0.4)).current;
+  const dot2Opacity = useRef(new Animated.Value(0.4)).current;
+  const dot3Opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
     // Add initial greeting message
@@ -36,6 +54,55 @@ export default function AIChatScreen() {
       },
     ]);
   }, []);
+  
+  // Add animation effect that only runs when isLoading changes to true
+  useEffect(() => {
+    let animationTimeout: NodeJS.Timeout;
+    
+    const animateDots = () => {
+      // Reset values
+      dot1Opacity.setValue(0.4);
+      dot2Opacity.setValue(0.4);
+      dot3Opacity.setValue(0.4);
+      
+      // Create animation sequence
+      Animated.sequence([
+        // Dot 1 animation
+        Animated.timing(dot1Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        // Dot 2 animation
+        Animated.timing(dot2Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        // Dot 3 animation
+        Animated.timing(dot3Opacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Loop the animation
+        animationTimeout = setTimeout(animateDots, 300);
+      });
+    };
+    
+    if (isLoading) {
+      animateDots();
+    }
+    
+    // Clean up animation when component unmounts or isLoading changes
+    return () => {
+      clearTimeout(animationTimeout);
+      dot1Opacity.stopAnimation();
+      dot2Opacity.stopAnimation();
+      dot3Opacity.stopAnimation();
+    };
+  }, [isLoading, dot1Opacity, dot2Opacity, dot3Opacity]);
 
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -112,10 +179,12 @@ export default function AIChatScreen() {
         protein: parseInt(goalsMatch[2]),
         carbs: parseInt(goalsMatch[3]),
         fat: parseInt(goalsMatch[4]),
-        activityLevel: 'moderately active', // Default value
-        goal: 'maintain', // Default value
-        weight: 70, // Default value
-        height: 170, // Default value
+        activityLevel: 'moderately active' as 'sedentary' | 'lightly active' | 'moderately active' | 'very active' | 'extra active',
+        goal: 'maintain' as 'lose weight' | 'gain weight' | 'maintain' | 'build muscle',
+        weight: 70,
+        height: 170,
+        age: 30,
+        gender: 'male' as 'male' | 'female',
       };
     }
     
@@ -182,131 +251,272 @@ export default function AIChatScreen() {
 
   useEffect(() => {
     // Scroll to bottom when messages change
-    scrollViewRef.current?.scrollToEnd({ animated: true });
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
   }, [messages]);
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <ScrollView
-        ref={scrollViewRef}
-        style={styles.messagesContainer}
-        contentContainerStyle={styles.messagesContent}
-      >
-        {messages.map((message, index) => (
-          <View
-            key={index}
-            style={[
-              styles.messageBubble,
-              message.isUser ? styles.userMessage : styles.aiMessage,
-            ]}
-          >
-            <Text style={[
-              styles.messageText,
-              message.isUser ? styles.userMessageText : styles.aiMessageText,
-            ]}>
-              {message.text}
-            </Text>
+  const renderAIMessageBubble = (text: string, index: number) => {
+    return (
+      <View key={index} style={styles.aiMessageContainer}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.aiAvatar}>
+            <Ionicons name="nutrition" size={16} color="#fff" />
           </View>
-        ))}
-        {isLoading && (
-          <View style={[styles.messageBubble, styles.aiMessage]}>
-            <ActivityIndicator size="small" color="#4CAF50" />
-          </View>
-        )}
-      </ScrollView>
-
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={inputText}
-          onChangeText={setInputText}
-          placeholder="Type your message..."
-          placeholderTextColor="#666"
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!inputText.trim() || isLoading}
-        >
-          <Ionicons
-            name="send"
-            size={24}
-            color={!inputText.trim() || isLoading ? '#666' : '#4CAF50'}
-          />
-        </TouchableOpacity>
+        </View>
+        <View style={styles.aiMessageBubble}>
+          <Text style={styles.aiMessageText}>{text}</Text>
+        </View>
       </View>
-    </KeyboardAvoidingView>
+    );
+  };
+
+  const renderUserMessageBubble = (text: string, index: number) => {
+    return (
+      <View key={index} style={styles.userMessageContainer}>
+        <View style={styles.userMessageBubble}>
+          <Text style={styles.userMessageText}>{text}</Text>
+        </View>
+      </View>
+    );
+  };
+
+  const renderLoadingIndicator = () => {
+    return (
+      <View style={styles.aiMessageContainer}>
+        <View style={styles.avatarContainer}>
+          <View style={styles.aiAvatar}>
+            <Ionicons name="nutrition" size={16} color="#fff" />
+          </View>
+        </View>
+        <View style={styles.loadingBubble}>
+          <View style={styles.loadingDots}>
+            <Animated.View style={[styles.loadingDot, { opacity: dot1Opacity }]} />
+            <Animated.View style={[styles.loadingDot, { opacity: dot2Opacity }]} />
+            <Animated.View style={[styles.loadingDot, { opacity: dot3Opacity }]} />
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" />
+      
+      <Header title="AI Assistant" showHeaderBackground={isScrolled} />
+
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={60}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          style={styles.messagesContainer}
+          contentContainerStyle={styles.messagesContent}
+        onScroll={(event) => {
+            // Simple scroll detection without animation values
+            const scrollOffset = event.nativeEvent.contentOffset.y;
+            setIsScrolled(scrollOffset > 10);
+          }}
+          scrollEventThrottle={16}
+        >
+          {messages.map((message, index) =>
+            message.isUser 
+              ? renderUserMessageBubble(message.text, index)
+              : renderAIMessageBubble(message.text, index)
+          )}
+          {isLoading && renderLoadingIndicator()}
+        </ScrollView>
+
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type your message..."
+              placeholderTextColor="#a0aec0"
+              multiline
+              maxLength={500}
+            />
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.sendButton, 
+              !inputText.trim() ? styles.sendButtonDisabled : styles.sendButtonActive
+            ]}
+            onPress={handleSend}
+            disabled={!inputText.trim() || isLoading}
+          >
+            <Ionicons
+              name="send"
+              size={22}
+              color={!inputText.trim() || isLoading ? '#a0aec0' : '#fff'}
+            />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: "#f8f9fe",
+  },
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f8f9fe",
+    marginTop: 60, // Account for header + status bar on iOS
   },
   messagesContainer: {
     flex: 1,
   },
   messagesContent: {
     padding: 16,
+    paddingBottom: 30,
   },
-  messageBubble: {
-    maxWidth: '80%',
+  // AI Message Styles
+  aiMessageContainer: {
+    flexDirection: "row",
+    marginBottom: 16,
+    alignItems: "flex-end",
+    maxWidth: MAX_BUBBLE_WIDTH,
+  },
+  avatarContainer: {
+    marginRight: 8,
+  },
+  aiAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#5E72E4",
+  },
+  aiMessageBubble: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    borderTopLeftRadius: 4,
     padding: 12,
-    borderRadius: 16,
-    marginBottom: 8,
-  },
-  userMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: '#4CAF50',
-  },
-  aiMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  messageText: {
-    fontSize: 16,
-  },
-  userMessageText: {
-    color: '#fff',
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    maxWidth: MAX_BUBBLE_WIDTH - 40,
   },
   aiMessageText: {
-    color: '#333',
+    fontSize: 16,
+    color: "#32325d",
+    lineHeight: 22,
   },
+
+  // User Message Styles
+  userMessageContainer: {
+    alignSelf: "flex-end",
+    marginBottom: 16,
+    maxWidth: MAX_BUBBLE_WIDTH,
+  },
+  userMessageBubble: {
+    borderRadius: 20,
+    borderBottomRightRadius: 4,
+    padding: 12,
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    backgroundColor: "#5E72E4",
+  },
+  userMessageText: {
+    fontSize: 16,
+    color: "#fff",
+    lineHeight: 22,
+    textShadowColor: "rgba(0, 0, 0, 0.1)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
+  },
+
+  // Loading Indicator Styles
+  loadingBubble: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    borderTopLeftRadius: 4,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+    height: 40,
+    width: 64,
+    justifyContent: "center",
+  },
+  loadingDots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  loadingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#5E72E4",
+    marginHorizontal: 2,
+  },
+
+  // Input Styles
   inputContainer: {
-    flexDirection: 'row',
-    padding: 16,
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: "rgba(0, 0, 0, 0.05)",
+  },
+  inputWrapper: {
+    flex: 1,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 25,
+    paddingHorizontal: 16,
+    paddingVertical: Platform.OS === "ios" ? 10 : 4,
+    marginRight: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   input: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
     fontSize: 16,
+    color: "#32325d",
     maxHeight: 100,
+    padding: 0,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f5f5f5',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  sendButtonActive: {
+    backgroundColor: "#5E72E4",
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    backgroundColor: "#e2e8f0",
   },
 }); 

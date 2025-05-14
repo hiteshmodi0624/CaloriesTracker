@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import 'react-native-get-random-values'; // This needs to be imported before uuid
 import { v4 as uuidv4 } from 'uuid';
 import { Meal, MealIngredient, NutritionInfo, Ingredient, Dish } from '../../types';
 import { fetchNutritionForIngredient, fetchImageCalories, isUpdateRecommended, resetFailureCounter } from '../services/openai';
@@ -29,7 +30,7 @@ interface AppContextData {
   checkForUpdates: () => void;
   dismissUpdateRecommendation: () => void;
   addMeal: (meal: Omit<Meal, 'id' | 'totalCalories'> & { ingredients: MealIngredient[], dishes?: Dish[] }) => Promise<void>;
-  addPhotoMeal: (imageUri: string, date: string, calories: number) => Promise<void>;
+  addPhotoMeal: (imageUri: string, date: string, calories: number, dishes?: Dish[] | Dish, ingredients?: MealIngredient[] | MealIngredient, mealName?: string) => Promise<void>;
   addCustomIngredient: (ingredient: Omit<Ingredient, 'id'>) => Promise<boolean>;
   updateIngredientNutrition: (id: string, nutrition: NutritionInfo) => Promise<void>;
   deleteIngredient: (id: string) => Promise<void>;
@@ -265,8 +266,46 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     await saveMeals([...meals, newMeal]);
   };
 
-  const addPhotoMeal = async (imageUri: string, date: string, calories: number) => {
-    const newMeal: Meal = { id: uuidv4(), name: 'Photo Meal', date, ingredients: [], totalCalories: calories, imageUri };
+  const addPhotoMeal = async (
+    imageUri: string, 
+    date: string, 
+    calories: number, 
+    dishes?: Dish[] | Dish, 
+    ingredients?: MealIngredient[] | MealIngredient, 
+    mealName?: string
+  ) => {
+    let mealDishes: Dish[] = [];
+    let mealIngredients: MealIngredient[] = [];
+    
+    // Add dishes if provided
+    if (dishes) {
+      if (Array.isArray(dishes)) {
+        mealDishes = dishes;
+      } else {
+        mealDishes = [dishes];
+      }
+    }
+    
+    // Add ingredients if provided
+    if (ingredients) {
+      if (Array.isArray(ingredients)) {
+        mealIngredients = ingredients;
+      } else {
+        mealIngredients = [ingredients];
+      }
+    }
+    
+    const newMeal: Meal = { 
+      id: uuidv4(), 
+      name: mealName || 'Photo Meal', 
+      date, 
+      ingredients: mealIngredients,
+      dishes: mealDishes,
+      totalCalories: calories, 
+      imageUri 
+    };
+    
+    console.log(`Saving photo meal with ${mealDishes.length} dishes and ${mealIngredients.length} ingredients`);
     await saveMeals([...meals, newMeal]);
   };
 

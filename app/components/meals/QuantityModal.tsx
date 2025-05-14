@@ -14,30 +14,84 @@ import { Ingredient } from '../../../types';
 
 interface QuantityModalProps {
   visible: boolean;
-  selectedIngredient: Ingredient | null;
+  ingredient: Ingredient | null;
   quantity: string;
   onQuantityChange: (quantity: string) => void;
   onCancel: () => void;
-  onAdd: () => void;
-  getBaseQuantityForUnit: (unit: string) => number;
+  onSave: () => void;
+  isDishIngredient?: boolean; // Flag to indicate if adding to dish or meal
 }
 
 const QuantityModal: React.FC<QuantityModalProps> = ({
   visible,
-  selectedIngredient,
+  ingredient,
   quantity,
   onQuantityChange,
   onCancel,
-  onAdd,
-  getBaseQuantityForUnit
+  onSave,
+  isDishIngredient = false
 }) => {
-  if (!selectedIngredient) return null;
+  if (!ingredient) return null;
+
+  // Helper function to determine base quantity for a unit
+  const getBaseQuantityForUnit = (unit: string): number => {
+    // Default values for common units
+    switch (unit.toLowerCase()) {
+      case 'g':
+      case 'gram':
+      case 'grams':
+        return 100;
+      case 'kg':
+      case 'kilogram':
+      case 'kilograms':
+        return 0.1;
+      case 'ml':
+      case 'milliliter':
+      case 'milliliters':
+        return 100;
+      case 'l':
+      case 'liter':
+      case 'liters':
+        return 0.25;
+      case 'cup':
+      case 'cups':
+        return 1;
+      case 'tbsp':
+      case 'tablespoon':
+      case 'tablespoons':
+        return 2;
+      case 'tsp':
+      case 'teaspoon':
+      case 'teaspoons':
+        return 3;
+      case 'oz':
+      case 'ounce':
+      case 'ounces':
+        return 3;
+      case 'lb':
+      case 'pound':
+      case 'pounds':
+        return 0.5;
+      case 'piece':
+      case 'pieces':
+      case 'slice':
+      case 'slices':
+        return 1;
+      default:
+        return 1;
+    }
+  };
 
   const suggestedQuantities = [
-    getBaseQuantityForUnit(selectedIngredient.unit) * 0.5,  // Half serving
-    getBaseQuantityForUnit(selectedIngredient.unit),        // Standard serving
-    getBaseQuantityForUnit(selectedIngredient.unit) * 2,    // Double serving
+    getBaseQuantityForUnit(ingredient.unit) * 0.5,  // Half serving
+    getBaseQuantityForUnit(ingredient.unit),        // Standard serving
+    getBaseQuantityForUnit(ingredient.unit) * 2,    // Double serving
   ];
+
+  // Calculate estimated calories based on current quantity
+  const estimatedCalories = quantity 
+    ? (ingredient.nutrition.calories * parseFloat(quantity)) / getBaseQuantityForUnit(ingredient.unit)
+    : 0;
 
   return (
     <Modal
@@ -58,21 +112,21 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.ingredientName}>{selectedIngredient.name}</Text>
+          <Text style={styles.ingredientName}>{ingredient.name}</Text>
           
           <View style={styles.nutritionInfo}>
             <Text style={styles.nutritionText}>
-              {selectedIngredient.nutrition.calories} cal per {getBaseQuantityForUnit(selectedIngredient.unit)} {selectedIngredient.unit}
+              {ingredient.nutrition.calories} cal per {getBaseQuantityForUnit(ingredient.unit)} {ingredient.unit}
             </Text>
           </View>
           
-          <Text style={styles.inputLabel}>Enter quantity ({selectedIngredient.unit}):</Text>
+          <Text style={styles.inputLabel}>Enter quantity ({ingredient.unit}):</Text>
           <TextInput
             style={styles.quantityInput}
             keyboardType="numeric"
             value={quantity}
             onChangeText={onQuantityChange}
-            placeholder={`e.g., ${getBaseQuantityForUnit(selectedIngredient.unit)}`}
+            placeholder={`e.g., ${getBaseQuantityForUnit(ingredient.unit)}`}
             autoFocus
           />
           
@@ -85,18 +139,32 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
                   style={styles.quickValueButton}
                   onPress={() => onQuantityChange(value.toString())}
                 >
-                  <Text style={styles.quickValueText}>{value} {selectedIngredient.unit}</Text>
+                  <Text style={styles.quickValueText}>{value} {ingredient.unit}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
           
+          {!!quantity && !isNaN(parseFloat(quantity)) && (
+            <View style={styles.estimatedCalories}>
+              <Text style={styles.estimatedCaloriesText}>
+                {Math.round((ingredient.nutrition.calories * parseFloat(quantity)) / getBaseQuantityForUnit(ingredient.unit))} estimated calories
+              </Text>
+            </View>
+          )}
+          
+          <View style={styles.flowHint}>
+            <Text style={styles.flowHintText}>
+              After adding this ingredient, you'll be returned to continue creating your meal.
+            </Text>
+          </View>
+          
           <TouchableOpacity
             style={[styles.addButton, !quantity && styles.disabledButton]}
-            onPress={onAdd}
+            onPress={onSave}
             disabled={!quantity}
           >
-            <Text style={styles.addButtonText}>Add to Dish</Text>
+            <Text style={styles.addButtonText}>Add Ingredient</Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -203,11 +271,34 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: 'white',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
   },
   disabledButton: {
     backgroundColor: '#ccc',
+  },
+  estimatedCalories: {
+    backgroundColor: '#e6f7ff',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  estimatedCaloriesText: {
+    fontSize: 15,
+    color: '#0076FF',
+    fontWeight: '500',
+  },
+  flowHint: {
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 8,
+  },
+  flowHintText: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
   },
 });
 
