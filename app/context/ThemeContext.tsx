@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
+import { COLORS } from '../constants';
 
 type Theme = {
   colors: {
@@ -10,17 +11,17 @@ type Theme = {
 
 const lightTheme: Theme = {
   colors: {
-    primary: '#4CAF50',
-    background: '#FFFFFF',
-    text: '#000000',
+    primary: COLORS.blue,
+    background: COLORS.white,
+    text: COLORS.black,
   },
 };
 
 const darkTheme: Theme = {
   colors: {
-    primary: '#4CAF50',
-    background: '#121212',
-    text: '#FFFFFF',
+    primary: COLORS.blue,
+    background: COLORS.darkGrey,
+    text: COLORS.white,
   },
 };
 

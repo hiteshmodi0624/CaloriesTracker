@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Dish } from '../../../types';
+import { COLORS } from '../../constants';
 
 interface DishItemProps {
   dish: Dish;
@@ -90,7 +91,7 @@ const DishItem: React.FC<DishItemProps> = ({
           <Ionicons 
             name={expanded ? "chevron-up" : "chevron-down"} 
             size={20} 
-            color="#666"
+            color={COLORS.grey}
             style={styles.expandIcon}
           />
         </TouchableOpacity>
@@ -140,7 +141,7 @@ const DishItem: React.FC<DishItemProps> = ({
                     <Text style={styles.quantityText}>
                       {ingredient.quantity} {ingredient.unit}
                     </Text>
-                    <Ionicons name="create-outline" size={14} color="#5D5FEF" />
+                    <Ionicons name="create-outline" size={14} color={COLORS.primary} />
                   </TouchableOpacity>
                   
                   <Text style={styles.ingredientCalories}>
@@ -155,7 +156,7 @@ const DishItem: React.FC<DishItemProps> = ({
                 style={[styles.dishActionButton, styles.editButton]}
                 onPress={() => onEdit(dish)}
               >
-                <Ionicons name="create-outline" size={18} color="#5D5FEF" />
+                <Ionicons name="create-outline" size={18} color={COLORS.primary} />
                 <Text style={[styles.dishActionText, styles.editText]}>Edit</Text>
               </TouchableOpacity>
               
@@ -163,7 +164,7 @@ const DishItem: React.FC<DishItemProps> = ({
                 style={[styles.dishActionButton, styles.removeButton]}
                 onPress={() => onRemove(dish.id)}
               >
-                <Ionicons name="trash-outline" size={18} color="#FF5A5A" />
+                <Ionicons name="trash-outline" size={18} color={COLORS.error3} />
                 <Text style={[styles.dishActionText, styles.removeText]}>Remove</Text>
               </TouchableOpacity>
             </View>
@@ -222,17 +223,17 @@ const DishItem: React.FC<DishItemProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     marginBottom: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: COLORS.grey3,
   },
   dishHeader: {
     flexDirection: 'row',
@@ -245,13 +246,13 @@ const styles = StyleSheet.create({
   dishName: {
     fontSize: 17,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   macroDistribution: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.cardBackground3,
     flexDirection: 'row',
     overflow: 'hidden',
   },
@@ -259,13 +260,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   proteinBar: {
-    backgroundColor: '#5D5FEF',
+    backgroundColor: COLORS.primary,
   },
   carbsBar: {
-    backgroundColor: '#4DDFFD',
+    backgroundColor: COLORS.lightBlue,
   },
   fatBar: {
-    backgroundColor: '#FF7676',
+    backgroundColor: COLORS.error3,
   },
   dishCalories: {
     alignItems: 'center',
@@ -274,11 +275,11 @@ const styles = StyleSheet.create({
   calorieValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: COLORS.textPrimary,
   },
   calorieLabel: {
     fontSize: 12,
-    color: '#666666',
+    color: COLORS.textSecondary,
   },
   expandIcon: {
     padding: 4,
@@ -286,12 +287,12 @@ const styles = StyleSheet.create({
   expandedContent: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F5F5F7',
+    borderTopColor: COLORS.grey5,
   },
   macroSummary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#F9F9FB',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
@@ -315,28 +316,28 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   proteinDot: {
-    backgroundColor: '#5D5FEF',
+    backgroundColor: COLORS.primary,
   },
   carbsDot: {
-    backgroundColor: '#4DDFFD',
+    backgroundColor: COLORS.lightBlue,
   },
   fatDot: {
-    backgroundColor: '#FF7676',
+    backgroundColor: COLORS.error3,
   },
   macroLabel: {
     fontSize: 12,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginBottom: 2,
   },
   macroValue: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
   },
   ingredientsHeader: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   ingredientItem: {
@@ -345,7 +346,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5F5F7',
+    borderBottomColor: COLORS.grey5,
   },
   lastIngredient: {
     borderBottomWidth: 0,
@@ -353,7 +354,7 @@ const styles = StyleSheet.create({
   },
   ingredientName: {
     fontSize: 15,
-    color: '#333333',
+    color: COLORS.textPrimary,
     flex: 1,
   },
   ingredientDetails: {
@@ -363,7 +364,7 @@ const styles = StyleSheet.create({
   quantityButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.cardBackground3,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -371,13 +372,13 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontSize: 14,
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginRight: 4,
   },
   ingredientCalories: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#FF9551',
+    color: COLORS.orange,
     width: 60,
     textAlign: 'right',
   },
@@ -395,10 +396,10 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   editButton: {
-    backgroundColor: '#F0F0FF',
+    backgroundColor: COLORS.background,
   },
   removeButton: {
-    backgroundColor: '#FFF0F0',
+    backgroundColor: COLORS.error2,
   },
   dishActionText: {
     fontSize: 14,
@@ -406,20 +407,20 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   editText: {
-    color: '#5D5FEF',
+    color: COLORS.primary,
   },
   removeText: {
-    color: '#FF5A5A',
+    color: COLORS.error,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     padding: 20,
     width: '80%',
@@ -428,13 +429,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalIngredientName: {
     fontSize: 16,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -442,7 +443,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 8,
     marginBottom: 20,
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
   },
   unitText: {
     fontSize: 16,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginLeft: 8,
   },
   modalActions: {
@@ -468,17 +469,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.cardBackground3,
   },
   updateButton: {
-    backgroundColor: '#5D5FEF',
+    backgroundColor: COLORS.primary,
   },
   cancelButtonText: {
-    color: '#666666',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   updateButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '500',
   },
 });

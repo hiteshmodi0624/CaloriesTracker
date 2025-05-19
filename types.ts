@@ -49,4 +49,26 @@ export type NutritionGoals = {
   height: number;
   age: number;
   gender: 'male' | 'female';
+};
+
+export type NotificationButton = {
+  id: string;
+  text: string;
+  link?: string;
+  action?: 'dismiss' | 'update' | 'custom';
+  onPress?: () => void;
+};
+
+export type NotificationType = 'blocking' | 'non-blocking';
+
+export type Notification = {
+  id: string;
+  title: string;
+  content: string;
+  type: NotificationType;
+  htmlContent?: string;
+  imageUrl?: string;
+  buttons: NotificationButton[];
+  expiry?: Date;
+  dismissible: boolean;
 }; 

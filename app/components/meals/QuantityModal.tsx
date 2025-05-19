@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Ingredient } from '../../../types';
-
+import { COLORS } from '../../constants';
 interface QuantityModalProps {
   visible: boolean;
   ingredient: Ingredient | null;
@@ -108,7 +108,7 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Add Quantity</Text>
             <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color={COLORS.blue} />
             </TouchableOpacity>
           </View>
 
@@ -177,15 +177,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     padding: 20,
   },
   modalView: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 20,
     width: '100%',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 5,
@@ -211,28 +211,28 @@ const styles = StyleSheet.create({
   ingredientName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.textPrimary,
     marginBottom: 10,
   },
   nutritionInfo: {
-    backgroundColor: '#f9f9f9',
+    backgroundColor: COLORS.cardBackground3,
     padding: 10,
     borderRadius: 8,
     marginBottom: 20,
   },
   nutritionText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   inputLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   quantityInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
   quickValuesLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   quickValueButtons: {
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   quickValueButton: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.lightBluegrey3,
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -261,24 +261,24 @@ const styles = StyleSheet.create({
   },
   quickValueText: {
     fontSize: 13,
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   addButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.blue,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: 'center',
   },
   addButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
     fontSize: 16,
   },
   disabledButton: {
-    backgroundColor: '#ccc',
+    backgroundColor: COLORS.cardBackground,
   },
   estimatedCalories: {
-    backgroundColor: '#e6f7ff',
+    backgroundColor: COLORS.background,
     padding: 10,
     borderRadius: 8,
     marginBottom: 15,
@@ -286,18 +286,18 @@ const styles = StyleSheet.create({
   },
   estimatedCaloriesText: {
     fontSize: 15,
-    color: '#0076FF',
+    color: COLORS.blue,
     fontWeight: '500',
   },
   flowHint: {
     marginBottom: 15,
     padding: 10,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
   },
   flowHintText: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
 });

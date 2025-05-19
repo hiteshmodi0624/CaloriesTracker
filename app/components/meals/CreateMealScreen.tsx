@@ -17,7 +17,7 @@ import { AppContext } from '../../context/AppContext';
 import { MealIngredient, Ingredient, Dish, Meal } from '../../../types';
 import Header from '../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
-
+import { COLORS } from '../../constants';
 // Import our modular components
 import {
   Snackbar,
@@ -25,16 +25,14 @@ import {
   IngredientSelectionModal,
   SavedDishesModal,
   getBaseQuantityForUnit,
-  generateEstimatedIngredients,
   addQuickDish as addQuickDishHelper
 } from './index';
 
 // Import new modular components
+import SaveMealButton from './SaveMealButton';
 import MealForm from './MealForm';
 import DishManagement from './DishManagement';
-import SaveMealButton from './SaveMealButton';
 import CreateDishModal from './CreateDishModal';
-import { fetchNutritionForDish } from '../../services/openai';
 import MealHistory from '../dashboard/MealHistory';
 
 // Component to show meals for a specific day
@@ -76,34 +74,34 @@ const DayMealsSelectionModal: React.FC<DayMealsSelectionModalProps> = ({
               <Text style={styles.modalTitle}>Select Meal</Text>
               <Text style={styles.modalSubtitle}>{formatDate(date)}</Text>
             </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={24} color="#333" />
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
             </TouchableOpacity>
           </View>
 
           <FlatList
             data={meals}
-            keyExtractor={item => item.id}
+            keyExtractor={(item) => item.id}
             contentContainerStyle={styles.mealListContainer}
             renderItem={({ item }) => (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.mealCard}
                 onPress={() => onSelectMeal(item)}
               >
                 <View style={styles.mealInfo}>
                   <Text style={styles.mealName}>{item.name}</Text>
-                  <Text style={styles.mealCalories}>{Math.round(item.totalCalories)} calories</Text>
-                  
+                  <Text style={styles.mealCalories}>
+                    {Math.round(item.totalCalories)} calories
+                  </Text>
+
                   {item.dishes && (
                     <Text style={styles.dishesCount}>
-                      {item.dishes.length} {item.dishes.length === 1 ? 'dish' : 'dishes'}
+                      {item.dishes.length}{" "}
+                      {item.dishes.length === 1 ? "dish" : "dishes"}
                     </Text>
                   )}
                 </View>
-                <Ionicons name="chevron-forward" size={20} color="#c5c5c5" />
+                <Ionicons name="chevron-forward" size={20} color={COLORS.grey3} />
               </TouchableOpacity>
             )}
           />
@@ -897,33 +895,33 @@ const CreateMealScreen: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
   },
   outerContainer: {
     flex: 1,
     position: 'relative',
-    marginTop: 60, // Account for header + status bar on iOS
+    marginTop: 80, // Account for header + status bar on iOS
   },
   container: {
     flex: 1,
     paddingHorizontal: 20,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
   },
   contentContainer: {
     paddingBottom: 30,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     maxHeight: "70%",
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -936,7 +934,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: COLORS.lightBluegrey3,
   },
   modalTitleContainer: {
     flexDirection: 'column',
@@ -944,11 +942,11 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginTop: 4,
   },
   closeButton: {
@@ -961,11 +959,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -977,17 +975,17 @@ const styles = StyleSheet.create({
   mealName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   mealCalories: {
     fontSize: 14,
-    color: '#FF9500',
+    color: COLORS.orange,
     marginBottom: 2,
   },
   dishesCount: {
     fontSize: 12,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
   }
 });
 

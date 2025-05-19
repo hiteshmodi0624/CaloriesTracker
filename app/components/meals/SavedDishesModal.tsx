@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Dish } from '../../../types';
+import { COLORS } from '../../constants';
 
 interface SavedDishesModalProps {
   visible: boolean;
@@ -57,7 +58,7 @@ const SavedDishesModal: React.FC<SavedDishesModalProps> = ({
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color={COLORS.blue} />
             </TouchableOpacity>
           </View>
           
@@ -79,14 +80,14 @@ const SavedDishesModal: React.FC<SavedDishesModalProps> = ({
                       style={styles.addDishButton}
                       onPress={() => onAddDishToMeal(item)}
                     >
-                      <Ionicons name="add-circle" size={24} color="#34C759" />
+                      <Ionicons name="add-circle" size={24} color={COLORS.success} />
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
                       style={styles.deleteDishButton}
                       onPress={() => confirmDeleteDish(item)}
                     >
-                      <Ionicons name="trash-outline" size={22} color="#FF3B30" />
+                      <Ionicons name="trash-outline" size={22} color={COLORS.error} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -98,7 +99,7 @@ const SavedDishesModal: React.FC<SavedDishesModalProps> = ({
             />
           ) : (
             <View style={styles.emptyContainer}>
-              <Ionicons name="restaurant-outline" size={48} color="#ccc" />
+              <Ionicons name="restaurant-outline" size={48} color={COLORS.grey3} />
               <Text style={styles.emptyTitle}>No Saved Dishes</Text>
               <Text style={styles.emptyText}>
                 Save dishes for quick reuse by using the "Save for Reuse" option when creating a dish.
@@ -114,12 +115,12 @@ const SavedDishesModal: React.FC<SavedDishesModalProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: 'center',
     padding: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 20,
     maxHeight: '80%',
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 5,
@@ -149,7 +150,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: COLORS.grey3,
   },
   savedDishInfo: {
     flex: 1,
@@ -158,12 +159,12 @@ const styles = StyleSheet.create({
   savedDishName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   savedDishDetails: {
     fontSize: 14,
-    color: '#FF9500',
+    color: COLORS.orange,
   },
   savedDishActions: {
     flexDirection: 'row',
@@ -184,19 +185,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
     marginTop: 15,
     marginBottom: 8,
   },
   emptyText: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
   emptyListText: {
     textAlign: 'center',
-    color: '#666',
+    color: COLORS.textSecondary,
     padding: 30,
     fontStyle: 'italic',
   },

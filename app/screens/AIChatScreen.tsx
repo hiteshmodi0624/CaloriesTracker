@@ -22,6 +22,8 @@ import { fetchChatResponse, fetchNutritionForIngredient } from '../services/open
 import { AppContext } from '../context/AppContext';
 import Header from '../components/Header';
 import { NutritionGoals } from '../../types';
+import { COLORS } from '../constants';
+import { createNutritionGoals, ActivityLevel, GoalType } from '../utils/calculators';
 
 interface Message {
   text: string;
@@ -32,7 +34,7 @@ const { width } = Dimensions.get('window');
 const MAX_BUBBLE_WIDTH = width * 0.75;
 
 export default function AIChatScreen() {
-  const { addMeal, addCustomIngredient, setGoals } = useContext(AppContext);
+  const { addMeal, addCustomIngredient, setGoals, goals } = useContext(AppContext);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -113,7 +115,17 @@ export default function AIChatScreen() {
     setIsLoading(true);
 
     try {
-      const response = await fetchChatResponse(userMessage, messages);
+      // Pass current user data from the goals context to OpenAI
+      const userData = goals ? {
+        weight: goals.weight,
+        height: goals.height,
+        age: goals.age,
+        gender: goals.gender,
+        activityLevel: goals.activityLevel,
+        goal: goals.goal
+      } : undefined;
+
+      const response = await fetchChatResponse(userMessage, messages, userData);
       setMessages(prev => [...prev, { text: response, isUser: false }]);
 
       // Process any actions that the AI might have triggered
@@ -134,8 +146,28 @@ export default function AIChatScreen() {
 
   const processAIResponse = async (response: string, userInput: string) => {
     try {
-      // Check if the AI response indicates a goal setting action
-      if (response.includes('Setting your nutrition goals')) {
+      // Check if the AI response has nutrition goals JSON format
+      const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+      
+      if (jsonMatch) {
+        try {
+          const jsonData = JSON.parse(jsonMatch[1]);
+          if (jsonData.type === 'nutrition_goals') {
+            const goals = await extractGoalsFromResponse(response);
+            if (goals) {
+              await setGoals(goals);
+              Alert.alert('Success', 'Your nutrition goals have been updated!');
+            } else {
+              Alert.alert('Error', 'Failed to parse nutrition goals from AI response');
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing JSON from response:', error);
+        }
+      }
+
+      // Fallback to old format
+      else if (response.includes('Setting your nutrition goals')) {
         const goals = await extractGoalsFromResponse(response);
         if (goals) {
           await setGoals(goals);
@@ -169,23 +201,70 @@ export default function AIChatScreen() {
   };
 
   const extractGoalsFromResponse = async (response: string) => {
-    // Extract goals from AI response using a more precise regex
+    // Extract JSON from the response using a regex for triple backtick code blocks
+    const jsonMatch = response.match(/```json\s*([\s\S]*?)\s*```/);
+    
+    if (jsonMatch) {
+      try {
+        const jsonData = JSON.parse(jsonMatch[1]);
+        
+        // Check if this is a nutrition goals response
+        if (jsonData.type === 'nutrition_goals' && jsonData.userDetails) {
+          console.log('Found user details in JSON format!', jsonData.userDetails);
+          
+          // Extract user details
+          const userDetails = jsonData.userDetails || {};
+          
+          // Validate user details
+          const weight = Number(userDetails.weight) || 70;
+          const height = Number(userDetails.height) || 170;
+          const age = Number(userDetails.age) || 30;
+          const gender = (userDetails.gender === 'male' || userDetails.gender === 'female') 
+            ? userDetails.gender 
+            : 'male';
+          const activityLevel = ['sedentary', 'lightly active', 'moderately active', 'very active', 'extra active']
+            .includes(userDetails.activityLevel) 
+              ? userDetails.activityLevel as ActivityLevel
+              : 'moderately active';
+          const goal = ['lose weight', 'gain weight', 'maintain', 'build muscle']
+            .includes(userDetails.goal)
+              ? userDetails.goal as GoalType
+              : 'maintain';
+          
+          // Use the app's calculator to ensure consistency
+          const nutritionGoals = createNutritionGoals({
+            weight,
+            height,
+            age,
+            gender,
+            activityLevel,
+            goal
+          });
+          
+          console.log('Calculated nutrition goals using app calculator:', nutritionGoals);
+          return nutritionGoals;
+        }
+      } catch (error) {
+        console.error('Error parsing goals JSON:', error);
+      }
+    }
+    
+    // Fallback to the old format if JSON parsing fails
     const goalsMatch = response.match(/Setting your nutrition goals:\s*Calories:\s*(\d+)\s*Protein:\s*(\d+)g\s*Carbs:\s*(\d+)g\s*Fat:\s*(\d+)g/s);
     
     if (goalsMatch) {
-      console.log('Found nutrition goals!', goalsMatch);
-      return {
-        calories: parseInt(goalsMatch[1]),
-        protein: parseInt(goalsMatch[2]),
-        carbs: parseInt(goalsMatch[3]),
-        fat: parseInt(goalsMatch[4]),
-        activityLevel: 'moderately active' as 'sedentary' | 'lightly active' | 'moderately active' | 'very active' | 'extra active',
-        goal: 'maintain' as 'lose weight' | 'gain weight' | 'maintain' | 'build muscle',
+      console.log('Found nutrition goals in old format!', goalsMatch);
+      
+      // Instead of using the old format values directly, use default user details
+      // with the app's calculator for consistency
+      return createNutritionGoals({
         weight: 70,
         height: 170,
         age: 30,
-        gender: 'male' as 'male' | 'female',
-      };
+        gender: 'male',
+        activityLevel: 'moderately active',
+        goal: 'maintain'
+      });
     }
     
     console.log('Failed to extract goals from response:', response);
@@ -261,7 +340,7 @@ export default function AIChatScreen() {
       <View key={index} style={styles.aiMessageContainer}>
         <View style={styles.avatarContainer}>
           <View style={styles.aiAvatar}>
-            <Ionicons name="nutrition" size={16} color="#fff" />
+            <Ionicons name="nutrition" size={16} color={COLORS.white} />
           </View>
         </View>
         <View style={styles.aiMessageBubble}>
@@ -286,7 +365,7 @@ export default function AIChatScreen() {
       <View style={styles.aiMessageContainer}>
         <View style={styles.avatarContainer}>
           <View style={styles.aiAvatar}>
-            <Ionicons name="nutrition" size={16} color="#fff" />
+            <Ionicons name="nutrition" size={16} color={COLORS.white} />
           </View>
         </View>
         <View style={styles.loadingBubble}>
@@ -338,7 +417,7 @@ export default function AIChatScreen() {
               value={inputText}
               onChangeText={setInputText}
               placeholder="Type your message..."
-              placeholderTextColor="#a0aec0"
+              placeholderTextColor={COLORS.grey2}
               multiline
               maxLength={500}
             />
@@ -354,7 +433,7 @@ export default function AIChatScreen() {
             <Ionicons
               name="send"
               size={22}
-              color={!inputText.trim() || isLoading ? '#a0aec0' : '#fff'}
+              color={!inputText.trim() || isLoading ? COLORS.grey2 : COLORS.white}
             />
           </TouchableOpacity>
         </View>
@@ -366,11 +445,11 @@ export default function AIChatScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f8f9fe",
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fe",
+    backgroundColor: COLORS.background,
     marginTop: 60, // Account for header + status bar on iOS
   },
   messagesContainer: {
@@ -396,15 +475,15 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.secondary,
   },
   aiMessageBubble: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 20,
     borderTopLeftRadius: 4,
     padding: 12,
     paddingVertical: 14,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -413,7 +492,7 @@ const styles = StyleSheet.create({
   },
   aiMessageText: {
     fontSize: 16,
-    color: "#32325d",
+    color: COLORS.textPrimary,
     lineHeight: 22,
   },
 
@@ -428,16 +507,16 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
     padding: 12,
     paddingVertical: 14,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 2,
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.secondary,
   },
   userMessageText: {
     fontSize: 16,
-    color: "#fff",
+    color: COLORS.white,
     lineHeight: 22,
     textShadowColor: "rgba(0, 0, 0, 0.1)",
     textShadowOffset: { width: 0, height: 1 },
@@ -446,11 +525,11 @@ const styles = StyleSheet.create({
 
   // Loading Indicator Styles
   loadingBubble: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 20,
     borderTopLeftRadius: 4,
     padding: 12,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -468,7 +547,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.secondary,
     marginHorizontal: 2,
   },
 
@@ -478,18 +557,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: "rgba(0, 0, 0, 0.05)",
+    borderTopColor: COLORS.opaqueBlack,
   },
   inputWrapper: {
     flex: 1,
-    backgroundColor: "#f1f5f9",
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === "ios" ? 10 : 4,
     marginRight: 10,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -497,7 +576,7 @@ const styles = StyleSheet.create({
   },
   input: {
     fontSize: 16,
-    color: "#32325d",
+    color: COLORS.textPrimary,
     maxHeight: 100,
     padding: 0,
   },
@@ -508,15 +587,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
   },
   sendButtonActive: {
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.secondary,
   },
   sendButtonDisabled: {
-    backgroundColor: "#e2e8f0",
+    backgroundColor: COLORS.background,
   },
 }); 

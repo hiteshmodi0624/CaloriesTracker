@@ -11,24 +11,9 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../../context/AppContext';
-
-// Activity level types
-type ActivityLevel = 'sedentary' | 'lightly active' | 'moderately active' | 'very active' | 'extra active';
-type GoalType = 'lose weight' | 'maintain' | 'gain weight' | 'build muscle';
-
-// Define NutritionGoals type locally to match AppContext
-type NutritionGoals = {
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  activityLevel: ActivityLevel;
-  goal: GoalType;
-  weight: number;
-  height: number;
-  age: number;
-  gender: 'male' | 'female';
-};
+import { COLORS } from '../../constants';
+import { calculateGoals, ActivityLevel, GoalType, createNutritionGoals } from '../../utils/calculators';
+import { NutritionGoals } from '../../../types';
 
 // Constants for activity levels and goals
 const ACTIVITY_LEVELS = [
@@ -109,99 +94,42 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
   // Calculate goals when inputs change for calculator tab
   useEffect(() => {
     if (activeTab === 'calculator') {
-      calculateGoals();
+      computeGoals();
     }
   }, [weight, height, age, gender, activityLevel, goalType, activeTab]);
 
-  // Improved calculation formula for nutrition goals
-  const calculateGoals = (): { calories: number; protein: number; fat: number; carbs: number; } => {
-    /* ---------- sanitize inputs ---------- */
-    const weightKg = Number(weight);
-    const heightCm = Number(height);
-    const ageYears = Number(age);
+  // Use the shared calculation utility to compute nutrition goals
+  const computeGoals = () => {
+    try {
+      const weightKg = Number(weight);
+      const heightCm = Number(height);
+      const ageYears = Number(age);
 
-    if ([weightKg, heightCm, ageYears].some((n) => !Number.isFinite(n))) {
-      throw new Error("Invalid numeric input.");
+      if ([weightKg, heightCm, ageYears].some((n) => !Number.isFinite(n))) {
+        console.warn("Invalid numeric input for goals calculation");
+        return;
+      }
+
+      const result = calculateGoals(
+        weightKg,
+        heightCm,
+        ageYears,
+        gender,
+        activityLevel,
+        goalType
+      );
+      
+      setCalculatedGoals(result);
+      return result;
+    } catch (error) {
+      console.error('Error calculating goals:', error);
+      return { calories: 0, protein: 0, carbs: 0, fat: 0 };
     }
-
-    /* ---------- BMR & TDEE (India-adjusted) ---------- */
-    // Mifflin-St Jeor with ≈-10 % correction seen in Indian cohorts
-    const BASE_BMR =
-      gender === "male"
-        ? 10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5
-        : 10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161;
-    const bmr = BASE_BMR * 0.9; // India adjustment
-
-    const activityMultipliers: Record<ActivityLevel, number> = {
-      sedentary: 1.15,
-      "lightly active": 1.3,
-      "moderately active": 1.45,
-      "very active": 1.6,
-      "extra active": 1.75,
-    };
-
-    const tdee = bmr * (activityMultipliers[activityLevel] ?? 1.3);
-
-    /* ---------- calorie target ---------- */
-    let calories: number;
-    switch (goalType) {
-      case "lose weight":
-        calories = Math.round(tdee * 0.85); // ~15 % deficit
-        break;
-      case "gain weight":
-        calories = Math.round(tdee * 1.08); // ~8 % surplus
-        break;
-      case "build muscle":
-        calories = Math.round(tdee * 1.05); // mild surplus
-        break;
-      default:
-        calories = Math.round(tdee); // maintain
-    }
-
-    /* ---------- protein target (activity × goal) ---------- */
-    const activityProteinBase: Record<ActivityLevel, number> = {
-      sedentary: 1.0,
-      "lightly active": 1.2,
-      "moderately active": 1.4,
-      "very active": 1.6,
-      "extra active": 1.8,
-    };
-
-    const baseProt = activityProteinBase[activityLevel] ?? 1.2;
-    let proteinPerKg: number;
-
-    switch (goalType) {
-      case "lose weight":
-        proteinPerKg = Math.max(baseProt, 1.3); // boost a little for satiety
-        break;
-      case "gain weight":
-        proteinPerKg = Math.max(baseProt + 0.2, 1.6);
-        break;
-      case "build muscle":
-        proteinPerKg = Math.max(baseProt + 0.4, 1.8);
-        break;
-      default: // maintain
-        proteinPerKg = baseProt;
-    }
-
-    const protein = Math.round(weightKg * proteinPerKg); // g
-
-    /* ---------- fats & carbs ---------- */
-    const fatRatio = goalType === "lose weight" ? 0.3 : 0.25; // 25–30 % kcal
-    const fat = Math.round((calories * fatRatio) / 9); // g
-    const carbs = Math.max(
-      0,
-      Math.round((calories - protein * 4 - fat * 9) / 4)
-    ); // g
-
-    const result = { calories, protein, fat, carbs };
-    setCalculatedGoals(result);
-    return result;
   };
 
   const saveGoals = async () => {
     try {
-      let newGoals: NutritionGoals;
+      let newGoals;
       
       if (activeTab === 'calculator') {
         // Get values from calculator
@@ -214,15 +142,15 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
           return;
         }
         
-        newGoals = {
-          ...calculatedGoals,
+        // Use the shared utility to create a consistent goals object
+        newGoals = createNutritionGoals({
           weight: weightNum,
           height: heightNum,
           age: ageNum,
           gender,
           activityLevel,
-          goal: goalType,
-        };
+          goal: goalType
+        });
       } else {
         // Get values from manual entry
         const caloriesNum = parseInt(manualCalories);
@@ -272,50 +200,57 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
             <View style={styles.modalTitleContainer}>
               <Text style={styles.modalTitle}>Nutrition Goals</Text>
             </View>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={onClose}
-            >
-              <Ionicons name="close" size={24} color="#333" />
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.modalScrollView}>
             {/* Tabs for different ways to set goals */}
             <View style={styles.goalTabsContainer}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.goalTab, 
-                  activeTab === 'calculator' && styles.activeGoalTab
+                  styles.goalTab,
+                  activeTab === "calculator" && styles.activeGoalTab,
                 ]}
-                onPress={() => setActiveTab('calculator')}
+                onPress={() => setActiveTab("calculator")}
               >
-                <Text style={[
-                  styles.goalTabText,
-                  activeTab === 'calculator' && styles.activeGoalTabText
-                ]}>Calculator</Text>
+                <Text
+                  style={[
+                    styles.goalTabText,
+                    activeTab === "calculator" && styles.activeGoalTabText,
+                  ]}
+                >
+                  Calculator
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
-                  styles.goalTab, 
-                  activeTab === 'manual' && styles.activeGoalTab
+                  styles.goalTab,
+                  activeTab === "manual" && styles.activeGoalTab,
                 ]}
-                onPress={() => setActiveTab('manual')}
+                onPress={() => setActiveTab("manual")}
               >
-                <Text style={[
-                  styles.goalTabText,
-                  activeTab === 'manual' && styles.activeGoalTabText
-                ]}>Manual Entry</Text>
+                <Text
+                  style={[
+                    styles.goalTabText,
+                    activeTab === "manual" && styles.activeGoalTabText,
+                  ]}
+                >
+                  Manual Entry
+                </Text>
               </TouchableOpacity>
             </View>
 
-            {activeTab === 'calculator' ? (
+            {activeTab === "calculator" ? (
               <>
                 <Text style={styles.sectionHeader}>Personal Details</Text>
-                
+
                 <View style={styles.infoCard}>
                   <View style={styles.inputRow}>
-                    <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
+                    <View
+                      style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}
+                    >
                       <Text style={styles.inputLabel}>Weight (kg)</Text>
                       <TextInput
                         style={styles.input}
@@ -325,8 +260,8 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                         placeholder="Enter weight"
                       />
                     </View>
-                    
-                    <View style={[styles.inputGroup, {flex: 1}]}>
+
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
                       <Text style={styles.inputLabel}>Height (cm)</Text>
                       <TextInput
                         style={styles.input}
@@ -337,9 +272,11 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
                   </View>
-                  
+
                   <View style={styles.inputRow}>
-                    <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
+                    <View
+                      style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}
+                    >
                       <Text style={styles.inputLabel}>Age</Text>
                       <TextInput
                         style={styles.input}
@@ -349,56 +286,73 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                         placeholder="Enter age"
                       />
                     </View>
-                    
-                    <View style={[styles.inputGroup, {flex: 1}]}>
+
+                    <View style={[styles.inputGroup, { flex: 1 }]}>
                       <Text style={styles.inputLabel}>Gender</Text>
                       <View style={styles.segmentedControl}>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[
-                            styles.segmentedOption, 
-                            gender === 'male' && styles.segmentedOptionSelected
+                            styles.segmentedOption,
+                            gender === "male" && styles.segmentedOptionSelected,
                           ]}
-                          onPress={() => setGender('male')}
+                          onPress={() => setGender("male")}
                         >
-                          <Text style={[
-                            styles.segmentedOptionText,
-                            gender === 'male' && styles.segmentedOptionTextSelected
-                          ]}>Male</Text>
+                          <Text
+                            style={[
+                              styles.segmentedOptionText,
+                              gender === "male" &&
+                                styles.segmentedOptionTextSelected,
+                            ]}
+                          >
+                            Male
+                          </Text>
                         </TouchableOpacity>
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={[
-                            styles.segmentedOption, 
-                            gender === 'female' && styles.segmentedOptionSelected
+                            styles.segmentedOption,
+                            gender === "female" &&
+                              styles.segmentedOptionSelected,
                           ]}
-                          onPress={() => setGender('female')}
+                          onPress={() => setGender("female")}
                         >
-                          <Text style={[
-                            styles.segmentedOptionText,
-                            gender === 'female' && styles.segmentedOptionTextSelected
-                          ]}>Female</Text>
+                          <Text
+                            style={[
+                              styles.segmentedOptionText,
+                              gender === "female" &&
+                                styles.segmentedOptionTextSelected,
+                            ]}
+                          >
+                            Female
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
                   </View>
                 </View>
-                
+
                 <Text style={styles.sectionHeader}>Activity & Goals</Text>
-                
+
                 <View style={styles.infoCard}>
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Activity Level</Text>
                     <View style={styles.customSelectContainer}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.customSelect}
                         onPress={() => setShowActivityPicker(true)}
                       >
                         <Text style={styles.customSelectText}>
-                          {ACTIVITY_LEVELS.find(item => item.value === activityLevel)?.label || 'Select Activity Level'}
+                          {ACTIVITY_LEVELS.find(
+                            (item) => item.value === activityLevel
+                          )?.label || "Select Activity Level"}
                         </Text>
-                        <Ionicons name="chevron-down" size={16} color="#8898aa" />
+                        <Ionicons
+                          name="chevron-down"
+                          size={16}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
-                    
+
                     {showActivityPicker && (
                       <View style={styles.pickerOptionsContainer}>
                         {ACTIVITY_LEVELS.map((option) => (
@@ -406,17 +360,21 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                             key={option.value}
                             style={[
                               styles.pickerOption,
-                              activityLevel === option.value && styles.pickerOptionSelected
+                              activityLevel === option.value &&
+                                styles.pickerOptionSelected,
                             ]}
                             onPress={() => {
                               setActivityLevel(option.value);
                               setShowActivityPicker(false);
                             }}
                           >
-                            <Text style={[
-                              styles.pickerOptionText,
-                              activityLevel === option.value && styles.pickerOptionTextSelected
-                            ]}>
+                            <Text
+                              style={[
+                                styles.pickerOptionText,
+                                activityLevel === option.value &&
+                                  styles.pickerOptionTextSelected,
+                              ]}
+                            >
                               {option.label}
                             </Text>
                           </TouchableOpacity>
@@ -424,21 +382,26 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       </View>
                     )}
                   </View>
-                  
+
                   <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Goal</Text>
                     <View style={styles.customSelectContainer}>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         style={styles.customSelect}
                         onPress={() => setShowGoalPicker(true)}
                       >
                         <Text style={styles.customSelectText}>
-                          {GOALS.find(item => item.value === goalType)?.label || 'Select Goal'}
+                          {GOALS.find((item) => item.value === goalType)
+                            ?.label || "Select Goal"}
                         </Text>
-                        <Ionicons name="chevron-down" size={16} color="#8898aa" />
+                        <Ionicons
+                          name="chevron-down"
+                          size={16}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
-                    
+
                     {showGoalPicker && (
                       <View style={styles.pickerOptionsContainer}>
                         {GOALS.map((option) => (
@@ -446,17 +409,21 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                             key={option.value}
                             style={[
                               styles.pickerOption,
-                              goalType === option.value && styles.pickerOptionSelected
+                              goalType === option.value &&
+                                styles.pickerOptionSelected,
                             ]}
                             onPress={() => {
                               setGoalType(option.value);
                               setShowGoalPicker(false);
                             }}
                           >
-                            <Text style={[
-                              styles.pickerOptionText,
-                              goalType === option.value && styles.pickerOptionTextSelected
-                            ]}>
+                            <Text
+                              style={[
+                                styles.pickerOptionText,
+                                goalType === option.value &&
+                                  styles.pickerOptionTextSelected,
+                              ]}
+                            >
                               {option.label}
                             </Text>
                           </TouchableOpacity>
@@ -470,18 +437,24 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
               // Manual Entry Tab
               <View style={styles.manualEntryContainer}>
                 <Text style={styles.sectionHeader}>Set Custom Targets</Text>
-                
+
                 <View style={styles.infoCard}>
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelRow}>
                       <Text style={styles.inputLabel}>Daily Calories</Text>
                       <TouchableOpacity
-                        onPress={() => Alert.alert(
-                          "About Calories",
-                          "Calories are a measure of energy from food. Your body needs calories to function properly."
-                        )}
+                        onPress={() =>
+                          Alert.alert(
+                            "About Calories",
+                            "Calories are a measure of energy from food. Your body needs calories to function properly."
+                          )
+                        }
                       >
-                        <Ionicons name="information-circle" size={18} color="#8898aa" />
+                        <Ionicons
+                          name="information-circle"
+                          size={18}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
                     <TextInput
@@ -492,17 +465,23 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       placeholder="e.g., 2000"
                     />
                   </View>
-                  
+
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelRow}>
                       <Text style={styles.inputLabel}>Protein (g)</Text>
                       <TouchableOpacity
-                        onPress={() => Alert.alert(
-                          "About Protein",
-                          "Protein is essential for building muscle and repairing tissues. It's recommended to consume 0.8-2.0g per kg of body weight."
-                        )}
+                        onPress={() =>
+                          Alert.alert(
+                            "About Protein",
+                            "Protein is essential for building muscle and repairing tissues. It's recommended to consume 0.8-2.0g per kg of body weight."
+                          )
+                        }
                       >
-                        <Ionicons name="information-circle" size={18} color="#8898aa" />
+                        <Ionicons
+                          name="information-circle"
+                          size={18}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
                     <TextInput
@@ -513,17 +492,23 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       placeholder="e.g., 150"
                     />
                   </View>
-                  
+
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelRow}>
                       <Text style={styles.inputLabel}>Carbs (g)</Text>
                       <TouchableOpacity
-                        onPress={() => Alert.alert(
-                          "About Carbohydrates",
-                          "Carbohydrates are your body's main energy source. They typically make up 45-65% of your total daily calories."
-                        )}
+                        onPress={() =>
+                          Alert.alert(
+                            "About Carbohydrates",
+                            "Carbohydrates are your body's main energy source. They typically make up 45-65% of your total daily calories."
+                          )
+                        }
                       >
-                        <Ionicons name="information-circle" size={18} color="#8898aa" />
+                        <Ionicons
+                          name="information-circle"
+                          size={18}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
                     <TextInput
@@ -534,17 +519,23 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       placeholder="e.g., 250"
                     />
                   </View>
-                  
+
                   <View style={styles.inputGroup}>
                     <View style={styles.inputLabelRow}>
                       <Text style={styles.inputLabel}>Fat (g)</Text>
                       <TouchableOpacity
-                        onPress={() => Alert.alert(
-                          "About Fat",
-                          "Dietary fat is essential for hormone production and nutrient absorption. It typically makes up 20-35% of your total daily calories."
-                        )}
+                        onPress={() =>
+                          Alert.alert(
+                            "About Fat",
+                            "Dietary fat is essential for hormone production and nutrient absorption. It typically makes up 20-35% of your total daily calories."
+                          )
+                        }
                       >
-                        <Ionicons name="information-circle" size={18} color="#8898aa" />
+                        <Ionicons
+                          name="information-circle"
+                          size={18}
+                          color={COLORS.blueGrey}
+                        />
                       </TouchableOpacity>
                     </View>
                     <TextInput
@@ -558,47 +549,58 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                 </View>
               </View>
             )}
-            
+
             <View style={styles.resultsContainer}>
               <Text style={styles.sectionHeader}>Calculated Targets</Text>
-              
+
               <View style={styles.macroResultsGrid}>
                 <View style={styles.macroResultsBox}>
-                  <Ionicons name="flame" size={24} color="#FF9500" />
+                  <Ionicons name="flame" size={24} color={COLORS.orange} />
                   <Text style={styles.macroResultValue}>
-                    {activeTab === 'calculator' ? calculatedGoals.calories : parseInt(manualCalories) || 0}
+                    {activeTab === "calculator"
+                      ? calculatedGoals.calories
+                      : parseInt(manualCalories) || 0}
                   </Text>
                   <Text style={styles.macroResultLabel}>Calories</Text>
                 </View>
-                
+
                 <View style={styles.macroResultsBox}>
-                  <Ionicons name="body" size={24} color="#34C759" />
+                  <Ionicons name="body" size={24} color={COLORS.success} />
                   <Text style={styles.macroResultValue}>
-                    {activeTab === 'calculator' ? calculatedGoals.protein : parseInt(manualProtein) || 0}g
+                    {activeTab === "calculator"
+                      ? calculatedGoals.protein
+                      : parseInt(manualProtein) || 0}
+                    g
                   </Text>
                   <Text style={styles.macroResultLabel}>Protein</Text>
                 </View>
-                
+
                 <View style={styles.macroResultsBox}>
-                  <Ionicons name="apps" size={24} color="#007AFF" />
+                  <Ionicons name="apps" size={24} color={COLORS.blue} />
                   <Text style={styles.macroResultValue}>
-                    {activeTab === 'calculator' ? calculatedGoals.carbs : parseInt(manualCarbs) || 0}g
+                    {activeTab === "calculator"
+                      ? calculatedGoals.carbs
+                      : parseInt(manualCarbs) || 0}
+                    g
                   </Text>
                   <Text style={styles.macroResultLabel}>Carbs</Text>
                 </View>
-                
+
                 <View style={styles.macroResultsBox}>
-                  <Ionicons name="water" size={24} color="#FF3B30" />
+                  <Ionicons name="water" size={24} color={COLORS.error3} />
                   <Text style={styles.macroResultValue}>
-                    {activeTab === 'calculator' ? calculatedGoals.fat : parseInt(manualFat) || 0}g
+                    {activeTab === "calculator"
+                      ? calculatedGoals.fat
+                      : parseInt(manualFat) || 0}
+                    g
                   </Text>
                   <Text style={styles.macroResultLabel}>Fat</Text>
                 </View>
               </View>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.saveGoalsButton} 
+
+            <TouchableOpacity
+              style={styles.saveGoalsButton}
               onPress={saveGoals}
             >
               <Text style={styles.saveGoalsText}>Save Goals</Text>
@@ -613,32 +615,32 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   goalModalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: COLORS.opaqueBlack,
+    justifyContent: "flex-end",
   },
   goalModalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground3,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: '90%',
+    maxHeight: "90%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.grey3,
   },
   modalTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 8,
@@ -647,12 +649,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   goalTabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    flexDirection: "row",
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 10,
     padding: 4,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -661,12 +663,12 @@ const styles = StyleSheet.create({
   goalTab: {
     flex: 1,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 8,
   },
   activeGoalTab: {
-    backgroundColor: '#fff',
-    shadowColor: '#000',
+    backgroundColor: COLORS.cardBackground,
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -674,149 +676,149 @@ const styles = StyleSheet.create({
   },
   goalTabText: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#8898aa',
+    fontWeight: "500",
+    color: COLORS.textSecondary,
   },
   activeGoalTabText: {
-    color: '#5E72E4',
-    fontWeight: '600',
+    color: COLORS.secondary,
+    fontWeight: "600",
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#32325d',
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
     marginBottom: 12,
     marginTop: 8,
   },
   infoCard: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#f0f0f0',
+    borderColor: COLORS.grey3,
   },
   inputRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 10,
   },
   inputGroup: {
     marginBottom: 15,
   },
   inputLabelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     marginBottom: 8,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   input: {
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: COLORS.grey3,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   segmentedControl: {
-    flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    flexDirection: "row",
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   segmentedOption: {
     flex: 1,
     paddingVertical: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   segmentedOptionSelected: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
   },
   segmentedOptionText: {
     fontSize: 14,
-    color: '#8898aa',
-    fontWeight: '500',
+    color: COLORS.textSecondary,
+    fontWeight: "500",
   },
   segmentedOptionTextSelected: {
-    color: '#fff',
+    color: COLORS.white,
   },
   customSelectContainer: {
-    position: 'relative',
+    position: "relative",
   },
   customSelect: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f8f9fe',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground3,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: COLORS.grey3,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
   },
   customSelectText: {
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   pickerOptionsContainer: {
     marginTop: 5,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e9ecef',
-    shadowColor: '#000',
+    borderColor: COLORS.grey3,
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 10,
+    zIndex: 10
   },
   pickerOption: {
     paddingVertical: 12,
     paddingHorizontal: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.grey3,
   },
   pickerOptionSelected: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.cardBackground3,
   },
   pickerOptionText: {
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   pickerOptionTextSelected: {
-    color: '#5E72E4',
-    fontWeight: '500',
+    color: COLORS.primary,
+    fontWeight: "500",
   },
   manualEntryContainer: {
     marginBottom: 20,
   },
   resultsContainer: {
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 12,
     padding: 20,
     marginTop: 10,
     marginBottom: 20,
   },
   macroResultsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   macroResultsBox: {
-    width: '48%',
-    backgroundColor: '#fff',
+    width: "48%",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 15,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -824,26 +826,26 @@ const styles = StyleSheet.create({
   },
   macroResultValue: {
     fontSize: 22,
-    fontWeight: 'bold',
-    color: '#32325d',
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
     marginTop: 8,
     marginBottom: 4,
   },
   macroResultLabel: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
   },
   saveGoalsButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 30,
   },
   saveGoalsText: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

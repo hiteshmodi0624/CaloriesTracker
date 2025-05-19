@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { MealIngredient } from '../../../types';
+import { COLORS } from '../../constants';
 
 interface CreateDishModalProps {
   visible: boolean;
@@ -284,13 +285,13 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
           style={styles.editButton}
           onPress={() => handleEditIngredient(ingredient.id)}
         >
-          <Ionicons name="create-outline" size={20} color="#007AFF" />
+          <Ionicons name="create-outline" size={20} color={COLORS.blue} />
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.removeButton}
           onPress={() => onRemoveIngredient(ingredient.id)}
         >
-          <Ionicons name="trash-outline" size={20} color="#FF3B30" />
+          <Ionicons name="trash-outline" size={20} color={COLORS.error} />
         </TouchableOpacity>
       </View>
     </View>
@@ -312,7 +313,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
               onPress={() => setEditModalVisible(false)}
               style={styles.editModalCloseButton}
             >
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color={COLORS.blue} />
             </TouchableOpacity>
           </View>
 
@@ -343,9 +344,9 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                   <Switch
                     value={autoScaleNutrition}
                     onValueChange={setAutoScaleNutrition}
-                    trackColor={{ false: "#eee", true: "#cce5ff" }}
-                    thumbColor={autoScaleNutrition ? "#007AFF" : "#ccc"}
-                    ios_backgroundColor="#eee"
+                    trackColor={{ false: COLORS.grey5, true: COLORS.lightBluegrey4 }}
+                    thumbColor={autoScaleNutrition ? COLORS.grey5 : COLORS.lightBluegrey4}
+                    ios_backgroundColor={COLORS.grey5}
                   />
                 </View>
               </View>
@@ -450,7 +451,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Create Dish</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color="#007AFF" />
+              <Ionicons name="close" size={24} color={COLORS.blue} />
             </TouchableOpacity>
           </View>
 
@@ -589,7 +590,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                         disabled={!quickDishName || isAddingQuickDish}
                       >
                         {isAddingQuickDish ? (
-                          <ActivityIndicator size="small" color="#fff" />
+                          <ActivityIndicator size="small" color={COLORS.white} />
                         ) : (
                           <Text style={styles.quickAddButtonText}>
                             Analyze Dish
@@ -685,8 +686,8 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                               size={18}
                               color={
                                 parseFloat(quickDishServings) <= 1
-                                  ? "#ccc"
-                                  : "#007AFF"
+                                  ? COLORS.grey3
+                                  : COLORS.blue
                               }
                             />
                           </TouchableOpacity>
@@ -714,7 +715,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                               }
                             }}
                           >
-                            <Ionicons name="add" size={18} color="#007AFF" />
+                            <Ionicons name="add" size={18} color={COLORS.blue} />
                           </TouchableOpacity>
                         </View>
 
@@ -780,12 +781,12 @@ const styles = StyleSheet.create({
   // Main modal styles
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: "center",
     padding: 20,
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 20,
     minHeight: 520,
@@ -807,7 +808,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 5,
@@ -818,7 +819,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     marginBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#ddd",
+    borderBottomColor: COLORS.grey4,
   },
   tab: {
     flex: 1,
@@ -827,30 +828,30 @@ const styles = StyleSheet.create({
   },
   activeTab: {
     borderBottomWidth: 2,
-    borderBottomColor: "#007AFF",
+    borderBottomColor: COLORS.blue,
   },
   tabText: {
     fontSize: 16,
-    color: "#666",
+    color: COLORS.textSecondary,
   },
   activeTabText: {
-    color: "#007AFF",
+    color: COLORS.blue,
     fontWeight: "600",
   },
 
   // Input styles
   inputLabel: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: COLORS.grey4,
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
   },
 
   // Ingredients list styles
@@ -864,16 +865,16 @@ const styles = StyleSheet.create({
   ingredientsTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   addIngredientButton: {
-    backgroundColor: "#007AFF",
+    backgroundColor: COLORS.blue,
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
   },
   addIngredientButtonText: {
-    color: "white",
+    color: COLORS.white,
     fontWeight: "500",
     fontSize: 14,
   },
@@ -884,7 +885,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 5,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: COLORS.grey4,
   },
   ingredientInfo: {
     flex: 1,
@@ -892,12 +893,12 @@ const styles = StyleSheet.create({
   ingredientName: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   ingredientDetails: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
   },
   ingredientActions: {
     flexDirection: "row",
@@ -913,20 +914,20 @@ const styles = StyleSheet.create({
   emptyIngredientsContainer: {
     alignItems: "center",
     padding: 20,
-    backgroundColor: "#f9f9f9",
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
     marginBottom: 15,
   },
   emptyIngredientsText: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     fontStyle: "italic",
     textAlign: "center",
     marginBottom: 5,
   },
   emptyIngredientsSubtext: {
     fontSize: 14,
-    color: "#999",
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
 
@@ -938,7 +939,7 @@ const styles = StyleSheet.create({
   totalCaloriesText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FF9500",
+    color: COLORS.orange,
   },
   buttonContainer: {
     flexDirection: "row",
@@ -947,37 +948,37 @@ const styles = StyleSheet.create({
   },
   saveDishButton: {
     flex: 1,
-    backgroundColor: "#34C759",
+    backgroundColor: COLORS.success,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
     marginRight: 8,
   },
   saveDishButtonText: {
-    color: "white",
+    color: COLORS.white,
     fontWeight: "bold",
     fontSize: 16,
   },
   saveForReuseButton: {
     flex: 1,
-    backgroundColor: "#007AFF",
+    backgroundColor: COLORS.blue,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
     marginLeft: 8,
   },
   saveForReuseButtonText: {
-    color: "white",
+    color: COLORS.white,
     fontWeight: "bold",
     fontSize: 16,
   },
   disabledButton: {
-    backgroundColor: "#ccc",
+    backgroundColor: COLORS.cardBackground,
   },
   buttonHelpText: {
     marginTop: 10,
     fontSize: 12,
-    color: "#8898aa",
+    color: COLORS.textSecondary,
     textAlign: "center",
   },
 
@@ -989,26 +990,26 @@ const styles = StyleSheet.create({
   },
   quickDishInstructions: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 20,
     textAlign: "center",
     fontStyle: "italic",
   },
   quickAddButton: {
-    backgroundColor: "#FF9500",
+    backgroundColor: COLORS.orange,
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 15,
   },
   quickAddButtonText: {
-    color: "white",
+    color: COLORS.white,
     fontWeight: "bold",
     fontSize: 16,
   },
   quickDishNote: {
     fontSize: 12,
-    color: "#999",
+    color: COLORS.textSecondary,
     textAlign: "center",
     marginTop: 15,
     marginBottom: 10,
@@ -1016,18 +1017,18 @@ const styles = StyleSheet.create({
   processingText: {
     marginTop: 15,
     fontSize: 14,
-    color: "#007AFF",
+    color: COLORS.blue,
     textAlign: "center",
     fontStyle: "italic",
   },
 
   // Nutrition summary card
   nutritionSummaryCard: {
-    backgroundColor: "#f8f9fe",
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 15,
     marginBottom: 20,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1036,13 +1037,13 @@ const styles = StyleSheet.create({
   },
   nutritionSummaryTitle: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   totalCaloriesLarge: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#FF9500",
+    color: COLORS.orange,
     marginBottom: 12,
   },
   macroSummaryContainer: {
@@ -1057,21 +1058,21 @@ const styles = StyleSheet.create({
   macroSummaryValue: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   macroSummaryLabel: {
     fontSize: 12,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
 
   // Servings controls
   servingsContainer: {
     marginBottom: 20,
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 15,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
@@ -1080,7 +1081,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: COLORS.textPrimary,
     marginBottom: 10,
   },
   servingsControlRow: {
@@ -1094,14 +1095,14 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: "#ddd",
-    backgroundColor: "#f8f9fe",
+    borderColor: COLORS.grey4,
+    backgroundColor: COLORS.background,
     justifyContent: "center",
     alignItems: "center",
   },
   servingsInput: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -1112,7 +1113,7 @@ const styles = StyleSheet.create({
   },
   servingsHelp: {
     fontSize: 12,
-    color: "#666",
+    color: COLORS.textSecondary,
     fontStyle: "italic",
     textAlign: "center",
   },
@@ -1123,7 +1124,7 @@ const styles = StyleSheet.create({
   },
   ingredientCount: {
     fontSize: 12,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 10,
     fontStyle: "italic",
   },
@@ -1131,16 +1132,16 @@ const styles = StyleSheet.create({
   // Edit modal styles
   editModalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: "center",
     alignItems: "center",
   },
   editModalContent: {
     width: "85%",
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 20,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
@@ -1155,7 +1156,7 @@ const styles = StyleSheet.create({
   editModalTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   editModalCloseButton: {
     padding: 5,
@@ -1163,34 +1164,34 @@ const styles = StyleSheet.create({
   editModalIngredientName: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: COLORS.textPrimary,
     marginBottom: 15,
   },
   quantitySection: {
     marginBottom: 20,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: COLORS.grey3,
   },
   nutritionSection: {
     marginBottom: 15,
   },
   editModalLabel: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   editModalInput: {
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
     fontSize: 16,
   },
   editModalInputDisabled: {
-    backgroundColor: "#f9f9f9",
-    color: "#666",
+    backgroundColor: COLORS.grey4,
+    color: COLORS.textSecondary,
   },
   editModalButtons: {
     flexDirection: "row",
@@ -1201,29 +1202,29 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: COLORS.cardBackground,
     marginRight: 8,
     alignItems: "center",
   },
   editModalCancelButtonText: {
-    color: "#666",
+    color: COLORS.textSecondary,
     fontWeight: "500",
   },
   editModalSaveButton: {
     flex: 1,
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#007AFF",
+    backgroundColor: COLORS.blue,
     marginLeft: 8,
     alignItems: "center",
   },
   editModalSaveButtonText: {
-    color: "white",
+    color: COLORS.white,
     fontWeight: "600",
   },
   macroText: {
     fontSize: 12,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
 
@@ -1236,7 +1237,7 @@ const styles = StyleSheet.create({
   },
   autoScaleLabel: {
     fontSize: 14,
-    color: "#333",
+    color: COLORS.textPrimary,
   },
 });
 

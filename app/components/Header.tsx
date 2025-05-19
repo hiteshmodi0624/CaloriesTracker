@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { COLORS } from '../constants';
 
 interface HeaderProps {
   title: string;
@@ -41,33 +42,32 @@ const Header: React.FC<HeaderProps> = ({
   return (
     <View style={styles.container}>
       {/* Static header (always visible) */}
-      <View style={[
-        styles.header, 
-        showHeaderBackground ? styles.coloredHeader : styles.transparentHeader
-      ]}>
+      <View style={[styles.header, styles.transparentHeader]}>
         {showBackButton ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.backButton}
             onPress={handleBackPress}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons 
-              name="chevron-back" 
-              size={24} 
-              color={showHeaderBackground ? "#fff" : "#32325d"} 
+            <Ionicons
+              name="chevron-back"
+              size={24}
+              color={showHeaderBackground ? COLORS.white : COLORS.textSecondary}
             />
           </TouchableOpacity>
         ) : (
           <View style={styles.placeholderButton} />
         )}
-        
-        <Text style={[
-          styles.title,
-          showHeaderBackground ? styles.lightText : styles.darkText
-        ]}>
+
+        <Text
+          style={[
+            styles.title,
+            showHeaderBackground ? styles.lightText : styles.darkText,
+          ]}
+        >
           {title}
         </Text>
-        
+
         {rightComponent || <View style={styles.placeholderButton} />}
       </View>
     </View>
@@ -91,22 +91,19 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 44 : 0, // Account for status bar on iOS
   },
   transparentHeader: {
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
-  },
-  coloredHeader: {
-    backgroundColor: '#5E72E4',
+    borderBottomColor: COLORS.grey3,
   },
   title: {
     fontSize: 18,
     fontWeight: '600',
   },
   darkText: {
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   lightText: {
-    color: 'white',
+    color: COLORS.white,
   },
   backButton: {
     width: 40,

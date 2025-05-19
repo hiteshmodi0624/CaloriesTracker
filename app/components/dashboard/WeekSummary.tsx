@@ -7,7 +7,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Meal } from '../../../types';
-
+import { COLORS } from '../../constants';
 interface DayData {
   date: string;
   meals: Meal[];
@@ -57,13 +57,13 @@ const WeekSummary: React.FC<WeekSummaryProps> = ({
           onPress={onViewAll}
         >
           <Text style={styles.viewAllText}>View All</Text>
-          <Ionicons name="chevron-forward" size={16} color="#5E72E4" />
+          <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
 
       {days.length === 0 ? (
         <View style={styles.emptyStateContainer}>
-          <Ionicons name="calendar-outline" size={50} color="#c1c1c1" />
+          <Ionicons name="calendar-outline" size={50} color={COLORS.grey3} />
           <Text style={styles.emptyText}>No meal history</Text>
           <Text style={styles.emptySubtext}>Your meal history will appear here</Text>
         </View>
@@ -95,19 +95,19 @@ const WeekSummary: React.FC<WeekSummaryProps> = ({
                 
                 <View style={styles.historyMacrosContainer}>
                   <View style={styles.historyMacroItem}>
-                    <View style={[styles.historyMacroDot, { backgroundColor: '#5E72E4' }]} />
+                    <View style={[styles.historyMacroDot, { backgroundColor: COLORS.secondary }]} />
                     <Text style={styles.historyMacroLabel}>P:</Text>
                     <Text style={styles.historyMacroValue}>{Math.round(day.macros.protein)}g</Text>
                   </View>
                   
                   <View style={styles.historyMacroItem}>
-                    <View style={[styles.historyMacroDot, { backgroundColor: '#11CDEF' }]} />
+                    <View style={[styles.historyMacroDot, { backgroundColor: COLORS.lightBlue }]} />
                     <Text style={styles.historyMacroLabel}>C:</Text>
                     <Text style={styles.historyMacroValue}>{Math.round(day.macros.carbs)}g</Text>
                   </View>
                   
                   <View style={styles.historyMacroItem}>
-                    <View style={[styles.historyMacroDot, { backgroundColor: '#FB6340' }]} />
+                    <View style={[styles.historyMacroDot, { backgroundColor: COLORS.orange2 }]} />
                     <Text style={styles.historyMacroLabel}>F:</Text>
                     <Text style={styles.historyMacroValue}>{Math.round(day.macros.fat)}g</Text>
                   </View>
@@ -122,7 +122,7 @@ const WeekSummary: React.FC<WeekSummaryProps> = ({
                           styles.historyProgressFill, 
                           { 
                             width: `${Math.min(100, (day.totalCalories / goals.calories) * 100)}%`,
-                            backgroundColor: day.totalCalories > goals.calories ? '#FF3B30' : '#5E72E4' 
+                            backgroundColor: day.totalCalories > goals.calories ? COLORS.error : COLORS.secondary 
                           }
                         ]}
                       />
@@ -135,7 +135,7 @@ const WeekSummary: React.FC<WeekSummaryProps> = ({
               </View>
               
               <View style={styles.historyChevronContainer}>
-                <Ionicons name="chevron-forward" size={20} color="#c5c5c5" />
+                <Ionicons name="chevron-forward" size={20} color={COLORS.grey3} />
               </View>
             </TouchableOpacity>
           ))}
@@ -149,9 +149,9 @@ const styles = StyleSheet.create({
   summaryCard: {
     margin: 15,
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -166,33 +166,33 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   viewAllText: {
-    color: '#5E72E4',
+    color: COLORS.textSecondary,
     fontWeight: '500',
     marginLeft: 4,
   },
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 30,
   },
   emptyText: {
     fontSize: 16,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     fontWeight: '500',
     marginTop: 10,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#a7b2c3',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: 5,
   },
@@ -201,11 +201,11 @@ const styles = StyleSheet.create({
   },
   historyDayCard: {
     flexDirection: 'row',
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
@@ -222,15 +222,15 @@ const styles = StyleSheet.create({
   },
   historyDayDate: {
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     fontWeight: '500',
   },
   todayText: {
     fontWeight: 'bold',
-    color: '#5E72E4',
+    color: COLORS.secondary,
   },
   todayIndicator: {
-    color: '#5E72E4',
+    color: COLORS.secondary,
     fontWeight: 'bold',
   },
   historyMealsInfo: {
@@ -238,11 +238,11 @@ const styles = StyleSheet.create({
   },
   historyMealCount: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
   },
   historyCalories: {
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     fontWeight: 'bold',
   },
   historyMacrosContainer: {
@@ -262,12 +262,12 @@ const styles = StyleSheet.create({
   },
   historyMacroLabel: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     marginRight: 2,
   },
   historyMacroValue: {
     fontSize: 14,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     fontWeight: '500',
   },
   historyProgressContainer: {
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   historyProgressBar: {
     height: 6,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 4,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   historyProgressText: {
     fontSize: 12,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     textAlign: 'right',
   },
   historyChevronContainer: {

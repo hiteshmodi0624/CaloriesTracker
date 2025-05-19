@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { AppContext } from '../context/AppContext';
 import Header from '../components/Header';
+import { COLORS } from '../constants';
 
 // Import custom components
 import DailyProgress from '../components/dashboard/DailyProgress';
@@ -181,11 +182,11 @@ const Dashboard: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     marginTop: 60, // Account for header + status bar on iOS
   },
   contentContainer: {
@@ -197,11 +198,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   date: {
     fontSize: 16,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     marginTop: 5,
   },
 });

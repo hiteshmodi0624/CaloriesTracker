@@ -1,13 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { useTheme } from '../context/ThemeContext';
+import { COLORS } from '../constants';
 
 export default function AddMealScreen() {
-  const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <Text style={[styles.title, { color: theme.colors.text }]}>Add Meal Screen</Text>
+    <View style={[styles.container, { backgroundColor: COLORS.cardBackground3 }]}>
+      <Text style={[styles.title, { color: COLORS.textPrimary }]}>Add Meal Screen</Text>
     </View>
   );
 }

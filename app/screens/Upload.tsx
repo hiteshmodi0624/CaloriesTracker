@@ -9,9 +9,7 @@ import {
   SafeAreaView, 
   StatusBar,
   Animated,
-  Platform,
   ActivityIndicator,
-  ScrollView,
   TextInput,
   Modal
 } from 'react-native';
@@ -19,11 +17,12 @@ import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { AppContext } from '../context/AppContext';
-import { fetchImageCalories, DishWithIngredients, IngredientData } from '../services/openai';
+import { fetchImageCalories, IngredientData } from '../services/openai';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
 import { v4 as uuidv4 } from 'uuid';
-import { Dish, NutritionInfo, MealIngredient } from '../../types';
+import { Dish, MealIngredient } from "../../types";
+import { COLORS } from '../constants';
 
 // Local interface for dish info with quantity
 interface DishInfo {
@@ -114,6 +113,9 @@ const Upload: React.FC = () => {
   };
 
   const analyzeImage = async () => {
+    setLoading(true);
+    setDishesInfo([]);
+    setCalories(null);
     if (!imageUri) {
       Alert.alert('Error', 'Please select or take a photo first');
       return;
@@ -146,6 +148,7 @@ const Upload: React.FC = () => {
       Alert.alert('Error', 'Failed to analyze image. The image might be too large or the service is temporarily unavailable.');
     } finally {
       setAnalyzing(false);
+      setLoading(false);
     }
   };
 
@@ -311,7 +314,7 @@ const Upload: React.FC = () => {
             style={styles.dateButton} 
             onPress={() => setShowDatePicker(true)}
           >
-            <Ionicons name="calendar-outline" size={24} color="#5E72E4" />
+            <Ionicons name="calendar-outline" size={24} color={COLORS.buttonColor} />
             <Text style={styles.dateText}>
               {date.toLocaleDateString(undefined, { 
                 weekday: 'long', 
@@ -360,12 +363,12 @@ const Upload: React.FC = () => {
                   style={styles.changeImageButton}
                   onPress={() => setImageUri(null)}
                 >
-                  <Ionicons name="close-circle" size={28} color="white" />
+                  <Ionicons name="close-circle" size={28} color={COLORS.white} />
                 </TouchableOpacity>
               </>
             ) : (
               <View style={styles.uploadPlaceholder}>
-                <Ionicons name="image-outline" size={60} color="#8898AA" />
+                <Ionicons name="image-outline" size={60} color={COLORS.blueGrey} />
                 <Text style={styles.placeholderText}>No image selected</Text>
               </View>
             )}
@@ -376,7 +379,7 @@ const Upload: React.FC = () => {
               style={[styles.uploadButton, styles.galleryButton]} 
               onPress={pickImage}
             >
-              <Ionicons name="images-outline" size={20} color="white" />
+              <Ionicons name="images-outline" size={20} color={COLORS.white} />
               <Text style={styles.buttonText}>Gallery</Text>
             </TouchableOpacity>
             
@@ -384,7 +387,7 @@ const Upload: React.FC = () => {
               style={[styles.uploadButton, styles.cameraButton]} 
               onPress={takePhoto}
             >
-              <Ionicons name="camera-outline" size={20} color="white" />
+              <Ionicons name="camera-outline" size={20} color={COLORS.white} />
               <Text style={styles.buttonText}>Camera</Text>
             </TouchableOpacity>
           </View>
@@ -415,7 +418,7 @@ const Upload: React.FC = () => {
                             <Text style={styles.quantityText}>
                               {dish.quantity}× 
                             </Text>
-                            <Ionicons name="create-outline" size={14} color="#5D5FEF" />
+                            <Ionicons name="create-outline" size={14} color={COLORS.primary} />
                           </TouchableOpacity>
                         </View>
                         
@@ -481,12 +484,12 @@ const Upload: React.FC = () => {
               >
                 {analyzing ? (
                   <>
-                    <ActivityIndicator size="small" color="white" />
+                    <ActivityIndicator size="small" color={COLORS.white} />
                     <Text style={styles.buttonText}>Analyzing...</Text>
                   </>
                 ) : (
                   <>
-                    <Ionicons name="nutrition-outline" size={20} color="white" />
+                    <Ionicons name="nutrition-outline" size={20} color={COLORS.white} />
                     <Text style={styles.buttonText}>Analyze Photo</Text>
                   </>
                 )}
@@ -507,10 +510,10 @@ const Upload: React.FC = () => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator size="small" color="white" />
+              <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
               <>
-                <Ionicons name="save-outline" size={20} color="white" />
+                <Ionicons name="save-outline" size={20} color={COLORS.white} />
                 <Text style={styles.saveButtonText}>Save Meal</Text>
               </>
             )}
@@ -570,11 +573,11 @@ const Upload: React.FC = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f8f9fe",
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fe",
+    backgroundColor: COLORS.background,
     marginTop: 60, // Account for header + status bar on iOS
   },
   contentContainer: {
@@ -588,22 +591,22 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#32325d",
+    color: COLORS.textPrimary,
     marginBottom: 5,
   },
   sectionDescription: {
     fontSize: 16,
-    color: "#525f7f",
+    color: COLORS.textSecondary,
     marginBottom: 10,
   },
   card: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 20,
     marginHorizontal: 20,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -611,20 +614,20 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#32325d",
+    color: COLORS.textPrimary,
     marginBottom: 15,
   },
   dateButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f7fafc",
+    backgroundColor: COLORS.background,
     borderRadius: 10,
     padding: 15,
   },
   dateText: {
     marginLeft: 10,
     fontSize: 16,
-    color: "#525f7f",
+    color: COLORS.textSecondary,
     flex: 1,
   },
   imageContainer: {
@@ -634,7 +637,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     overflow: "hidden",
     position: "relative",
-    backgroundColor: "#f7fafc",
+    backgroundColor: COLORS.background,
   },
   image: {
     width: "100%",
@@ -649,7 +652,7 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     marginTop: 10,
-    color: "#8898AA",
+    color: COLORS.textSecondary,
     fontSize: 16,
   },
   buttonContainer: {
@@ -665,13 +668,13 @@ const styles = StyleSheet.create({
     flex: 0.48,
   },
   galleryButton: {
-    backgroundColor: "#11CDEF",
+    backgroundColor: COLORS.buttonColor,
   },
   cameraButton: {
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.buttonColor2,
   },
   buttonText: {
-    color: "white",
+    color: COLORS.textPrimary,
     fontSize: 16,
     fontWeight: "600",
     marginLeft: 8,
@@ -680,7 +683,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 10,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: COLORS.opaqueBlack,
     borderRadius: 20,
     padding: 5,
   },
@@ -692,7 +695,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#5E72E4",
+    backgroundColor: COLORS.buttonColor2,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 15,
@@ -700,36 +703,36 @@ const styles = StyleSheet.create({
   calorieValue: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "white",
+    color: COLORS.textPrimary,
   },
   calorieLabel: {
     fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
+    color: COLORS.textSecondary,
   },
   reanalyzeButton: {
     padding: 8,
   },
   reanalyzeText: {
     fontSize: 14,
-    color: "#5E72E4",
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   analyzeButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#FB6340",
+    backgroundColor: COLORS.error3,
     borderRadius: 10,
     padding: 15,
     marginBottom: 15,
   },
   disabledButton: {
-    backgroundColor: "#8898AA",
+    backgroundColor: COLORS.blueGrey,
     opacity: 0.7,
   },
   infoText: {
     fontSize: 14,
-    color: "#8898AA",
+    color: COLORS.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -737,20 +740,20 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#2DCE89",
+    backgroundColor: COLORS.buttonColor,
     borderRadius: 10,
     padding: 18,
     marginHorizontal: 20,
     marginTop: 10,
     marginBottom: 20,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   saveButtonText: {
-    color: "white",
+    color: COLORS.textPrimary,
     fontSize: 18,
     fontWeight: "bold",
     marginLeft: 8,
@@ -759,18 +762,18 @@ const styles = StyleSheet.create({
     height: 80,
   },
   descriptionInput: {
-    backgroundColor: "#f7fafc",
+    backgroundColor: COLORS.background,
     borderRadius: 10,
     padding: 15,
     fontSize: 16,
-    color: "#525f7f",
+    color: COLORS.textSecondary,
   },
   dishesContainer: {
     width: '100%',
     marginTop: 20,
   },
   dishCard: {
-    backgroundColor: '#f7fafc',
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 15,
     marginBottom: 10,
@@ -778,12 +781,12 @@ const styles = StyleSheet.create({
   dishName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   dishCalories: {
     fontSize: 14,
-    color: '#FB6340',
+    color: COLORS.textSecondary,
     fontWeight: '500',
     marginBottom: 10,
   },
@@ -792,7 +795,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
     marginTop: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     padding: 10,
   },
@@ -801,13 +804,13 @@ const styles = StyleSheet.create({
   },
   macroLabel: {
     fontSize: 14,
-    color: '#8898AA',
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   macroValue: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#5E72E4',
+    color: COLORS.textSecondary,
   },
   dishHeader: {
     flexDirection: 'row',
@@ -818,25 +821,25 @@ const styles = StyleSheet.create({
   quantityButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0FF',
+    backgroundColor: COLORS.background,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
   },
   quantityText: {
     fontSize: 14,
-    color: '#5D5FEF',
+    color: COLORS.textSecondary,
     fontWeight: '600',
     marginRight: 4,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     padding: 20,
     width: '80%',
@@ -845,13 +848,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginBottom: 8,
     textAlign: 'center',
   },
   modalIngredientName: {
     fontSize: 16,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -859,7 +862,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 8,
     marginBottom: 20,
@@ -871,7 +874,7 @@ const styles = StyleSheet.create({
   },
   unitText: {
     fontSize: 16,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginLeft: 8,
   },
   modalActions: {
@@ -885,29 +888,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.background,
   },
   updateButton: {
-    backgroundColor: '#5D5FEF',
+    backgroundColor: COLORS.primary,
   },
   cancelButtonText: {
-    color: '#666666',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   updateButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '500',
   },
   ingredientsContainer: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 0.5,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: COLORS.grey4,
   },
   ingredientsTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#525F7F',
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   ingredientItem: {
@@ -918,12 +921,12 @@ const styles = StyleSheet.create({
   },
   ingredientName: {
     fontSize: 13,
-    color: '#8898AA',
+    color: COLORS.textSecondary,
     flex: 1,
   },
   ingredientCalories: {
     fontSize: 13,
-    color: '#525F7F',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
 });

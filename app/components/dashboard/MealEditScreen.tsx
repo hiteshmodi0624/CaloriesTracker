@@ -15,6 +15,7 @@ import {
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Meal, MealIngredient } from '../../../types';
+import { COLORS } from '../meals/ingredients/constants';
 
 interface MealEditScreenProps {
   visible: boolean;
@@ -219,7 +220,7 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Edit Meal</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color="#333" />
+              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
             </TouchableOpacity>
           </View>
 
@@ -250,7 +251,7 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
                   onPress={() => setShowDatePicker(true)}
                 >
                   <Text style={styles.dateText}>{mealDate.toDateString()}</Text>
-                  <Ionicons name="calendar-outline" size={24} color="#5E72E4" />
+                  <Ionicons name="calendar-outline" size={24} color={COLORS.secondary} />
                 </TouchableOpacity>
 
                 {showDatePicker && (
@@ -303,7 +304,7 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
                                 <FontAwesome
                                   name="pencil"
                                   size={16}
-                                  color="#007AFF"
+                                  color={COLORS.blue}
                                 />
                               </TouchableOpacity>
                             </View>
@@ -394,16 +395,16 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     height: '90%',
     width: '100%',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -418,16 +419,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: 'white',
+    borderBottomWidth: .2,
+    borderBottomColor: COLORS.lightBluegrey3,
+    backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 8,
@@ -440,11 +441,11 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Extra padding for the save button
   },
   section: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -453,17 +454,17 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 12,
   },
   inputLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
@@ -474,23 +475,23 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   dateText: {
     fontSize: 16,
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   mealCalories: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#5E72E4',
+    color: COLORS.secondary,
     marginTop: 8,
   },
   dishItem: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -498,23 +499,23 @@ const styles = StyleSheet.create({
   dishName: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   dishCalories: {
     fontSize: 14,
-    color: '#FF9500',
+    color: COLORS.orange,
     marginBottom: 8,
   },
   dishIngredients: {
     borderTopWidth: 1,
-    borderTopColor: '#eee',
+    borderTopColor: COLORS.grey4,
     paddingTop: 8,
     marginTop: 8,
   },
   ingredientItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.lightBluegrey3,
   },
   ingredientRow: {
     flexDirection: 'row',
@@ -523,28 +524,28 @@ const styles = StyleSheet.create({
   },
   ingredientName: {
     fontSize: 14,
-    color: '#333',
+    color: COLORS.textPrimary,
     flex: 1,
   },
   ingredientNutrition: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   editButton: {
     padding: 8,
   },
   inlineEditForm: {
-    backgroundColor: '#f5f7ff',
+    backgroundColor: COLORS.background,
     borderRadius: 8,
     padding: 12,
     marginTop: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
   },
   sectionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 12,
     fontStyle: 'italic',
   },
@@ -556,15 +557,15 @@ const styles = StyleSheet.create({
   quantityInput: {
     flex: 0.7,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: COLORS.grey3,
     borderRadius: 8,
     padding: 10,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
   },
   quantityUnit: {
     flex: 0.3,
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginLeft: 10,
   },
   editFormButtons: {
@@ -578,26 +579,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: COLORS.cardBackground3,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
   },
   cancelButtonText: {
-    color: '#666',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   updateButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
   },
   updateButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
   },
   bottomPadding: {
     height: 40,
   },
   saveButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
     margin: 16,
     padding: 16,
     borderRadius: 10,
@@ -608,10 +609,10 @@ const styles = StyleSheet.create({
     right: 0,
   },
   saveButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: COLORS.cardBackground,
   },
   saveButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '600',
   },

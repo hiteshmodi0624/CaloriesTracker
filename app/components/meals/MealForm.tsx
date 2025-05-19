@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../../constants';
 
 interface MealFormProps {
   name: string;
@@ -39,7 +40,10 @@ const MealForm: React.FC<MealFormProps> = ({
         />
 
         <Text style={styles.inputLabel}>Date</Text>
-        <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+        <TouchableOpacity
+          style={styles.dateButton}
+          onPress={() => setShowDatePicker(true)}
+        >
           <Text>{date.toDateString()}</Text>
         </TouchableOpacity>
 
@@ -51,12 +55,17 @@ const MealForm: React.FC<MealFormProps> = ({
             onChange={handleDateChange}
           />
         )}
-        
+
         <TouchableOpacity
           style={styles.previousMealButton}
           onPress={() => setShowPastMeals(true)}
         >
-          <Ionicons name="albums-outline" size={18} color="#fff" style={styles.previousMealIcon} />
+          <Ionicons
+            name="albums-outline"
+            size={18}
+            color={COLORS.white}
+            style={styles.previousMealIcon}
+          />
           <Text style={styles.previousMealButtonText}>Browse Meal History</Text>
         </TouchableOpacity>
       </View>
@@ -69,14 +78,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   formSection: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     padding: 15,
     borderRadius: 15,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -90,12 +99,12 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   requiredBadge: {
     fontSize: 12,
-    color: '#FF3B30',
+    color: COLORS.error,
     fontWeight: '500',
     backgroundColor: 'rgba(255, 59, 48, 0.1)',
     paddingHorizontal: 8,
@@ -104,11 +113,11 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
     padding: 15,
     borderRadius: 10,
     marginBottom: 15,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
   },
   requiredInput: {
     borderColor: 'rgba(255, 59, 48, 0.5)',
@@ -116,16 +125,16 @@ const styles = StyleSheet.create({
   },
   dateButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: COLORS.grey4,
     padding: 15,
     borderRadius: 10,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
   },
   previousMealButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5856D6',
+    backgroundColor: COLORS.darkPurple,
     paddingVertical: 12,
     borderRadius: 10,
     marginTop: 15,
@@ -134,7 +143,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   previousMealButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
     fontSize: 14,
   },

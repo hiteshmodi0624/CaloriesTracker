@@ -6,7 +6,7 @@ import {
   TouchableOpacity 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
+import { COLORS } from '../../constants';
 interface NutritionGoals {
   calories: number;
   protein: number;
@@ -68,7 +68,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
           onPress={onEditGoals}
         >
           <Text style={styles.viewAllText}>Edit Goals</Text>
-          <Ionicons name="chevron-forward" size={16} color="#5E72E4" />
+          <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
         </TouchableOpacity>
       </View>
       
@@ -97,7 +97,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
         <View style={styles.progressItem}>
           <View style={styles.progressLabelRow}>
             <View style={styles.macroIconContainer}>
-              <Ionicons name="flame" size={14} color="#FF9500" />
+              <Ionicons name="flame" size={14} color={COLORS.orange} />
             </View>
             <Text style={styles.progressLabel}>Calories</Text>
             <Text style={styles.progressValue}>
@@ -108,7 +108,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${Math.min(calorieProgress, 100)}%`, backgroundColor: '#FF9500' }
+                { width: `${Math.min(calorieProgress, 100)}%`, backgroundColor: COLORS.orange }
               ]} 
             />
           </View>
@@ -117,7 +117,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
         <View style={styles.progressItem}>
           <View style={styles.progressLabelRow}>
             <View style={styles.macroIconContainer}>
-              <Ionicons name="body" size={14} color="#34C759" />
+              <Ionicons name="body" size={14} color={COLORS.success} />
             </View>
             <Text style={styles.progressLabel}>Protein</Text>
             <Text style={styles.progressValue}>
@@ -128,7 +128,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${Math.min(proteinProgress, 100)}%`, backgroundColor: '#34C759' }
+                { width: `${Math.min(proteinProgress, 100)}%`, backgroundColor: COLORS.success }
               ]} 
             />
           </View>
@@ -137,7 +137,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
         <View style={styles.progressItem}>
           <View style={styles.progressLabelRow}>
             <View style={styles.macroIconContainer}>
-              <Ionicons name="apps" size={14} color="#007AFF" />
+              <Ionicons name="apps" size={14} color={COLORS.blue} />
             </View>
             <Text style={styles.progressLabel}>Carbs</Text>
             <Text style={styles.progressValue}>
@@ -148,7 +148,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${Math.min(carbsProgress, 100)}%`, backgroundColor: '#007AFF' }
+                { width: `${Math.min(carbsProgress, 100)}%`, backgroundColor: COLORS.blue }
               ]} 
             />
           </View>
@@ -157,7 +157,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
         <View style={styles.progressItem}>
           <View style={styles.progressLabelRow}>
             <View style={styles.macroIconContainer}>
-              <Ionicons name="water" size={14} color="#FF3B30" />
+              <Ionicons name="water" size={14} color={COLORS.error} />
             </View>
             <Text style={styles.progressLabel}>Fat</Text>
             <Text style={styles.progressValue}>
@@ -168,7 +168,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             <View 
               style={[
                 styles.progressFill, 
-                { width: `${Math.min(fatProgress, 100)}%`, backgroundColor: '#FF3B30' }
+                { width: `${Math.min(fatProgress, 100)}%`, backgroundColor: COLORS.error }
               ]} 
             />
           </View>
@@ -182,9 +182,9 @@ const styles = StyleSheet.create({
   goalCard: {
     margin: 15,
     padding: 20,
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -193,22 +193,22 @@ const styles = StyleSheet.create({
   goalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   goalSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 15,
   },
   setGoalsButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
     marginTop: 10,
   },
   setGoalsButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
     fontSize: 16,
   },
@@ -221,14 +221,14 @@ const styles = StyleSheet.create({
   summaryTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   viewAllButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   viewAllText: {
-    color: '#5E72E4',
+    color: COLORS.secondary,
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
@@ -248,17 +248,17 @@ const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 12,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
   },
   summaryDivider: {
     width: 1,
     height: 40,
-    backgroundColor: '#e9ecef',
+    backgroundColor: COLORS.cardBackground,
     marginHorizontal: 10,
   },
   progressContainer: {
@@ -276,24 +276,24 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
   progressLabel: {
     fontSize: 14,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     flex: 1,
   },
   progressValue: {
     fontSize: 14,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     fontWeight: '500',
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 4,
     overflow: 'hidden',
   },

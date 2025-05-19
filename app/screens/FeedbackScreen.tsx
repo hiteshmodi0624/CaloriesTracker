@@ -15,7 +15,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
-
+import { COLORS } from '../constants';
 const FeedbackScreen = () => {
   const navigation = useNavigation();
   const [feedback, setFeedback] = useState('');
@@ -64,7 +64,7 @@ const FeedbackScreen = () => {
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Ionicons name="chatbubble-ellipses" size={40} color="#5E72E4" />
+            <Ionicons name="chatbubble-ellipses" size={40} color={COLORS.secondary} />
           </View>
           <Text style={styles.headerText}>We Value Your Feedback</Text>
           <Text style={styles.headerSubText}>
@@ -116,11 +116,11 @@ const FeedbackScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     marginTop: 60, // Account for header + status bar on iOS
   },
   contentContainer: {
@@ -135,11 +135,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 15,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -148,23 +148,23 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 10,
     textAlign: 'center',
   },
   headerSubText: {
     fontSize: 16,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
     lineHeight: 22,
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -172,19 +172,19 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     marginBottom: 8,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: COLORS.background,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 20,
   },
   textArea: {
@@ -192,13 +192,13 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   sendButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.secondary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   sendButtonText: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -208,12 +208,12 @@ const styles = StyleSheet.create({
   },
   alternativeText: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   emailLink: {
     fontSize: 16,
-    color: '#5E72E4',
+    color: COLORS.secondary,
     fontWeight: '500',
   },
 });

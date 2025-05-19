@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { AppContext } from '../context/AppContext';
 import Header from '../components/Header';
-
+import { COLORS } from '../constants';
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const { goals, setGoals } = useContext(AppContext);
@@ -102,7 +102,7 @@ const ProfileScreen = () => {
         <View style={styles.profileHeaderSection}>
           <View style={styles.avatarContainer}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={50} color="#fff" />
+              <Ionicons name="person" size={50} color={COLORS.white} />
             </View>
           </View>
           
@@ -120,6 +120,7 @@ const ProfileScreen = () => {
               value={name}
               onChangeText={setName}
               placeholder="Enter your name"
+              placeholderTextColor={COLORS.textSecondary}
             />
           </View>
           
@@ -132,6 +133,7 @@ const ProfileScreen = () => {
               placeholder="Enter your email"
               keyboardType="email-address"
               autoCapitalize="none"
+              placeholderTextColor={COLORS.textSecondary}
             />
           </View>
         </View>
@@ -148,6 +150,7 @@ const ProfileScreen = () => {
                 onChangeText={setWeight}
                 keyboardType="numeric"
                 placeholder="Weight in kg"
+                placeholderTextColor={COLORS.textSecondary}
               />
             </View>
             
@@ -159,6 +162,7 @@ const ProfileScreen = () => {
                 onChangeText={setHeight}
                 keyboardType="numeric"
                 placeholder="Height in cm"
+                placeholderTextColor={COLORS.textSecondary}
               />
             </View>
           </View>
@@ -172,6 +176,7 @@ const ProfileScreen = () => {
                 onChangeText={setAge}
                 keyboardType="numeric"
                 placeholder="Your age"
+                placeholderTextColor={COLORS.textSecondary}
               />
             </View>
             
@@ -213,7 +218,7 @@ const ProfileScreen = () => {
           disabled={isSaving}
         >
           {isSaving ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={COLORS.white} />
           ) : (
             <Text style={styles.saveButtonText}>Save Profile</Text>
           )}
@@ -226,21 +231,21 @@ const ProfileScreen = () => {
             style={styles.menuItem}
             onPress={navigateToFeedback}
           >
-            <Ionicons name="chatbubble-ellipses-outline" size={24} color="#5E72E4" style={styles.menuIcon} />
+            <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.primary} style={styles.menuIcon} />
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuText}>Send Feedback</Text>
               <Text style={styles.menuSubText}>Help us improve the app</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#ccc" />
+            <Ionicons name="chevron-forward" size={24} color={COLORS.grey3} />
           </TouchableOpacity>
           
           {/* <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="help-circle-outline" size={24} color="#5E72E4" style={styles.menuIcon} />
+            <Ionicons name="help-circle-outline" size={24} color=COLORS.primary style={styles.menuIcon} />
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuText}>Help Center</Text>
               <Text style={styles.menuSubText}>Frequently asked questions</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color="#ccc" />
+            <Ionicons name="chevron-forward" size={24} color=COLORS.grey3 />
           </TouchableOpacity> */}
         </View>
         
@@ -255,11 +260,11 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fe',
+    backgroundColor: COLORS.background,
     marginTop: 60, // Account for header + status bar on iOS
   },
   contentContainer: {
@@ -277,10 +282,10 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -289,19 +294,19 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 5,
   },
   headerSubText: {
     fontSize: 16,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
   },
   card: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
@@ -310,7 +315,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#32325d',
+    color: COLORS.textPrimary,
     marginBottom: 15,
   },
   inputGroup: {
@@ -322,23 +327,23 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: '#525f7f',
+    color: COLORS.textSecondary,
     marginBottom: 8,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: '#f8f9fe',
-    borderWidth: 1,
-    borderColor: '#e9ecef',
+    backgroundColor: COLORS.background,
+    borderWidth: .8,
+    borderColor: COLORS.grey3,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
     overflow: 'hidden',
   },
@@ -348,25 +353,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   segmentedOptionSelected: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.primary,
   },
   segmentedOptionText: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
   segmentedOptionTextSelected: {
-    color: '#fff',
+    color: COLORS.textPrimary,
   },
   saveButton: {
-    backgroundColor: '#5E72E4',
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 20,
   },
   saveButtonText: {
-    color: '#fff',
+    color: COLORS.textPrimary,
     fontSize: 18,
     fontWeight: '600',
   },
@@ -374,8 +379,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomWidth: .2,
+    borderBottomColor: COLORS.lightBluegrey4,
   },
   menuIcon: {
     marginRight: 15,
@@ -385,12 +390,12 @@ const styles = StyleSheet.create({
   },
   menuText: {
     fontSize: 16,
-    color: '#32325d',
+    color: COLORS.textPrimary,
     fontWeight: '500',
   },
   menuSubText: {
     fontSize: 13,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
     marginTop: 3,
   },
   versionContainer: {
@@ -399,7 +404,7 @@ const styles = StyleSheet.create({
   },
   versionText: {
     fontSize: 14,
-    color: '#8898aa',
+    color: COLORS.textSecondary,
   },
 });
 

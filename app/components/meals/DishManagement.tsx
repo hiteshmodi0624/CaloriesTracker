@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Image } from 'react
 import { Ionicons } from '@expo/vector-icons';
 import { Dish } from '../../../types';
 import { NutritionSummary, DishItem } from './index';
+import { COLORS } from '../../constants';
 
 interface DishManagementProps {
   dishes: Dish[];
@@ -105,7 +106,7 @@ const DishManagement: React.FC<DishManagementProps> = ({
                 style={styles.actionButton}
                 onPress={createNewDish}
               >
-                <Ionicons name="add-circle" size={20} color="#fff" style={styles.buttonIcon} />
+                <Ionicons name="add-circle" size={20} color={COLORS.white} style={styles.buttonIcon} />
                 <Text style={styles.actionButtonText}>Add New Dish</Text>
               </TouchableOpacity>
               
@@ -113,14 +114,14 @@ const DishManagement: React.FC<DishManagementProps> = ({
                 style={[styles.actionButton, styles.savedButton]}
                 onPress={() => setShowSavedDishesModal(true)}
               >
-                <Ionicons name="bookmark" size={20} color="#fff" style={styles.buttonIcon} />
+                <Ionicons name="bookmark" size={20} color={COLORS.white} style={styles.buttonIcon} />
                 <Text style={styles.actionButtonText}>Saved Dishes</Text>
               </TouchableOpacity>
             </View>
           </>
         ) : (
           <View style={styles.emptyDishesContainer}>
-            <Ionicons name="restaurant-outline" size={60} color="#E0E0E0" />
+            <Ionicons name="restaurant-outline" size={60} color={COLORS.grey4} />
             <Text style={styles.emptyDishesText}>
               No dishes added yet
             </Text>
@@ -133,7 +134,7 @@ const DishManagement: React.FC<DishManagementProps> = ({
                 style={styles.emptyActionButton}
                 onPress={createNewDish}
               >
-                <Ionicons name="add-circle" size={24} color="#5D5FEF" />
+                <Ionicons name="add-circle" size={24} color={COLORS.primary} />
                 <Text style={styles.emptyActionButtonText}>Create Dish</Text>
               </TouchableOpacity>
               
@@ -141,7 +142,7 @@ const DishManagement: React.FC<DishManagementProps> = ({
                 style={styles.emptyActionButton}
                 onPress={createQuickDish}
               >
-                <Ionicons name="flash" size={24} color="#FF9551" />
+                <Ionicons name="flash" size={24} color={COLORS.orange} />
                 <Text style={styles.emptyActionButtonText}>Quick Add</Text>
               </TouchableOpacity>
               
@@ -149,7 +150,7 @@ const DishManagement: React.FC<DishManagementProps> = ({
                 style={styles.emptyActionButton}
                 onPress={() => setShowSavedDishesModal(true)}
               >
-                <Ionicons name="bookmark" size={24} color="#00BA90" />
+                <Ionicons name="bookmark" size={24} color={COLORS.green} />
                 <Text style={styles.emptyActionButtonText}>Saved Dishes</Text>
               </TouchableOpacity>
             </View>
@@ -169,13 +170,13 @@ const DishManagement: React.FC<DishManagementProps> = ({
                   }}
                 >
                   <View style={styles.quickIdeaIcon}>
-                    <Ionicons name={idea.icon as any} size={24} color="#5D5FEF" />
+                    <Ionicons name={idea.icon as any} size={24} color={COLORS.primary} />
                   </View>
                   <View style={styles.quickIdeaContent}>
                     <Text style={styles.quickIdeaName}>{idea.name}</Text>
                     <Text style={styles.quickIdeaDescription}>{idea.description}</Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={20} color="#CCCCCC" />
+                  <Ionicons name="chevron-forward" size={20} color={COLORS.grey} />
                 </TouchableOpacity>
               ))}
             </View>
@@ -188,11 +189,11 @@ const DishManagement: React.FC<DishManagementProps> = ({
 
 const styles = StyleSheet.create({
   formSection: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     padding: 20,
     borderRadius: 20,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
@@ -207,12 +208,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333333',
+    color: COLORS.textPrimary,
   },
   dishCount: {
     fontSize: 14,
-    color: '#666666',
-    backgroundColor: '#F5F5F7',
+    color: COLORS.textSecondary,
+    backgroundColor: COLORS.cardBackground3,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -231,16 +232,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#5D5FEF',
+    backgroundColor: COLORS.primary,
     paddingVertical: 12,
     borderRadius: 12,
     flex: 0.48,
   },
   savedButton: {
-    backgroundColor: '#4DDFFD',
+    backgroundColor: COLORS.lightBlue,
   },
   actionButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
     fontSize: 16,
   },
@@ -251,13 +252,13 @@ const styles = StyleSheet.create({
   emptyDishesText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginTop: 15,
     textAlign: 'center',
   },
   emptyDishesSubtext: {
     fontSize: 14,
-    color: '#666666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginTop: 5,
     marginBottom: 25,
@@ -270,21 +271,22 @@ const styles = StyleSheet.create({
   },
   emptyActionButton: {
     alignItems: 'center',
-    backgroundColor: '#F5F5F7',
+    backgroundColor: COLORS.cardBackground3,
     padding: 15,
     borderRadius: 12,
     flex: 0.31,
   },
   emptyActionButtonText: {
-    color: '#333333',
+    color: COLORS.textPrimary,
     fontWeight: '500',
     fontSize: 14,
     marginTop: 8,
+    textAlign: 'center',
   },
   quickIdeasTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
     alignSelf: 'flex-start',
     marginBottom: 10,
   },
@@ -294,7 +296,7 @@ const styles = StyleSheet.create({
   quickIdeaCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9F9FB',
+    backgroundColor: COLORS.cardBackground3,
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
@@ -303,7 +305,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0FF',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -314,12 +316,12 @@ const styles = StyleSheet.create({
   quickIdeaName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333333',
+    color: COLORS.textPrimary,
     marginBottom: 2,
   },
   quickIdeaDescription: {
     fontSize: 13,
-    color: '#666666',
+    color: COLORS.textSecondary,
   },
 });
 

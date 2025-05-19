@@ -2,22 +2,8 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Ingredient } from '../../../../types';
+import { COLORS } from './constants';
 
-// Constants for styles
-const { width } = Dimensions.get('window');
-const COLORS = {
-  white: '#FFFFFF',
-  black: '#000000',
-  primary: '#007AFF',
-  grey1: '#6E6E6E',
-  grey2: '#AEAEB2',
-  grey3: '#C7C7CC',
-  grey5: '#E5E5EA',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  background: '#F2F2F7',
-  error: '#FF3B30',
-  success: '#34C759',
-};
 
 interface IngredientItemProps {
   ingredient: Ingredient;
@@ -74,7 +60,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginVertical: 4,
@@ -91,7 +77,7 @@ const styles = StyleSheet.create({
   ingredientName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.black,
+    color: COLORS.textPrimary,
     marginBottom: 6,
   },
   ingredientDetails: {
@@ -100,7 +86,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ingredientUnit: {
-    backgroundColor: COLORS.grey5,
+    backgroundColor: COLORS.cardBackground3,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,
@@ -108,11 +94,11 @@ const styles = StyleSheet.create({
   },
   ingredientUnitText: {
     fontSize: 12,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
   },
   ingredientCalories: {
     fontSize: 14,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
   },
   macrosContainer: {
     flexDirection: 'row',
@@ -120,7 +106,7 @@ const styles = StyleSheet.create({
   },
   macroText: {
     fontSize: 12,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginRight: 8,
   },
   addButtonContainer: {
@@ -132,7 +118,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     justifyContent: 'center',
     alignItems: 'center',
   },

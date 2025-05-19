@@ -8,6 +8,7 @@ import UpdateModal from '../components/UpdateModal';
 import { View, TouchableOpacity, StyleSheet, Text, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import ProfileStack from './ProfileStack';
+import { COLORS } from '../constants';
 
 const Tab = createBottomTabNavigator();
 const RootStack = createStackNavigator();
@@ -45,7 +46,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
                 onPress={onPress}
                 style={styles.addButton}
               >
-                <Ionicons name="add" size={30} color="#FFF" />
+                <Ionicons name="add" size={30} color={COLORS.white} />
               </TouchableOpacity>
             );
           }
@@ -60,12 +61,12 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
               <Ionicons
                 name={iconName as any}
                 size={22}
-                color={isFocused ? '#007AFF' : '#8E8E93'}
+                color={isFocused ? COLORS.primary : COLORS.textSecondary}
               />
               <Text
                 style={[
                   styles.label,
-                  { color: isFocused ? '#007AFF' : '#8E8E93' }
+                  { color: isFocused ? COLORS.primary : COLORS.textSecondary }
                 ]}
               >
                 {label}
@@ -180,7 +181,8 @@ const Navigation: React.FC = () => {
 
 const styles = StyleSheet.create({
   screenContainer: {
-    flex: 1
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
   bottomSpacer: {
     height: 100 // Add spacer at the bottom of all screens
@@ -194,7 +196,7 @@ const styles = StyleSheet.create({
   },
   tabBarContainer: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 30,
     width: '90%',
     height: 60,
@@ -203,7 +205,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: COLORS.black,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 10,
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   addButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.primary,
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -229,7 +231,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#007AFF',
+        shadowColor: COLORS.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 6,

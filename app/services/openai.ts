@@ -2,10 +2,8 @@ import OpenAI from 'openai';
 import * as FileSystem from 'expo-file-system';
 import { NutritionInfo } from '../../types';
 import { ENV, validateEnv } from '../config/env';
-import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
 
 // Validate environment variables at startup
 if (!validateEnv()) {
@@ -117,9 +115,29 @@ export const fetchNutritionForIngredient = async (
 
 export const fetchChatResponse = async (
   userMessage: string,
-  messageHistory: { text: string; isUser: boolean }[]
+  messageHistory: { text: string; isUser: boolean }[],
+  userData?: {
+    weight?: number;
+    height?: number;
+    age?: number;
+    gender?: 'male' | 'female';
+    activityLevel?: 'sedentary' | 'lightly active' | 'moderately active' | 'very active' | 'extra active';
+    goal?: 'lose weight' | 'gain weight' | 'maintain' | 'build muscle';
+  }
 ): Promise<string> => {
   try {
+    // Create a description of user data for the system prompt
+    let userDataDescription = '';
+    if (userData) {
+      userDataDescription = `\nUSER DATA:`;
+      if (userData.weight) userDataDescription += `\n- Weight: ${userData.weight}kg`;
+      if (userData.height) userDataDescription += `\n- Height: ${userData.height}cm`;
+      if (userData.age) userDataDescription += `\n- Age: ${userData.age} years`;
+      if (userData.gender) userDataDescription += `\n- Gender: ${userData.gender}`;
+      if (userData.activityLevel) userDataDescription += `\n- Activity Level: ${userData.activityLevel}`;
+      if (userData.goal) userDataDescription += `\n- Goal: ${userData.goal}`;
+    }
+
     const messages = [
       {
         role: "system" as const,
@@ -128,25 +146,49 @@ export const fetchChatResponse = async (
 2. Adding meals and ingredients
 3. Providing nutrition advice
 
-When setting goals, calculate and provide:
-- Daily calorie target
-- Protein, carbs, and fat requirements
-- Activity level recommendations
+Use the following user data to personalize your responses:${userDataDescription}
+
+When setting goals, you should:
+1. Use any existing user data you have
+2. Ask for any missing information needed (weight, height, age, gender, activity level, goal)
+3. If the user provides any new data in their message, extract and use it
+
+DO NOT calculate nutrition values yourself. ONLY collect user details to pass to the app's calculator.
 
 FORMAT FOR GOAL SETTING:
-When you calculate nutrition goals, use the following template to ensure the app can correctly extract the data:
+When collecting user information for goals, use the following JSON template wrapped in triple backticks. The app will use its own calculator with this data:
 
-Setting your nutrition goals:
-Calories: [calories]
-Protein: [protein]g
-Carbs: [carbs]g
-Fat: [fat]g
+\`\`\`json
+{
+  "type": "nutrition_goals",
+  "userDetails": {
+    "weight": [weight in kg],
+    "height": [height in cm],
+    "age": [age in years],
+    "gender": "[male or female]",
+    "activityLevel": "[sedentary/lightly active/moderately active/very active/extra active]",
+    "goal": "[lose weight/gain weight/maintain/build muscle]"
+  },
+  "description": "Brief explanation of the user's goals and activity level"
+}
+\`\`\`
 
-For example: "Setting your nutrition goals:
-Calories: 2200
-Protein: 150g
-Carbs: 220g
-Fat: 70g"
+For example:
+
+\`\`\`json
+{
+  "type": "nutrition_goals",
+  "userDetails": {
+    "weight": 70,
+    "height": 175,
+    "age": 30,
+    "gender": "male",
+    "activityLevel": "moderately active",
+    "goal": "lose weight"
+  },
+  "description": "User wants to lose weight with moderate activity 3-5 times per week"
+}
+\`\`\`
 
 When adding meals or ingredients, provide detailed nutrition information.
 

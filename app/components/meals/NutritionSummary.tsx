@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { COLORS } from '../../constants';
 
 interface NutritionSummaryProps {
   nutrition: {
@@ -87,11 +88,11 @@ const NutritionSummary: React.FC<NutritionSummaryProps> = ({ nutrition }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 15,
     marginBottom: 20,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -106,19 +107,19 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
   calories: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#FF9500',
+    color: COLORS.orange,
   },
   macrosContainer: {
     marginTop: 5,
   },
   macroProgressBar: {
     height: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: COLORS.lightBluegrey3,
     borderRadius: 6,
     flexDirection: 'row',
     overflow: 'hidden',
@@ -128,13 +129,13 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   proteinBar: {
-    backgroundColor: '#5856D6',
+    backgroundColor: COLORS.darkPurple,
   },
   carbsBar: {
-    backgroundColor: '#FF9500',
+    backgroundColor: COLORS.orange,
   },
   fatBar: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: COLORS.error,
   },
   macrosInfo: {
     flexDirection: 'row',
@@ -152,22 +153,22 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   proteinIndicator: {
-    backgroundColor: '#5856D6',
+    backgroundColor: COLORS.darkPurple,
   },
   carbsIndicator: {
-    backgroundColor: '#FF9500',
+    backgroundColor: COLORS.orange,
   },
   fatIndicator: {
-    backgroundColor: '#FF3B30',
+    backgroundColor: COLORS.error,
   },
   macroLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   macroValue: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.textPrimary,
   },
 });
 

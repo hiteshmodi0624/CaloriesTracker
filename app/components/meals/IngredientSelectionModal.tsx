@@ -18,29 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { Camera } from 'expo-camera';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { IngredientSelectionView, CustomIngredientForm } from './ingredients';
-
-// Get screen dimensions directly
-const { height } = Dimensions.get('window');
-
-// Define colors here directly to avoid import issues
-const COLORS = {
-  primary: '#0A84FF',
-  secondary: '#5E5CE6',
-  success: '#34C759',
-  warning: '#FF9500',
-  danger: '#FF3B30',
-  grey1: '#8E8E93',
-  grey2: '#AEAEB2',
-  grey3: '#C7C7CC',
-  grey4: '#D1D1D6',
-  grey5: '#E5E5EA',
-  grey6: '#F2F2F7',
-  black: '#1C1C1E',
-  white: '#FFFFFF',
-  background: '#F9F9F9',
-  card: '#FFFFFF',
-  overlay: 'rgba(0,0,0,0.4)',
-};
+import { COLORS } from '../../constants/colors';
 
 // Define interfaces
 interface IngredientSelectionModalProps {
@@ -423,17 +401,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.opaqueBlack,
   },
   modalContent: {
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 20,
     overflow: 'scroll',
     height: '80%',
     width: '90%',
     alignSelf: 'center',
     marginBottom: 10,
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,

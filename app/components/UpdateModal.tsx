@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { APP_VERSION, OPENAI_SERVICE_VERSION, resetFailureCounter } from '../services/openai';
+import { COLORS } from '../constants';
 
 interface UpdateModalProps {
   visible: boolean;
@@ -44,7 +45,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ visible, onDismiss }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View style={styles.iconContainer}>
-            <Ionicons name="refresh-circle" size={60} color="#5856D6" />
+            <Ionicons name="refresh-circle" size={60} color={COLORS.darkPurple} />
           </View>
           
           <Text style={styles.title}>Update Recommended</Text>
@@ -84,17 +85,17 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     padding: 20
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 15,
     padding: 20,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: {
       width: 0,
       height: 2
@@ -110,18 +111,18 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 15,
-    color: '#333'
+    color: COLORS.textPrimary
   },
   message: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 20,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 22
   },
   versionInfo: {
     fontSize: 14,
-    color: '#888',
+    color: COLORS.textSecondary,
     marginBottom: 20
   },
   buttonContainer: {
@@ -137,18 +138,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 5
   },
   primaryButton: {
-    backgroundColor: '#5856D6'
+    backgroundColor: COLORS.darkPurple
   },
   secondaryButton: {
-    backgroundColor: '#f5f5f5'
+    backgroundColor: COLORS.cardBackground3
   },
   primaryButtonText: {
-    color: 'white',
+    color: COLORS.white,
     fontWeight: '600',
     fontSize: 16
   },
   secondaryButtonText: {
-    color: '#666',
+    color: COLORS.textSecondary,
     fontWeight: '600',
     fontSize: 16
   }

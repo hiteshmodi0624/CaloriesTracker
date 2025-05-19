@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { COLORS } from '../../constants';
 
 interface SnackbarProps {
   visible: boolean;
@@ -56,14 +57,14 @@ const Snackbar: React.FC<SnackbarProps> = ({
   const getBackgroundColor = () => {
     switch (type) {
       case 'success':
-        return '#34C759';
+        return COLORS.success;
       case 'warning':
-        return '#FF9500';
+        return COLORS.orange;
       case 'info':
-        return '#007AFF';
+        return COLORS.blue;
       case 'error':
       default:
-        return '#FF3B30';
+        return COLORS.error;
     }
   };
 
@@ -90,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -98,7 +99,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   message: {
-    color: 'white',
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',

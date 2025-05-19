@@ -1,35 +1,22 @@
-import React from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  TextInput, 
-  ScrollView, 
+import React from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  ScrollView,
   Image,
   ActivityIndicator,
-  StyleSheet, 
-  Dimensions 
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { NutritionInfo } from '../../../../types';
+  StyleSheet,
+  Dimensions,
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { NutritionInfo } from "../../../../types";
+import { COLORS } from "./constants";
 
 // Constants for styles
-const { width } = Dimensions.get('window');
-const COLORS = {
-  white: '#FFFFFF',
-  black: '#000000',
-  primary: '#007AFF',
-  grey1: '#6E6E6E',
-  grey2: '#AEAEB2',
-  grey3: '#C7C7CC',
-  grey5: '#E5E5EA',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  background: '#F2F2F7',
-  error: '#FF3B30',
-  success: '#34C759',
-};
-
-const UNITS = ['g', 'ml', 'oz', 'lb', 'cup', 'tbsp', 'tsp', 'piece', 'serving'];
+const { width } = Dimensions.get("window");
+const UNITS = ["g", "ml", "oz", "lb", "cup", "tbsp", "tsp", "piece", "serving"];
 
 interface CustomIngredientFormProps {
   name: string;
@@ -80,21 +67,21 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
   handleFetchNutrition,
   handleAddCustomIngredient,
   handleCloseCustomForm,
-  getBaseQuantityForSelectedUnit
+  getBaseQuantityForSelectedUnit,
 }) => {
   return (
     <View style={styles.customFormContainer}>
       {/* Header */}
       <View style={styles.customFormHeader}>
         <TouchableOpacity onPress={handleCloseCustomForm}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.blue} />
         </TouchableOpacity>
         <Text style={styles.customFormTitle}>Add Custom Ingredient</Text>
-        <View style={{width: 24}} />
+        <View style={{ width: 24 }} />
       </View>
-      
+
       {/* Form Content */}
-      <ScrollView 
+      <ScrollView
         style={styles.customFormScroll}
         contentContainerStyle={styles.customFormContent}
         showsVerticalScrollIndicator={false}
@@ -102,65 +89,73 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
         <Text style={styles.customFormDescription}>
           Create a new ingredient with complete nutrition information
         </Text>
-        
+
         {/* Basic Info Section */}
         <View style={styles.formSection}>
           <Text style={styles.formSectionTitle}>Basic Information</Text>
-          
+
           <Text style={styles.inputLabel}>Ingredient Name*</Text>
-          <View style={[
-            styles.inputContainer,
-            submitAttempted && !isNameValid && styles.inputError
-          ]}>
+          <View
+            style={[
+              styles.inputContainer,
+              submitAttempted && !isNameValid && styles.inputError,
+            ]}
+          >
             <TextInput
               style={styles.input}
               placeholder="e.g., Homemade Bread"
-              placeholderTextColor={COLORS.grey2}
+              placeholderTextColor={COLORS.grey3}
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
             />
             {name.length > 0 && (
-              <TouchableOpacity onPress={() => setName('')}>
-                <Ionicons name="close-circle" size={18} color={COLORS.grey1} />
+              <TouchableOpacity onPress={() => setName("")}>
+                <Ionicons
+                  name="close-circle"
+                  size={18}
+                  color={COLORS.grey2}
+                />
               </TouchableOpacity>
             )}
           </View>
           {submitAttempted && !isNameValid && (
-            <Text style={styles.errorText}>Please enter an ingredient name</Text>
+            <Text style={styles.errorText}>
+              Please enter an ingredient name
+            </Text>
           )}
-          
+
           <Text style={styles.inputLabel}>Unit of Measurement*</Text>
           <TouchableOpacity
             style={styles.unitSelector}
             onPress={() => setShowUnitSelector(!showUnitSelector)}
           >
             <Text style={styles.unitSelectorText}>{unit}</Text>
-            <Ionicons 
-              name={showUnitSelector ? "chevron-up" : "chevron-down"} 
-              size={18} 
-              color={COLORS.grey1} 
+            <Ionicons
+              name={showUnitSelector ? "chevron-up" : "chevron-down"}
+              size={18}
+              color={COLORS.grey2}
             />
           </TouchableOpacity>
-          
+
           {showUnitSelector && (
             <View style={styles.unitDropdown}>
-              {UNITS.map(u => (
-                <TouchableOpacity 
-                  key={u} 
+              {UNITS.map((u) => (
+                <TouchableOpacity
+                  key={u}
                   style={[
                     styles.unitOption,
-                    unit === u && styles.unitOptionSelected
+                    unit === u && styles.unitOptionSelected,
                   ]}
                   onPress={() => {
                     setUnit(u);
                     setShowUnitSelector(false);
                   }}
                 >
-                  <Text 
+                  <Text
                     style={[
                       styles.unitOptionText,
-                      unit === u && styles.unitOptionTextSelected
+                      unit === u && styles.unitOptionTextSelected,
                     ]}
                   >
                     {u}
@@ -170,7 +165,7 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
             </View>
           )}
         </View>
-        
+
         {/* Nutrition Section */}
         <View style={styles.formSection}>
           <View style={styles.sectionHeader}>
@@ -179,27 +174,40 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
               Per {getBaseQuantityForSelectedUnit(unit)} {unit}
             </Text>
           </View>
-          
+
           {/* Image Upload Section */}
           <View style={styles.imageSection}>
             {imageUri ? (
               <View style={styles.imageContainer}>
                 <Image source={{ uri: imageUri }} style={styles.image} />
-                <TouchableOpacity 
-                  style={styles.removeImageButton} 
+                <TouchableOpacity
+                  style={styles.removeImageButton}
                   onPress={() => setImageUri(null)}
                 >
-                  <Ionicons name="close-circle" size={24} color={COLORS.white} />
+                  <Ionicons
+                    name="close-circle"
+                    size={24}
+                    color={COLORS.white}
+                  />
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity 
-                style={styles.imagePlaceholder} 
+              <TouchableOpacity
+                style={styles.imagePlaceholder}
                 onPress={pickImage}
               >
                 <View style={styles.imageIconContainer}>
-                  <Ionicons name="camera-outline" size={28} color={COLORS.grey1} />
-                  <Ionicons name="image-outline" size={28} color={COLORS.grey1} style={{marginLeft: 24}} />
+                  <Ionicons
+                    name="camera-outline"
+                    size={28}
+                    color={COLORS.grey2}
+                  />
+                  <Ionicons
+                    name="image-outline"
+                    size={28}
+                    color={COLORS.grey2}
+                    style={{ marginLeft: 24 }}
+                  />
                 </View>
                 <Text style={styles.imagePlaceholderText}>
                   Tap to take a photo or select from gallery
@@ -208,7 +216,7 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
             )}
 
             {imageUri && (
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.processButton}
                 onPress={processNutritionLabel}
                 disabled={customLoading}
@@ -217,8 +225,15 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
                   <ActivityIndicator size="small" color={COLORS.white} />
                 ) : (
                   <View style={styles.buttonContent}>
-                    <Ionicons name="scan-outline" size={18} color={COLORS.white} style={{marginRight: 8}} />
-                    <Text style={styles.buttonText}>Process Nutrition Label</Text>
+                    <Ionicons
+                      name="scan-outline"
+                      size={18}
+                      color={COLORS.white}
+                      style={{ marginRight: 8 }}
+                    />
+                    <Text style={styles.buttonText}>
+                      Process Nutrition Label
+                    </Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -231,9 +246,9 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
             <Text style={styles.dividerText}>OR</Text>
             <View style={styles.dividerLine} />
           </View>
-          
+
           {/* Fetch Nutrition Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.fetchButton}
             onPress={handleFetchNutrition}
             disabled={customLoading || !name}
@@ -242,12 +257,17 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
               <ActivityIndicator size="small" color={COLORS.white} />
             ) : (
               <View style={styles.buttonContent}>
-                <Ionicons name="nutrition-outline" size={18} color={COLORS.white} style={{marginRight: 8}} />
+                <Ionicons
+                  name="nutrition-outline"
+                  size={18}
+                  color={COLORS.white}
+                  style={{ marginRight: 8 }}
+                />
                 <Text style={styles.buttonText}>Fetch Nutrition Data</Text>
               </View>
             )}
           </TouchableOpacity>
-          
+
           {/* Nutrition Input Fields */}
           <View style={styles.nutritionGrid}>
             <View style={styles.nutritionItem}>
@@ -255,81 +275,90 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
               <TextInput
                 style={[
                   styles.nutritionInput,
-                  submitAttempted && !isCaloriesValid && styles.inputError
+                  submitAttempted && !isCaloriesValid && styles.inputError,
                 ]}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={COLORS.grey2}
+                placeholderTextColor={COLORS.grey3}
                 value={nutrition.calories.toString()}
-                onChangeText={text => {
-                  const value = text.trim() === '' ? 0 : parseFloat(text);
-                  setNutrition({...nutrition, calories: isNaN(value) ? 0 : value});
+                onChangeText={(text) => {
+                  const value = text.trim() === "" ? 0 : parseFloat(text);
+                  setNutrition({
+                    ...nutrition,
+                    calories: isNaN(value) ? 0 : value,
+                  });
                 }}
               />
               {submitAttempted && !isCaloriesValid && (
                 <Text style={styles.errorText}>Required</Text>
               )}
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Protein (g)</Text>
               <TextInput
                 style={styles.nutritionInput}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={COLORS.grey2}
-                value={nutrition.protein?.toString() || ''}
-                onChangeText={text => {
-                  const value = text.trim() === '' ? 0 : parseFloat(text);
-                  setNutrition({...nutrition, protein: isNaN(value) ? 0 : value});
+                placeholderTextColor={COLORS.grey3}
+                value={nutrition.protein?.toString() || ""}
+                onChangeText={(text) => {
+                  const value = text.trim() === "" ? 0 : parseFloat(text);
+                  setNutrition({
+                    ...nutrition,
+                    protein: isNaN(value) ? 0 : value,
+                  });
                 }}
               />
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Carbs (g)</Text>
               <TextInput
                 style={styles.nutritionInput}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={COLORS.grey2}
-                value={nutrition.carbs?.toString() || ''}
-                onChangeText={text => {
-                  const value = text.trim() === '' ? 0 : parseFloat(text);
-                  setNutrition({...nutrition, carbs: isNaN(value) ? 0 : value});
+                placeholderTextColor={COLORS.grey3}
+                value={nutrition.carbs?.toString() || ""}
+                onChangeText={(text) => {
+                  const value = text.trim() === "" ? 0 : parseFloat(text);
+                  setNutrition({
+                    ...nutrition,
+                    carbs: isNaN(value) ? 0 : value,
+                  });
                 }}
               />
             </View>
-            
+
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Fat (g)</Text>
               <TextInput
                 style={styles.nutritionInput}
                 keyboardType="numeric"
                 placeholder="0"
-                placeholderTextColor={COLORS.grey2}
-                value={nutrition.fat?.toString() || ''}
-                onChangeText={text => {
-                  const value = text.trim() === '' ? 0 : parseFloat(text);
-                  setNutrition({...nutrition, fat: isNaN(value) ? 0 : value});
+                placeholderTextColor={COLORS.grey3}
+                value={nutrition.fat?.toString() || ""}
+                onChangeText={(text) => {
+                  const value = text.trim() === "" ? 0 : parseFloat(text);
+                  setNutrition({ ...nutrition, fat: isNaN(value) ? 0 : value });
                 }}
               />
             </View>
           </View>
         </View>
-        
+
         <Text style={styles.requiredNote}>* Required fields</Text>
-        
+
         {/* Extra space for bottom padding */}
-        <View style={{height: 80}} />
+        <View style={{ height: 80 }} />
       </ScrollView>
-      
+
       {/* Footer with Save Button */}
       <View style={styles.footer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
             styles.saveButton,
-            (!isFormValid || customLoading) && styles.saveButtonDisabled
+            (!isFormValid || customLoading) && styles.saveButtonDisabled,
           ]}
           onPress={handleAddCustomIngredient}
           disabled={!isFormValid || customLoading}
@@ -348,22 +377,20 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
 const styles = StyleSheet.create({
   customFormContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.cardBackground3,
   },
   customFormHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey5,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground3,
   },
   customFormTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.black,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
   },
   customFormScroll: {
     flex: 1,
@@ -373,12 +400,12 @@ const styles = StyleSheet.create({
   },
   customFormDescription: {
     fontSize: 14,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginBottom: 24,
   },
   formSection: {
     marginBottom: 24,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 12,
     padding: 16,
     shadowColor: COLORS.black,
@@ -389,8 +416,8 @@ const styles = StyleSheet.create({
   },
   formSectionTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.black,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
     marginBottom: 16,
   },
   sectionHeader: {
@@ -398,24 +425,24 @@ const styles = StyleSheet.create({
   },
   formSectionSubtitle: {
     fontSize: 14,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginTop: 4,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
-    color: COLORS.black,
+    fontWeight: "500",
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.grey5,
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     paddingHorizontal: 12,
     marginBottom: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
   },
   inputError: {
     borderColor: COLORS.error,
@@ -424,7 +451,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.textPrimary,
   },
   errorText: {
     color: COLORS.error,
@@ -433,25 +460,25 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   unitSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.grey5,
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginBottom: 16,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
   },
   unitSelectorText: {
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.textPrimary,
   },
   unitDropdown: {
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground,
     borderWidth: 1,
-    borderColor: COLORS.grey5,
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     marginTop: -12,
     marginBottom: 16,
@@ -461,146 +488,144 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey5,
+    borderBottomColor: COLORS.grey4,
   },
   unitOptionSelected: {
-    backgroundColor: COLORS.primary + '15',
+    backgroundColor: COLORS.blue + "15",
   },
   unitOptionText: {
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.textPrimary,
   },
   unitOptionTextSelected: {
-    color: COLORS.primary,
-    fontWeight: '500',
+    color: COLORS.blue,
+    fontWeight: "500",
   },
   imageSection: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 16,
   },
   imageContainer: {
-    width: '100%',
+    width: "100%",
     height: 180,
     borderRadius: 8,
-    overflow: 'hidden',
+    overflow: "hidden",
     marginBottom: 12,
   },
   image: {
-    width: '100%',
-    height: '100%',
+    width: "100%",
+    height: "100%",
   },
   removeImageButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.opaqueBlack,
     borderRadius: 12,
   },
   imagePlaceholder: {
-    width: '100%',
+    width: "100%",
     height: 180,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.grey5,
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: COLORS.grey4,
+    borderStyle: "dashed",
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 12,
-    backgroundColor: COLORS.grey5 + '30',
+    backgroundColor: COLORS.grey4 + "30",
   },
   imageIconContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     marginBottom: 16,
   },
   imagePlaceholderText: {
-    color: COLORS.grey1,
-    textAlign: 'center',
+    color: COLORS.textSecondary,
+    textAlign: "center",
     paddingHorizontal: 20,
   },
   processButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginTop: 8,
   },
   divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: COLORS.grey5,
+    backgroundColor: COLORS.grey4,
   },
   dividerText: {
     paddingHorizontal: 16,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     fontSize: 14,
   },
   fetchButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.error3,
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 24,
-    alignItems: 'center',
+    alignItems: "center",
   },
   buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   buttonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   nutritionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   nutritionItem: {
-    width: '48%',
+    width: "48%",
     marginBottom: 16,
   },
   nutritionInput: {
     borderWidth: 1,
-    borderColor: COLORS.grey5,
+    borderColor: COLORS.grey4,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
-    color: COLORS.black,
-    backgroundColor: COLORS.white,
+    color: COLORS.textPrimary,
+    backgroundColor: COLORS.cardBackground,
   },
   requiredNote: {
     fontSize: 12,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginBottom: 8,
   },
   footer: {
-    padding: 16,
-    backgroundColor: COLORS.white,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.grey5,
+    padding: 8,
+    backgroundColor: COLORS.cardBackground,
   },
   saveButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.blue,
     paddingVertical: 14,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   saveButtonDisabled: {
-    backgroundColor: COLORS.grey3,
+    backgroundColor: COLORS.buttonColor2,
   },
   saveButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 
-export default CustomIngredientForm; 
+export default CustomIngredientForm;

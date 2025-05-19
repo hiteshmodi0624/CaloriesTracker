@@ -1,33 +1,17 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  TouchableOpacity, 
-  TextInput, 
-  FlatList, 
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  FlatList,
   ActivityIndicator,
-  StyleSheet, 
-  Dimensions 
-} from 'react-native';
+  StyleSheet,
+} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
 import { Ingredient } from '../../../../types';
 import IngredientItem from './IngredientItem';
-
-// Constants for styles
-const { width } = Dimensions.get('window');
-const COLORS = {
-  white: '#FFFFFF',
-  black: '#000000',
-  primary: '#007AFF',
-  grey1: '#6E6E6E',
-  grey2: '#AEAEB2',
-  grey3: '#C7C7CC',
-  grey5: '#E5E5EA',
-  overlay: 'rgba(0, 0, 0, 0.5)',
-  background: '#F2F2F7',
-  error: '#FF3B30',
-  success: '#34C759',
-};
+import { COLORS } from './constants';
 
 interface IngredientSelectionViewProps {
   searchTerm: string;
@@ -62,17 +46,17 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Select Ingredient</Text>
         <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-          <Ionicons name="close" size={24} color={COLORS.black} />
+          <Ionicons name="close" size={24} color={COLORS.textPrimary} />
         </TouchableOpacity>
       </View>
       
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color={COLORS.grey1} style={styles.searchIcon} />
+        <Ionicons name="search" size={20} color={COLORS.grey2} style={styles.searchIcon} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search ingredients..."
-          placeholderTextColor={COLORS.grey2}
+          placeholderTextColor={COLORS.grey3}
           value={searchTerm}
           onChangeText={(text) => {
             onSearchChange(text);
@@ -83,7 +67,7 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
         />
         {searchTerm ? (
           <TouchableOpacity onPress={handleClearSearch}>
-            <Ionicons name="close-circle-outline" size={20} color={COLORS.grey1} />
+            <Ionicons name="close-circle-outline" size={20} color={COLORS.grey2} />
           </TouchableOpacity>
         ) : null}
       </View>
@@ -98,12 +82,12 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
       <View style={styles.contentContainer}>
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
+            <ActivityIndicator size="large" color={COLORS.blue} />
             <Text style={styles.loadingText}>Loading ingredients...</Text>
           </View>
         ) : searchTerm && filteredIngredients.length === 0 ? (
           <View style={styles.emptyResultsContainer}>
-            <Ionicons name="search-outline" size={48} color={COLORS.grey3} />
+            <Ionicons name="search-outline" size={48} color={COLORS.grey4} />
             <Text style={styles.emptyResultsTitle}>No results found</Text>
             <Text style={styles.emptyResultsSubtitle}>
               Try a different search term or add a custom ingredient
@@ -158,7 +142,7 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
               ListEmptyComponent={
                 !searchTerm && ingredients.length === 0 ? (
                   <View style={styles.emptyListContainer}>
-                    <Ionicons name="nutrition-outline" size={48} color={COLORS.grey3} />
+                    <Ionicons name="nutrition-outline" size={48} color={COLORS.grey4} />
                     <Text style={styles.emptyListTitle}>No ingredients yet</Text>
                     <Text style={styles.emptyListSubtitle}>
                       Add your first ingredient using the button above
@@ -177,7 +161,7 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
 const styles = StyleSheet.create({
   selectionContainer: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.cardBackground3,
   },
   header: {
     flexDirection: 'row',
@@ -185,14 +169,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey5,
-    backgroundColor: COLORS.white,
+    backgroundColor: COLORS.cardBackground3,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.black,
+    color: COLORS.textPrimary,
   },
   closeButton: {
     padding: 4,
@@ -218,14 +200,14 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: COLORS.black,
+    color: COLORS.textPrimary,
     paddingVertical: 4,
   },
   addCustomButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.buttonColor,
     borderRadius: 10,
     marginHorizontal: 16,
     marginBottom: 16,
@@ -249,7 +231,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.black,
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   recentList: {
@@ -269,7 +251,7 @@ const styles = StyleSheet.create({
   },
   resultCount: {
     fontSize: 14,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
   },
   ingredientsList: {
     paddingBottom: 20,
@@ -283,7 +265,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
   },
   emptyResultsContainer: {
     flex: 1,
@@ -294,13 +276,13 @@ const styles = StyleSheet.create({
   emptyResultsTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyResultsSubtitle: {
     fontSize: 14,
-    color: COLORS.grey2,
+    color: COLORS.textTertiary,
     textAlign: 'center',
     paddingHorizontal: 30,
   },
@@ -314,13 +296,13 @@ const styles = StyleSheet.create({
   emptyListTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.grey1,
+    color: COLORS.textSecondary,
     marginTop: 16,
     marginBottom: 8,
   },
   emptyListSubtitle: {
     fontSize: 14,
-    color: COLORS.grey2,
+    color: COLORS.textTertiary,
     textAlign: 'center',
     paddingHorizontal: 30,
   },

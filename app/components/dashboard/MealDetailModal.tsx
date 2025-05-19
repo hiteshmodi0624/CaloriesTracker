@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { Meal } from '../../../types';
+import { COLORS } from '../../constants';
 
 interface MealDetailProps {
   visible: boolean;
@@ -75,19 +76,19 @@ const MealDetailModal: React.FC<MealDetailProps> = ({
                 style={styles.editButton}
                 onPress={handleNavigateToEdit}
               >
-                <MaterialIcons name="edit" size={24} color="#007AFF" />
+                <MaterialIcons name="edit" size={24} color={COLORS.blue} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.deleteButton}
                 onPress={handleDelete}
               >
-                <MaterialIcons name="delete" size={24} color="#FF3B30" />
+                <MaterialIcons name="delete" size={24} color={COLORS.error} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={onClose}
               >
-                <Ionicons name="close" size={24} color="#333" />
+                <Ionicons name="close" size={24} color={COLORS.darkGrey} />
               </TouchableOpacity>
             </View>
           </View>
@@ -156,16 +157,16 @@ const MealDetailModal: React.FC<MealDetailProps> = ({
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: COLORS.opaqueBlack,
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
     maxHeight: "90%",
-    shadowColor: "#000",
+    shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -181,12 +182,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: COLORS.lightBluegrey3,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   modalActions: {
     flexDirection: "row",
@@ -205,24 +206,24 @@ const styles = StyleSheet.create({
   },
   mealDate: {
     fontSize: 14,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginBottom: 5,
   },
   mealCalories: {
     fontSize: 18,
-    color: "#5E72E4",
+    color: COLORS.secondary,
     fontWeight: "500",
     marginBottom: 15,
   },
   modalSubtitle: {
     fontSize: 16,
     fontWeight: "500",
-    color: "#333",
+    color: COLORS.textPrimary,
     marginBottom: 10,
     marginTop: 10,
   },
   dishItem: {
-    backgroundColor: "#f7f7f7",
+    backgroundColor: COLORS.cardBackground3,
     borderRadius: 8,
     padding: 12,
     marginBottom: 15,
@@ -230,31 +231,31 @@ const styles = StyleSheet.create({
   dishName: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: COLORS.textPrimary,
     marginBottom: 5,
   },
   dishCalories: {
     fontSize: 14,
-    color: "#FF9500",
+    color: COLORS.orange,
     marginBottom: 8,
   },
   dishIngredients: {
     borderTopWidth: 1,
-    borderTopColor: "#eee",
+    borderTopColor: COLORS.grey4,
     paddingTop: 8,
   },
   ingredientItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
+    borderBottomColor: COLORS.lightBluegrey3,
   },
   ingredientName: {
     fontSize: 14,
-    color: "#333",
+    color: COLORS.textPrimary,
   },
   ingredientNutrition: {
     fontSize: 12,
-    color: "#666",
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
   bottomPadding: {

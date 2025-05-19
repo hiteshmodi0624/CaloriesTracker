@@ -10,19 +10,19 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.hiteshmodi0624.Fynko"
+      "bundleIdentifier": "com.threecomma.fynko"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.hiteshmodi0624.Fynko"
+      "package": "com.threecomma.fynko"
     },
     "web": {
       "favicon": "./assets/favicon.png"
