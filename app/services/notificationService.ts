@@ -143,6 +143,23 @@ export const isNotificationDismissed = async (notificationId: string): Promise<b
 };
 
 /**
+ * Gets custom onboarding notifications stored locally
+ * @returns Promise<Notification[]>
+ */
+export const getCustomNotifications = async (): Promise<Notification[]> => {
+  try {
+    const customNotificationsJson = await AsyncStorage.getItem('custom_notifications');
+    if (customNotificationsJson) {
+      return JSON.parse(customNotificationsJson);
+    }
+    return [];
+  } catch (error) {
+    console.error('Error getting custom notifications:', error);
+    return [];
+  }
+};
+
+/**
  * Gets active (non-dismissed) notifications
  * @returns Promise<Notification[]>
  */
@@ -151,12 +168,18 @@ export const getActiveNotifications = async (): Promise<Notification[]> => {
     // Fetch all notifications from API
     const allNotifications = await fetchNotifications();
     
+    // Get custom notifications (like onboarding)
+    const customNotifications = await getCustomNotifications();
+    
+    // Combine API and custom notifications
+    const combinedNotifications = [...allNotifications, ...customNotifications];
+    
     // Get list of dismissed notification IDs
     const dismissedIds = await getDismissedNotifications();
     
     // Filter out dismissed notifications that are dismissible (non-blocking)
     // Blocking notifications are always shown regardless of dismissed status
-    return allNotifications.filter(notification => 
+    return combinedNotifications.filter(notification => 
       notification.type === 'blocking' || !dismissedIds.includes(notification.id)
     );
   } catch (error) {

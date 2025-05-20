@@ -20,7 +20,7 @@ import Header from '../components/Header';
 import { COLORS } from '../constants';
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const { goals, setGoals } = useContext(AppContext);
+  const { goals, setGoals, markProfileCompleted } = useContext(AppContext);
   
   // User profile state
   const [name, setName] = useState('');
@@ -79,6 +79,9 @@ const ProfileScreen = () => {
         await setGoals(updatedGoals);
       }
       
+      // Mark profile setup as completed
+      await markProfileCompleted();
+      navigation.goBack();
       Alert.alert('Success', 'Your profile has been updated!');
     } catch (error) {
       console.error('Error saving profile:', error);

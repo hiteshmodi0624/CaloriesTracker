@@ -109,8 +109,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({ childr
     // Handle button action
     if (button.action === 'dismiss') {
       await handleDismissNotification(notificationId);
-    } else if (button.link) {
-      // Open link if provided
+    } else if (button.link && button.action !== 'navigate') {
+      // Open link if provided and not a navigation action
       Linking.openURL(button.link).catch(err => {
         console.error('Failed to open URL:', err);
       });

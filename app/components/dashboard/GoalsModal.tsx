@@ -37,7 +37,7 @@ interface GoalsModalProps {
 }
 
 const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
-  const { goals, setGoals } = useContext(AppContext);
+  const { goals, setGoals, markGoalsCompleted } = useContext(AppContext);
   
   // Goal setting state with calculator approach
   const [weight, setWeight] = useState(goals?.weight ? goals.weight.toString() : '70');
@@ -179,6 +179,10 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
       }
       
       await setGoals(newGoals);
+      
+      // Mark goals setup as completed
+      await markGoalsCompleted();
+      
       onClose();
       Alert.alert('Success', 'Your nutrition goals have been updated!');
     } catch (error) {

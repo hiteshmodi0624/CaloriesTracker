@@ -26,6 +26,12 @@ interface AppContextData {
   goals: NutritionGoals | null;
   updateAvailable: boolean;
   showUpdateModal: boolean;
+  isFirstTimeUser: boolean;
+  hasCompletedProfile: boolean;
+  hasSetGoals: boolean;
+  checkOnboardingStatus: () => Promise<{ profileCompleted: boolean; goalsCompleted: boolean }>;
+  markProfileCompleted: () => Promise<void>;
+  markGoalsCompleted: () => Promise<void>;
   setShowUpdateModal: (show: boolean) => void;
   checkForUpdates: () => void;
   dismissUpdateRecommendation: () => void;
@@ -52,6 +58,12 @@ export const AppContext = createContext<AppContextData>({
   goals: null,
   updateAvailable: false,
   showUpdateModal: false,
+  isFirstTimeUser: true,
+  hasCompletedProfile: false,
+  hasSetGoals: false,
+  checkOnboardingStatus: async () => ({ profileCompleted: false, goalsCompleted: false }),
+  markProfileCompleted: async () => {},
+  markGoalsCompleted: async () => {},
   setShowUpdateModal: () => {},
   checkForUpdates: () => {},
   dismissUpdateRecommendation: () => {},
@@ -80,6 +92,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [savedDishes, setSavedDishes] = useState<Dish[]>([]);
   const [goals, setGoalsState] = useState<NutritionGoals | null>(null);
+  const [isFirstTimeUser, setIsFirstTimeUser] = useState<boolean>(true);
+  const [hasCompletedProfile, setHasCompletedProfile] = useState<boolean>(false);
+  const [hasSetGoals, setHasSetGoals] = useState<boolean>(false);
 
   useEffect(() => {
     (async () => {
@@ -169,6 +184,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setGoalsState(null);
         }
         
+        // Load onboarding status
+        const onboardingStatus = await AsyncStorage.getItem('onboarding_status');
+        if (onboardingStatus) {
+          const { isFirstTime, profileCompleted, goalsCompleted } = JSON.parse(onboardingStatus);
+          setIsFirstTimeUser(isFirstTime);
+          setHasCompletedProfile(profileCompleted);
+          setHasSetGoals(goalsCompleted);
+        } else {
+          setIsFirstTimeUser(true);
+          setHasCompletedProfile(false);
+          setHasSetGoals(false);
+        }
+        
         console.log('App data loading complete');
       } catch (e) {
         console.error('Failed to load data', e);
@@ -177,6 +205,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setIngredients([]);
         setSavedDishes([]);
         setGoalsState(null);
+        setIsFirstTimeUser(true);
+        setHasCompletedProfile(false);
+        setHasSetGoals(false);
       }
     })();
   }, []);
@@ -619,6 +650,61 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => clearInterval(updateCheckInterval);
   }, []);
 
+  // Check if user has completed onboarding
+  const checkOnboardingStatus = async () => {
+    try {
+      const storedName = await AsyncStorage.getItem('user_name');
+      const goalsJson = await AsyncStorage.getItem('goals');
+      
+      const profileCompleted = !!storedName;
+      const goalsCompleted = !!goalsJson;
+      
+      setHasCompletedProfile(profileCompleted);
+      setHasSetGoals(goalsCompleted);
+      
+      // Save onboarding status
+      await AsyncStorage.setItem('onboarding_status', JSON.stringify({
+        isFirstTime: isFirstTimeUser && (!profileCompleted || !goalsCompleted),
+        profileCompleted,
+        goalsCompleted
+      }));
+      
+      return { profileCompleted, goalsCompleted };
+    } catch (error) {
+      console.error('Error checking onboarding status:', error);
+      return { profileCompleted: false, goalsCompleted: false };
+    }
+  };
+  
+  // Mark profile setup as completed
+  const markProfileCompleted = async () => {
+    try {
+      setHasCompletedProfile(true);
+      await AsyncStorage.setItem('onboarding_status', JSON.stringify({
+        isFirstTime: isFirstTimeUser && !hasSetGoals,
+        profileCompleted: true,
+        goalsCompleted: hasSetGoals
+      }));
+    } catch (error) {
+      console.error('Error marking profile as completed:', error);
+    }
+  };
+  
+  // Mark goals setup as completed
+  const markGoalsCompleted = async () => {
+    try {
+      setHasSetGoals(true);
+      setIsFirstTimeUser(false);
+      await AsyncStorage.setItem('onboarding_status', JSON.stringify({
+        isFirstTime: false,
+        profileCompleted: hasCompletedProfile,
+        goalsCompleted: true
+      }));
+    } catch (error) {
+      console.error('Error marking goals as completed:', error);
+    }
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -628,6 +714,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         goals,
         updateAvailable,
         showUpdateModal,
+        isFirstTimeUser,
+        hasCompletedProfile,
+        hasSetGoals,
+        checkOnboardingStatus,
+        markProfileCompleted,
+        markGoalsCompleted,
         setShowUpdateModal,
         checkForUpdates,
         dismissUpdateRecommendation,

@@ -51,13 +51,13 @@ export type NutritionGoals = {
   gender: 'male' | 'female';
 };
 
-export type NotificationButton = {
+export interface NotificationButton {
   id: string;
   text: string;
+  action?: 'dismiss' | 'update' | 'custom' | 'navigate';
   link?: string;
-  action?: 'dismiss' | 'update' | 'custom';
   onPress?: () => void;
-};
+}
 
 export type NotificationType = 'blocking' | 'non-blocking';
 

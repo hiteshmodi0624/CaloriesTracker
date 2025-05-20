@@ -49,8 +49,13 @@ type InspirationItem = {
 
 const Home: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
-  const { meals, goals } = useContext(AppContext);
+  const { meals, goals, checkOnboardingStatus } = useContext(AppContext);
   const [scrollY] = useState(new Animated.Value(0));
+
+  // Check onboarding status when Home screen loads
+  useEffect(() => {
+    checkOnboardingStatus();
+  }, []);
 
   // Calculate today's stats
   const today = new Date().toISOString().split("T")[0];

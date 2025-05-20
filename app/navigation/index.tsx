@@ -160,11 +160,15 @@ const TabNavigator = () => {
   );
 };
 
-const Navigation: React.FC = () => {
+interface NavigationProps {
+  navigationRef?: React.RefObject<any>;
+}
+
+const Navigation: React.FC<NavigationProps> = ({ navigationRef }) => {
   const { showUpdateModal, setShowUpdateModal } = useContext(AppContext);
   
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="MainTabs" component={TabNavigator} />
         <RootStack.Screen name="ProfileStack" component={ProfileStack} />

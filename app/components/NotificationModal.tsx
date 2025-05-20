@@ -9,12 +9,15 @@ import {
   Linking,
   Platform,
   ScrollView,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../constants';
-import { Notification } from '../../types';
+import { Notification, NotificationButton } from '../../types';
 import HTML from 'react-native-render-html';
 import { useWindowDimensions } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 interface NotificationModalProps {
   notification: Notification | null;
@@ -29,22 +32,18 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
   onDismiss,
   onButtonPress,
 }) => {
-  const { width } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
 
-  if (!notification) {
+  // Don't render anything if notification is null or if modal is not visible
+  if (!notification || !visible) {
     return null;
   }
 
-  // Handler for button actions
-  const handleButtonPress = (buttonId: string) => {
-    onButtonPress(notification.id, buttonId);
-  };
-
-  // Handler for dismissing the notification
-  const handleDismiss = () => {
-    if (notification.dismissible) {
-      onDismiss(notification.id);
-    }
+  const handleButtonPress = (button: NotificationButton) => {
+    onButtonPress(notification.id, button.id);
+    
+    // For 'navigate' actions, we'll handle it in the parent component
+    // This prevents errors when NotificationModal is rendered outside NavigationContainer
   };
 
   return (
@@ -52,7 +51,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
       visible={visible}
       animationType="fade"
       transparent={true}
-      onRequestClose={handleDismiss}
+      onRequestClose={() => notification.dismissible && onDismiss(notification.id)}
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
@@ -60,7 +59,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
           <View style={styles.headerContainer}>
             <Text style={styles.title}>{notification.title}</Text>
             {notification.dismissible && (
-              <TouchableOpacity onPress={handleDismiss} style={styles.closeButton}>
+              <TouchableOpacity onPress={() => onDismiss(notification.id)} style={styles.closeButton}>
                 <Ionicons name="close" size={24} color={COLORS.grey2} />
               </TouchableOpacity>
             )}
@@ -86,8 +85,14 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
               <View style={styles.htmlContainer}>
                 <HTML
                   source={{ html: notification.htmlContent }}
-                  contentWidth={width - 80}
-                  baseStyle={styles.htmlBaseStyle}
+                  contentWidth={windowWidth - 80}
+                  tagsStyles={{
+                    p: { color: COLORS.textPrimary, lineHeight: 22 },
+                    h1: { color: COLORS.textPrimary },
+                    h2: { color: COLORS.textPrimary },
+                    h3: { color: COLORS.textPrimary },
+                    a: { color: COLORS.primary }
+                  }}
                 />
               </View>
             ) : (
@@ -102,27 +107,20 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
               notification.buttons.length > 2 && styles.buttonContainerColumn,
             ]}
           >
-            {notification.buttons.map((button) => (
+            {notification.buttons.map((button, index) => (
               <TouchableOpacity
                 key={button.id}
                 style={[
                   styles.button,
-                  button.action === 'dismiss'
-                    ? styles.secondaryButton
-                    : button.action === 'update'
-                    ? styles.primaryButton
-                    : styles.customButton,
+                  index === 0 ? styles.primaryButton : styles.secondaryButton,
                   notification.buttons.length > 2 && styles.fullWidthButton,
                 ]}
-                onPress={() => handleButtonPress(button.id)}
+                onPress={() => handleButtonPress(button)}
               >
                 <Text
                   style={[
-                    button.action === 'dismiss'
-                      ? styles.secondaryButtonText
-                      : button.action === 'update'
-                      ? styles.primaryButtonText
-                      : styles.customButtonText,
+                    styles.buttonText,
+                    index === 0 ? styles.primaryButtonText : styles.secondaryButtonText,
                   ]}
                 >
                   {button.text}
@@ -245,6 +243,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   customButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  buttonText: {
     color: COLORS.white,
     fontWeight: '600',
     fontSize: 16,
