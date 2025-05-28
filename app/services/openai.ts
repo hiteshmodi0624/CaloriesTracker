@@ -242,10 +242,20 @@ export interface DishWithIngredients extends NutritionInfo {
   ingredients: IngredientData[];
 }
 
+// Add interface definition for simplified dish analysis
+export interface SimpleDishData {
+  name: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  estimatedQuantity?: string; // e.g., "1 serving", "200g", etc.
+}
+
 export const fetchImageCalories = async (
   imageUri: string,
   description: string = ''
-): Promise<DishWithIngredients[]> => {
+): Promise<SimpleDishData[]> => {
   try {
     // Read the image file as base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
@@ -262,11 +272,10 @@ export const fetchImageCalories = async (
     }
 
     const promptText = description 
-      ? `Analyze this food image and identify all dishes present. The user provided this description: "${description}". Use this description to help identify the food and quantities. For each dish, provide detailed information in this exact JSON format: [{"name": "Dish Name", "calories": 000, "protein": 00, "carbs": 00, "fat": 00, "ingredients": [{"name": "Ingredient Name", "quantity": 0, "unit": "g/pcs/servings/ml/oz", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}]}]. Include at least 2-4 main ingredients per dish with their estimated quantities. Return ONLY the valid JSON array with no other text.`
-      : `Analyze this food image and identify all dishes present. For each dish, provide detailed information in this exact JSON format: [{"name": "Dish Name", "calories": 000, "protein": 00, "carbs": 00, "fat": 00, "ingredients": [{"name": "Ingredient Name", "quantity": 0, "unit": "g/oz/etc", "calories": 000, "protein": 00, "carbs": 00, "fat": 00}]}]. Include at least 2-4 main ingredients per dish with their estimated quantities. Return ONLY the valid JSON array with no other text.`;
-
+      ? `Analyze this food image and identify all dishes present. The user provided this description: "${description}". Use this description to help identify the complete meal and estimate quantities of each dish. For each dish, provide the TOTAL nutrition values for ALL items of that dish visible in the image (e.g., if you see 5 rotis, provide calories for all 5 rotis combined). Count the quantity carefully and include it in estimatedQuantity. Return in this exact JSON format: [{"name": "Dish Name", "calories": 000, "protein": 00, "carbs": 00, "fat": 00, "estimatedQuantity": "5 rotis" or "2 servings" etc}]. Return ONLY the valid JSON array with no other text.`
+      : `Analyze this food image and identify all dishes present. For each dish, provide the TOTAL nutrition values for ALL items of that dish visible in the image (e.g., if you see 5 rotis, provide calories for all 5 rotis combined). Count the quantity carefully and include it in estimatedQuantity. Return in this exact JSON format: [{"name": "Dish Name", "calories": 000, "protein": 00, "carbs": 00, "fat": 00, "estimatedQuantity": "5 rotis" or "2 servings" etc}]. Return ONLY the valid JSON array with no other text.`;
     const response = await openai.chat.completions.create({
-      model: "gpt-4o", // Use the latest optimized model with vision capabilities
+      model: "gpt-4.1-mini", // Use the latest optimized model with vision capabilities
       messages: [
         {
           role: "user" as const,
@@ -279,13 +288,12 @@ export const fetchImageCalories = async (
               type: "image_url" as const,
               image_url: {
                 url: `data:image/jpeg;base64,${base64}`,
-                detail: "low" // Use low detail to reduce token usage
               }
             }
           ]
         }
       ],
-      max_tokens: 1000
+      max_tokens: 800
     });
 
     const content = response.choices[0]?.message?.content;
@@ -308,22 +316,14 @@ export const fetchImageCalories = async (
           console.log('Parsed dishes data:', dishesData);
           
           if (Array.isArray(dishesData) && dishesData.length > 0) {
-            // Return array of dishes with their nutrition and ingredient data
+            // Return array of dishes with their nutrition data (no ingredients breakdown)
             return dishesData.map(dish => ({
               name: dish.name || 'Unknown Dish',
               calories: dish.calories || 0,
               protein: dish.protein || 0,
               carbs: dish.carbs || 0,
               fat: dish.fat || 0,
-              ingredients: Array.isArray(dish.ingredients) ? dish.ingredients.map((ing: any) => ({
-                name: ing.name || 'Unknown Ingredient',
-                quantity: ing.quantity || 1,
-                unit: ing.unit || 'serving',
-                calories: ing.calories || 0,
-                protein: ing.protein || 0,
-                carbs: ing.carbs || 0,
-                fat: ing.fat || 0
-              })) : []
+              estimatedQuantity: dish.estimatedQuantity || '1 serving'
             }));
           }
         } catch (initialParseError) {
@@ -344,22 +344,14 @@ export const fetchImageCalories = async (
             console.log('Parsed dishes data after cleanup:', dishesData);
             
             if (Array.isArray(dishesData) && dishesData.length > 0) {
-              // Return array of dishes with their nutrition and ingredient data
+              // Return array of dishes with their nutrition data (no ingredients breakdown)
               return dishesData.map(dish => ({
                 name: dish.name || 'Unknown Dish',
                 calories: dish.calories || 0,
                 protein: dish.protein || 0,
                 carbs: dish.carbs || 0,
                 fat: dish.fat || 0,
-                ingredients: Array.isArray(dish.ingredients) ? dish.ingredients.map((ing: any) => ({
-                  name: ing.name || 'Unknown Ingredient',
-                  quantity: ing.quantity || 1,
-                  unit: ing.unit || 'serving',
-                  calories: ing.calories || 0,
-                  protein: ing.protein || 0,
-                  carbs: ing.carbs || 0,
-                  fat: ing.fat || 0
-                })) : []
+                estimatedQuantity: dish.estimatedQuantity || '1 serving'
               }));
             }
           } catch (cleanupParseError) {
@@ -390,15 +382,7 @@ export const fetchImageCalories = async (
             protein: dish.protein || 0,
             carbs: dish.carbs || 0,
             fat: dish.fat || 0,
-            ingredients: Array.isArray(dish.ingredients) ? dish.ingredients.map((ing: any) => ({
-              name: ing.name || 'Unknown Ingredient',
-              quantity: ing.quantity || 1,
-              unit: ing.unit || 'serving',
-              calories: ing.calories || 0,
-              protein: ing.protein || 0,
-              carbs: ing.carbs || 0,
-              fat: ing.fat || 0
-            })) : []
+            estimatedQuantity: dish.estimatedQuantity || '1 serving'
           }];
         } catch (singleDishParseError) {
           console.error('Failed to parse single dish JSON:', singleDishParseError);
@@ -410,31 +394,14 @@ export const fetchImageCalories = async (
 
     // Fallback to a basic structure if parsing fails
     console.log('Falling back to basic structure');
-    return [{
-      name: 'Photo Meal',
-      calories: 350,
-      protein: 15,
-      carbs: 30,
-      fat: 15,
-      ingredients: [
-        {
-          name: 'Unknown Ingredient',
-          quantity: 1,
-          unit: 'serving',
-          calories: 350,
-          protein: 15,
-          carbs: 30,
-          fat: 15
-        }
-      ]
-    }];
+    return [];
   } catch (error) {
     console.error('Error analyzing image:', error);
     throw error;
   }
 };
 
-export async function extractNutritionFromLabel(imageUri: string): Promise<NutritionInfo> {
+export async function extractNutritionFromLabel(imageUri: string, unit: string): Promise<NutritionInfo> {
   try {
     // Read the image file as base64
     const base64 = await FileSystem.readAsStringAsync(imageUri, {
@@ -451,14 +418,15 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
     }
     
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o', // Use the latest optimized model
+      model: 'gpt-4.1-mini', // Use the latest optimized model
       messages: [
         {
           role: 'user',
           content: [
             {
               type: "text" as const,
-              text: "Analyze this nutrition label image and extract the following nutritional information in JSON format: calories, protein, carbs, and fat. Only respond with the JSON object."
+              text: `Analyze this nutrition label image and extract the following nutritional information in JSON format: calories, protein, carbs, and fat. Only respond with the JSON object. 
+              The nutrition values should be for per ${unit} of the ingredient.`
             },
             {
               type: "image_url" as const,
@@ -521,12 +489,9 @@ export async function extractNutritionFromLabel(imageUri: string): Promise<Nutri
 export const fetchNutritionForDish = async (
   dishName: string,
   servingSize: number = 1
-): Promise<DishWithIngredients> => {
+): Promise<SimpleDishData> => {
   try {
-    const prompt = `For the dish "${dishName}" with ${servingSize} serving(s):
-1. Provide overall dish nutrition (calories, protein, carbs, fat)
-2. Generate 3-5 main ingredients that would typically be in this dish
-3. Include estimated quantities and nutrition for each ingredient
+    const prompt = `For the dish "${dishName}" with ${servingSize} serving(s), provide the TOTAL nutrition values for the entire dish. Do not break it down into ingredients. Estimate the nutrition based on a typical serving of this dish.
 
 Format your response as a single JSON object with this exact structure:
 {
@@ -535,27 +500,15 @@ Format your response as a single JSON object with this exact structure:
   "protein": 00,
   "carbs": 00,
   "fat": 00,
-  "ingredients": [
-    {
-      "name": "Ingredient Name",
-      "quantity": 0.0,
-      "unit": "g/oz/cup/etc",
-      "calories": 000,
-      "protein": 00,
-      "carbs": 00,
-      "fat": 00
-    },
-    ...more ingredients...
-  ]
-}
-The total nutrition values should approximately equal the sum of all ingredient nutrition values.`;
+  "estimatedQuantity": "${servingSize} serving(s)"
+}`;
     
     const response = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
         {
           role: "system" as const,
-          content: "You are a nutrition expert. Provide accurate nutritional information for dishes and their ingredients. Always respond with valid JSON that exactly matches the requested structure. The nutrition values for the dish should approximately equal the sum of the ingredients. Return ONLY the JSON object with no markdown or explanatory text."
+          content: "You are a nutrition expert. Provide accurate nutritional information for dishes as complete units. Always respond with valid JSON that exactly matches the requested structure. Return ONLY the JSON object with no markdown or explanatory text."
         },
         {
           role: "user" as const,
@@ -572,7 +525,7 @@ The total nutrition values should approximately equal the sum of all ingredient 
       throw new Error('No response from OpenAI');
     }
 
-    console.log('Dish with ingredients response:', content);
+    console.log('Dish nutrition response:', content);
     
     try {
       // Parse the response
@@ -581,19 +534,6 @@ The total nutrition values should approximately equal the sum of all ingredient 
       // Reset failure counter on success
       consecutiveFailures = 0;
       
-      // Process the ingredients
-      const processedIngredients = Array.isArray(dishData.ingredients) 
-        ? dishData.ingredients.map((ing: any) => ({
-            name: ing.name || 'Unknown Ingredient',
-            quantity: ing.quantity || 1,
-            unit: ing.unit || 'serving',
-            calories: ing.calories || 0,
-            protein: ing.protein || 0,
-            carbs: ing.carbs || 0,
-            fat: ing.fat || 0
-          }))
-        : [];
-      
       // Build the final result object
       return {
         name: dishData.name || dishName,
@@ -601,7 +541,7 @@ The total nutrition values should approximately equal the sum of all ingredient 
         protein: dishData.protein || 0,
         carbs: dishData.carbs || 0,
         fat: dishData.fat || 0,
-        ingredients: processedIngredients
+        estimatedQuantity: dishData.estimatedQuantity || `${servingSize} serving(s)`
       };
     } catch (parseError) {
       console.error('JSON parse error:', parseError);
@@ -615,17 +555,7 @@ The total nutrition values should approximately equal the sum of all ingredient 
         protein: 15,
         carbs: 30,
         fat: 15,
-        ingredients: [
-          {
-            name: `${dishName} (main component)`,
-            quantity: 1,
-            unit: 'serving',
-            calories: 350,
-            protein: 15, 
-            carbs: 30,
-            fat: 15
-          }
-        ]
+        estimatedQuantity: `${servingSize} serving(s)`
       };
     }
   } catch (error) {
@@ -640,17 +570,7 @@ The total nutrition values should approximately equal the sum of all ingredient 
       protein: 15,
       carbs: 30,
       fat: 15,
-      ingredients: [
-        {
-          name: `${dishName} (main component)`,
-          quantity: 1,
-          unit: 'serving',
-          calories: 350,
-          protein: 15,
-          carbs: 30,
-          fat: 15
-        }
-      ]
+      estimatedQuantity: `${servingSize} serving(s)`
     };
   }
 }; 

@@ -381,20 +381,20 @@ export default function AIChatScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
-      
+      <StatusBar barStyle="light-content" />
+
       <Header title="AI Assistant" showHeaderBackground={isScrolled} />
 
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={60}
       >
         <ScrollView
           ref={scrollViewRef}
           style={styles.messagesContainer}
           contentContainerStyle={styles.messagesContent}
-        onScroll={(event) => {
+          onScroll={(event) => {
             // Simple scroll detection without animation values
             const scrollOffset = event.nativeEvent.contentOffset.y;
             setIsScrolled(scrollOffset > 10);
@@ -402,7 +402,7 @@ export default function AIChatScreen() {
           scrollEventThrottle={16}
         >
           {messages.map((message, index) =>
-            message.isUser 
+            message.isUser
               ? renderUserMessageBubble(message.text, index)
               : renderAIMessageBubble(message.text, index)
           )}
@@ -417,25 +417,30 @@ export default function AIChatScreen() {
               value={inputText}
               onChangeText={setInputText}
               placeholder="Type your message..."
-              placeholderTextColor={COLORS.grey2}
+              placeholderTextColor={COLORS.grey4}
               multiline
               maxLength={500}
             />
+
+            <TouchableOpacity
+              style={[
+                styles.sendButton,
+                !inputText.trim()
+                  ? styles.sendButtonDisabled
+                  : styles.sendButtonActive,
+              ]}
+              onPress={handleSend}
+              disabled={!inputText.trim() || isLoading}
+            >
+              <Ionicons
+                name="send"
+                size={20}
+                color={
+                  !inputText.trim() || isLoading ? COLORS.grey2 : COLORS.white
+                }
+              />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={[
-              styles.sendButton, 
-              !inputText.trim() ? styles.sendButtonDisabled : styles.sendButtonActive
-            ]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isLoading}
-          >
-            <Ionicons
-              name="send"
-              size={22}
-              color={!inputText.trim() || isLoading ? COLORS.grey2 : COLORS.white}
-            />
-          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -557,13 +562,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: COLORS.cardBackground,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.opaqueBlack,
+    backgroundColor: COLORS.background,
   },
   inputWrapper: {
     flex: 1,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 25,
     paddingHorizontal: 16,
     paddingVertical: Platform.OS === "ios" ? 10 : 4,
@@ -573,16 +576,20 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   input: {
     fontSize: 16,
     color: COLORS.textPrimary,
     maxHeight: 100,
     padding: 0,
+    flex: 1,
   },
   sendButton: {
-    width: 44,
-    height: 44,
+    width: 36,
+    height: 36,
     borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",

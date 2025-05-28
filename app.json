@@ -14,7 +14,11 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.threecomma.fynko"
+      "bundleIdentifier": "com.threecomma.fynko",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to camera to take photos of nutrition labels for automatic nutrition analysis.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to select nutrition label images for automatic nutrition analysis."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,10 +26,24 @@
         "backgroundColor": "#000"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.threecomma.fynko"
+      "package": "com.threecomma.fynko",
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you select nutrition label images for automatic nutrition analysis.",
+          "cameraPermission": "The app accesses your camera to let you take photos of nutrition labels for automatic nutrition analysis."
+        }
+      ]
+    ]
   }
 }

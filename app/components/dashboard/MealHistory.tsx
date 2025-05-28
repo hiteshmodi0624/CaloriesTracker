@@ -69,7 +69,7 @@ const MealHistory: React.FC<MealHistoryProps> = ({
               style={styles.closeButton}
               onPress={onClose}
             >
-              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
+              <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -184,8 +184,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey3,
   },
   modalTitleContainer: {
     flexDirection: 'row',
@@ -202,7 +200,7 @@ const styles = StyleSheet.create({
   emptyStateContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 30,
   },
@@ -223,7 +221,7 @@ const styles = StyleSheet.create({
   },
   historyDayCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,

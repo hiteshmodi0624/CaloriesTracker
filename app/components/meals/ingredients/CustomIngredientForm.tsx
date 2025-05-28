@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   Image,
   ActivityIndicator,
@@ -13,6 +12,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { NutritionInfo } from "../../../../types";
 import { COLORS } from "./constants";
+import { FynkoTextInput } from "../../common";
 
 // Constants for styles
 const { width } = Dimensions.get("window");
@@ -44,6 +44,13 @@ interface CustomIngredientFormProps {
   getBaseQuantityForSelectedUnit: (unit: string) => number;
 }
 
+interface NutritionInputState {
+  calories: string;
+  protein: string;
+  carbs: string;
+  fat: string;
+}
+
 const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
   name,
   setName,
@@ -69,6 +76,46 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
   handleCloseCustomForm,
   getBaseQuantityForSelectedUnit,
 }) => {
+  const [nutritionInputs, setNutritionInputs] = React.useState<NutritionInputState>({
+    calories: nutrition.calories.toString(),
+    protein: (nutrition.protein ?? 0).toString(),
+    carbs: (nutrition.carbs ?? 0).toString(),
+    fat: (nutrition.fat ?? 0).toString(),
+  });
+
+  React.useEffect(() => {
+    setNutritionInputs({
+      calories: nutrition.calories.toString(),
+      protein: (nutrition.protein ?? 0).toString(),
+      carbs: (nutrition.carbs ?? 0).toString(),
+      fat: (nutrition.fat ?? 0).toString(),
+    });
+  }, [nutrition]);
+
+  const updateNutritionValue = (
+    field: keyof NutritionInputState,
+    value: string
+  ) => {
+    if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
+      setNutritionInputs((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+
+      if (
+        value !== "" &&
+        value[value.length - 1] != "." &&
+        /^[0-9]*\.?[0-9]*$/.test(value)
+      ) {
+        const numValue = value === "" ? 0 : parseFloat(value);
+        setNutrition({
+          ...nutrition,
+          [field]: numValue,
+        });
+      }
+    }
+  };
+
   return (
     <View style={styles.customFormContainer}>
       {/* Header */}
@@ -101,7 +148,7 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
               submitAttempted && !isNameValid && styles.inputError,
             ]}
           >
-            <TextInput
+            <FynkoTextInput
               style={styles.input}
               placeholder="e.g., Homemade Bread"
               placeholderTextColor={COLORS.grey3}
@@ -140,28 +187,34 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
 
           {showUnitSelector && (
             <View style={styles.unitDropdown}>
-              {UNITS.map((u) => (
-                <TouchableOpacity
-                  key={u}
-                  style={[
-                    styles.unitOption,
-                    unit === u && styles.unitOptionSelected,
-                  ]}
-                  onPress={() => {
-                    setUnit(u);
-                    setShowUnitSelector(false);
-                  }}
-                >
-                  <Text
+              <ScrollView 
+                style={styles.unitScrollView}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {UNITS.map((u) => (
+                  <TouchableOpacity
+                    key={u}
                     style={[
-                      styles.unitOptionText,
-                      unit === u && styles.unitOptionTextSelected,
+                      styles.unitOption,
+                      unit === u && styles.unitOptionSelected,
                     ]}
+                    onPress={() => {
+                      setUnit(u);
+                      setShowUnitSelector(false);
+                    }}
                   >
-                    {u}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                    <Text
+                      style={[
+                        styles.unitOptionText,
+                        unit === u && styles.unitOptionTextSelected,
+                      ]}
+                    >
+                      {u}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
             </View>
           )}
         </View>
@@ -272,21 +325,18 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
           <View style={styles.nutritionGrid}>
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Calories*</Text>
-              <TextInput
+              <FynkoTextInput
                 style={[
                   styles.nutritionInput,
                   submitAttempted && !isCaloriesValid && styles.inputError,
                 ]}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={COLORS.grey3}
-                value={nutrition.calories.toString()}
+                value={nutritionInputs.calories}
                 onChangeText={(text) => {
-                  const value = text.trim() === "" ? 0 : parseFloat(text);
-                  setNutrition({
-                    ...nutrition,
-                    calories: isNaN(value) ? 0 : value,
-                  });
+                  
+                    updateNutritionValue("calories", text);
                 }}
               />
               {submitAttempted && !isCaloriesValid && (
@@ -296,51 +346,42 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
 
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Protein (g)</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.nutritionInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={COLORS.grey3}
-                value={nutrition.protein?.toString() || ""}
+                value={nutritionInputs.protein}
                 onChangeText={(text) => {
-                  const value = text.trim() === "" ? 0 : parseFloat(text);
-                  setNutrition({
-                    ...nutrition,
-                    protein: isNaN(value) ? 0 : value,
-                  });
+                  updateNutritionValue("protein", text);
                 }}
               />
             </View>
 
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Carbs (g)</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.nutritionInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={COLORS.grey3}
-                value={nutrition.carbs?.toString() || ""}
+                value={nutritionInputs.carbs}
                 onChangeText={(text) => {
-                  const value = text.trim() === "" ? 0 : parseFloat(text);
-                  setNutrition({
-                    ...nutrition,
-                    carbs: isNaN(value) ? 0 : value,
-                  });
+                  updateNutritionValue("carbs", text);
                 }}
               />
             </View>
 
             <View style={styles.nutritionItem}>
               <Text style={styles.inputLabel}>Fat (g)</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.nutritionInput}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="0"
                 placeholderTextColor={COLORS.grey3}
-                value={nutrition.fat?.toString() || ""}
+                value={nutritionInputs.fat}
                 onChangeText={(text) => {
-                  const value = text.trim() === "" ? 0 : parseFloat(text);
-                  setNutrition({ ...nutrition, fat: isNaN(value) ? 0 : value });
+                  updateNutritionValue("fat", text);
                 }}
               />
             </View>
@@ -377,7 +418,7 @@ const CustomIngredientForm: React.FC<CustomIngredientFormProps> = ({
 const styles = StyleSheet.create({
   customFormContainer: {
     flex: 1,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   customFormHeader: {
     flexDirection: "row",
@@ -385,7 +426,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   customFormTitle: {
     fontSize: 18,
@@ -482,6 +523,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginTop: -12,
     marginBottom: 16,
+    maxHeight: 200,
+  },
+  unitScrollView: {
     maxHeight: 200,
   },
   unitOption: {

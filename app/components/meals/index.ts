@@ -13,6 +13,7 @@ export { default as NutritionSummary } from './NutritionSummary';
 export { default as Snackbar } from './Snackbar';
 export { default as QuantityModal } from './QuantityModal';
 export { default as IngredientSelectionModal } from './IngredientSelectionModal';
+export { default as MealIngredients } from './MealIngredients';
 
 // Helper functions
 export const getBaseQuantityForUnit = (unit: string): number => {

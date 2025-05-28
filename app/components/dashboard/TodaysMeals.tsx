@@ -8,6 +8,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Meal } from '../../../types';
 import { COLORS } from '../../constants';
+import { formatNutritionValue } from '../../utils/nutrition';
 
 interface TodaysMealsProps {
   meals: Meal[];
@@ -39,19 +40,19 @@ const TodaysMeals: React.FC<TodaysMealsProps> = ({ meals, onSelectMeal }) => {
             </View>
             <View style={styles.mealInfo}>
               <Text style={styles.mealName}>{meal.name}</Text>
-              <Text style={styles.mealCalories}>{meal.totalCalories} calories</Text>
+              <Text style={styles.mealCalories}>{formatNutritionValue(meal.totalCalories)} calories</Text>
               <View style={styles.macroRow}>
-                <Text style={styles.macroText}>P: {Math.round(
+                <Text style={styles.macroText}>P: {formatNutritionValue(
                   meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.protein || 0), 0) +
                   (meal.dishes || []).reduce((dishSum, dish) => 
                     dishSum + dish.ingredients.reduce((ingSum, ing) => ingSum + (ing.nutrition.protein || 0), 0), 0)
                 )}g</Text>
-                <Text style={styles.macroText}>C: {Math.round(
+                <Text style={styles.macroText}>C: {formatNutritionValue(
                   meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.carbs || 0), 0) +
                   (meal.dishes || []).reduce((dishSum, dish) => 
                     dishSum + dish.ingredients.reduce((ingSum, ing) => ingSum + (ing.nutrition.carbs || 0), 0), 0)
                 )}g</Text>
-                <Text style={styles.macroText}>F: {Math.round(
+                <Text style={styles.macroText}>F: {formatNutritionValue(
                   meal.ingredients.reduce((sum, ing) => sum + (ing.nutrition.fat || 0), 0) +
                   (meal.dishes || []).reduce((dishSum, dish) => 
                     dishSum + dish.ingredients.reduce((ingSum, ing) => ingSum + (ing.nutrition.fat || 0), 0), 0)
@@ -111,9 +112,10 @@ const styles = StyleSheet.create({
   mealItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey3,
+    padding: 15,
+    backgroundColor: COLORS.background,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   mealIconContainer: {
     width: 40,
@@ -125,7 +127,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   mealInfo: {
-    flex: 1,
+    flex: 1
   },
   mealName: {
     fontSize: 16,

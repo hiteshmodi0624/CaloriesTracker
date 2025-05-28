@@ -5,7 +5,7 @@ import { COLORS } from '../constants';
 export default function AddMealScreen() {
 
   return (
-    <View style={[styles.container, { backgroundColor: COLORS.cardBackground3 }]}>
+    <View style={[styles.container, { backgroundColor: COLORS.cardBackground2 }]}>
       <Text style={[styles.title, { color: COLORS.textPrimary }]}>Add Meal Screen</Text>
     </View>
   );

@@ -60,7 +60,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
             <Text style={styles.title}>{notification.title}</Text>
             {notification.dismissible && (
               <TouchableOpacity onPress={() => onDismiss(notification.id)} style={styles.closeButton}>
-                <Ionicons name="close" size={24} color={COLORS.grey2} />
+                <Ionicons name="close" size={24} color={COLORS.textSecondary} />
               </TouchableOpacity>
             )}
           </View>
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.blue,
   },
   secondaryButton: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   customButton: {
     backgroundColor: COLORS.buttonColor,

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
+import { FynkoTextInput } from '../common';
 
 interface MealFormProps {
   name: string;
@@ -32,7 +33,7 @@ const MealForm: React.FC<MealFormProps> = ({
           <Text style={styles.inputLabel}>Meal Name</Text>
           <Text style={styles.requiredBadge}>Required</Text>
         </View>
-        <TextInput
+        <FynkoTextInput
           style={[styles.input, !name && styles.requiredInput]}
           placeholder="Enter meal name"
           value={name}
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.darkPurple,
+    backgroundColor: COLORS.purple,
     paddingVertical: 12,
     borderRadius: 10,
     marginTop: 15,

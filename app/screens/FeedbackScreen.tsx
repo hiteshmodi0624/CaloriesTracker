@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TextInput,
   TouchableOpacity,
   ScrollView,
   Linking,
@@ -16,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import Header from '../components/Header';
 import { COLORS } from '../constants';
+import { FynkoTextInput } from '../components/common';
 const FeedbackScreen = () => {
   const navigation = useNavigation();
   const [feedback, setFeedback] = useState('');
@@ -58,13 +58,13 @@ const FeedbackScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
       <Header title="Send Feedback" showBackButton={true} />
       
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Ionicons name="chatbubble-ellipses" size={40} color={COLORS.secondary} />
+            <Ionicons name="chatbubble-ellipses" size={40} color={COLORS.primary} />
           </View>
           <Text style={styles.headerText}>We Value Your Feedback</Text>
           <Text style={styles.headerSubText}>
@@ -74,7 +74,7 @@ const FeedbackScreen = () => {
         
         <View style={styles.card}>
           <Text style={styles.inputLabel}>Subject</Text>
-          <TextInput
+          <FynkoTextInput
             style={styles.input}
             value={subject}
             onChangeText={setSubject}
@@ -82,7 +82,7 @@ const FeedbackScreen = () => {
           />
           
           <Text style={styles.inputLabel}>Your Feedback</Text>
-          <TextInput
+          <FynkoTextInput
             style={[styles.input, styles.textArea]}
             value={feedback}
             onChangeText={setFeedback}
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   sendButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   },
   emailLink: {
     fontSize: 16,
-    color: COLORS.secondary,
+    color: COLORS.primary,
     fontWeight: '500',
   },
 });

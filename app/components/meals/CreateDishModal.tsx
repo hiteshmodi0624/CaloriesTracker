@@ -3,7 +3,6 @@ import {
   Modal, 
   View, 
   Text, 
-  TextInput, 
   TouchableOpacity, 
   StyleSheet, 
   ScrollView, 
@@ -15,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { MealIngredient } from '../../../types';
 import { COLORS } from '../../constants';
+import { FynkoTextInput } from '../common';
 
 interface CreateDishModalProps {
   visible: boolean;
@@ -328,7 +328,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                 <Text style={styles.editModalLabel}>
                   Amount ({selectedIngredient.unit})
                 </Text>
-                <TextInput
+                <FynkoTextInput
                   style={styles.editModalInput}
                   value={editQuantity}
                   onChangeText={handleQuantityChange}
@@ -358,7 +358,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                 </Text>
 
                 <Text style={styles.editModalLabel}>Calories</Text>
-                <TextInput
+                <FynkoTextInput
                   style={[
                     styles.editModalInput,
                     autoScaleNutrition && styles.editModalInputDisabled,
@@ -372,7 +372,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                 />
 
                 <Text style={styles.editModalLabel}>Protein (g)</Text>
-                <TextInput
+                <FynkoTextInput
                   style={[
                     styles.editModalInput,
                     autoScaleNutrition && styles.editModalInputDisabled,
@@ -386,7 +386,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                 />
 
                 <Text style={styles.editModalLabel}>Carbs (g)</Text>
-                <TextInput
+                <FynkoTextInput
                   style={[
                     styles.editModalInput,
                     autoScaleNutrition && styles.editModalInputDisabled,
@@ -400,7 +400,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                 />
 
                 <Text style={styles.editModalLabel}>Fat (g)</Text>
-                <TextInput
+                <FynkoTextInput
                   style={[
                     styles.editModalInput,
                     autoScaleNutrition && styles.editModalInputDisabled,
@@ -497,12 +497,13 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
             {activeTab === "ingredients" ? (
               // Ingredients Tab Content
               <>
-                <Text style={styles.inputLabel}>Dish Name</Text>
-                <TextInput
-                  style={styles.input}
+                <FynkoTextInput
+                  label="Dish Name"
                   placeholder="Enter dish name"
                   value={dishName}
                   onChangeText={onDishNameChange}
+                  required={true}
+                  leftIcon="restaurant-outline"
                 />
 
                 <View style={styles.ingredientsHeader}>
@@ -563,12 +564,14 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
               // Quick Add Tab Content
               <View style={styles.quickDishContainer}>
                 <View>
-                  <Text style={styles.inputLabel}>Dish Name</Text>
-                  <TextInput
-                    style={styles.input}
+                  <FynkoTextInput
+                    label="Dish Name"
                     placeholder="e.g., Spaghetti Bolognese"
                     value={quickDishName}
                     onChangeText={onQuickDishNameChange}
+                    required={true}
+                    leftIcon="sparkles"
+                    helperText="Enter dish name for AI analysis"
                   />
 
                   {localIngredients.length === 0 ? (
@@ -692,7 +695,7 @@ const CreateDishModal: React.FC<CreateDishModalProps> = ({
                             />
                           </TouchableOpacity>
 
-                          <TextInput
+                          <FynkoTextInput
                             style={styles.servingsInput}
                             placeholder="1"
                             value={quickDishServings}
@@ -914,7 +917,7 @@ const styles = StyleSheet.create({
   emptyIngredientsContainer: {
     alignItems: "center",
     padding: 20,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 8,
     marginBottom: 15,
   },

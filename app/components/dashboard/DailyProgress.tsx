@@ -68,7 +68,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
           onPress={onEditGoals}
         >
           <Text style={styles.viewAllText}>Edit Goals</Text>
-          <Ionicons name="chevron-forward" size={16} color={COLORS.secondary} />
+          <Ionicons name="chevron-forward" size={16} color={COLORS.textSecondary} />
         </TouchableOpacity>
       </View>
       
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   setGoalsButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     borderRadius: 10,
     padding: 15,
     alignItems: 'center',
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   viewAllText: {
-    color: COLORS.secondary,
+    color: COLORS.textSecondary,
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 15,
     marginBottom: 15,
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 4,
     overflow: 'hidden',
   },

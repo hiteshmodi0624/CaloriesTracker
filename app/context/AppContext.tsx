@@ -4,6 +4,7 @@ import 'react-native-get-random-values'; // This needs to be imported before uui
 import { v4 as uuidv4 } from 'uuid';
 import { Meal, MealIngredient, NutritionInfo, Ingredient, Dish } from '../../types';
 import { fetchNutritionForIngredient, fetchImageCalories, isUpdateRecommended, resetFailureCounter } from '../services/openai';
+import { roundNutritionValues, roundToTwoDecimals } from '../utils/nutrition';
 
 // Define NutritionGoals type locally if not available in types.ts
 type NutritionGoals = {
@@ -285,7 +286,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       ? mealData.dishes.reduce((sum, dish) => sum + dish.totalCalories, 0)
       : 0;
       
-    const totalCalories = ingredientsCalories + dishesCalories;
+    const totalCalories = roundToTwoDecimals(ingredientsCalories + dishesCalories);
     
     const newMeal: Meal = { 
       id: uuidv4(), 
@@ -362,12 +363,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       
       // Sanitize nutrition data to prevent undefined values
-      const sanitizedNutrition = {
+      const sanitizedNutrition = roundNutritionValues({
         calories: ingredientData.nutrition.calories || 0,
         protein: ingredientData.nutrition.protein || 0,
         carbs: ingredientData.nutrition.carbs || 0,
         fat: ingredientData.nutrition.fat || 0
-      };
+      });
       
       // Create the new ingredient with a unique ID
       const newIngredient: Ingredient = { 
@@ -554,7 +555,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           0
         );
         
-        updatedMeal.totalCalories = ingredientsCalories + dishesCalories;
+        updatedMeal.totalCalories = roundToTwoDecimals(ingredientsCalories + dishesCalories);
       }
       
       // Create a new array with the updated meal

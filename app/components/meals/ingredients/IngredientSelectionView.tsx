@@ -3,7 +3,6 @@ import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   FlatList,
   ActivityIndicator,
   StyleSheet,
@@ -12,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Ingredient } from '../../../../types';
 import IngredientItem from './IngredientItem';
 import { COLORS } from './constants';
+import { FynkoTextInput } from '../../common';
 
 interface IngredientSelectionViewProps {
   searchTerm: string;
@@ -53,7 +53,7 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <Ionicons name="search" size={20} color={COLORS.grey2} style={styles.searchIcon} />
-        <TextInput
+        <FynkoTextInput
           style={styles.searchInput}
           placeholder="Search ingredients..."
           placeholderTextColor={COLORS.grey3}
@@ -161,7 +161,7 @@ const IngredientSelectionView: React.FC<IngredientSelectionViewProps> = ({
 const styles = StyleSheet.create({
   selectionContainer: {
     flex: 1,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   header: {
     flexDirection: 'row',
@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   headerTitle: {
     fontSize: 18,
@@ -202,6 +202,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.textPrimary,
     paddingVertical: 4,
+    backgroundColor: COLORS.cardBackground,
   },
   addCustomButton: {
     flexDirection: 'row',

@@ -7,7 +7,7 @@ export default function HomeScreen() {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: COLORS.cardBackground3 }]}>
+    <View style={[styles.container, { backgroundColor: COLORS.cardBackground2 }]}>
       <Text style={[styles.title, { color: COLORS.textPrimary }]}>Home Screen</Text>
     </View>
   );

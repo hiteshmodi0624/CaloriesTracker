@@ -84,39 +84,43 @@ const MealDetailModal: React.FC<MealDetailProps> = ({
               >
                 <MaterialIcons name="delete" size={24} color={COLORS.error} />
               </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={onClose}
-              >
-                <Ionicons name="close" size={24} color={COLORS.darkGrey} />
+              <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+                <Ionicons name="close" size={24} color={COLORS.textPrimary} />
               </TouchableOpacity>
             </View>
           </View>
 
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={true}>
+          <ScrollView
+            style={styles.scrollContent}
+            showsVerticalScrollIndicator={true}
+          >
             <Text style={styles.mealDate}>
               {new Date(meal.date).toLocaleDateString()}
             </Text>
-            <Text style={styles.mealCalories}>
-              {meal.totalCalories} calories
-            </Text>
-            
+
             {meal.dishes && meal.dishes.length > 0 && (
               <>
-                <Text style={styles.modalSubtitle}>Dishes:</Text>
+                <Text style={styles.modalSubtitle}>
+                  Dishes ({meal.totalCalories.toFixed(2)} calories):
+                </Text>
                 {meal.dishes.map((dish) => (
                   <View key={dish.id} style={styles.dishItem}>
                     <Text style={styles.dishName}>{dish.name}</Text>
-                    <Text style={styles.dishCalories}>{dish.totalCalories} calories</Text>
+                    <Text style={styles.dishCalories}>
+                      {dish.totalCalories.toFixed(2)} calories
+                    </Text>
                     <View style={styles.dishIngredients}>
                       {dish.ingredients.map((ingredient) => (
                         <View key={ingredient.id} style={styles.ingredientItem}>
                           <Text style={styles.ingredientName}>
-                            {ingredient.quantity} {ingredient.unit} {ingredient.name}
+                            {ingredient.quantity} {ingredient.unit}{" "}
+                            {ingredient.name}
                           </Text>
                           <Text style={styles.ingredientNutrition}>
-                            {ingredient.nutrition.calories} cal | P: {ingredient.nutrition.protein || 0}g | 
-                            C: {ingredient.nutrition.carbs || 0}g | F: {ingredient.nutrition.fat || 0}g
+                            {ingredient.nutrition.calories.toFixed(2)} cal | P:{" "}
+                            {ingredient.nutrition.protein?.toFixed(2) || 0}g |
+                            C: {ingredient.nutrition.carbs?.toFixed(2) || 0}g |
+                            F: {ingredient.nutrition.fat?.toFixed(2) || 0}g
                           </Text>
                         </View>
                       ))}
@@ -125,12 +129,12 @@ const MealDetailModal: React.FC<MealDetailProps> = ({
                 ))}
               </>
             )}
-            
+
             {meal.ingredients.length > 0 && (
               <>
                 <Text style={styles.modalSubtitle}>
-                  {meal.dishes && meal.dishes.length > 0 
-                    ? "Additional Ingredients:" 
+                  {meal.dishes && meal.dishes.length > 0
+                    ? "Additional Ingredients:"
                     : "Ingredients:"}
                 </Text>
                 {meal.ingredients.map((ingredient) => (
@@ -139,8 +143,10 @@ const MealDetailModal: React.FC<MealDetailProps> = ({
                       {ingredient.quantity} {ingredient.unit} {ingredient.name}
                     </Text>
                     <Text style={styles.ingredientNutrition}>
-                      {ingredient.nutrition.calories} cal | P: {ingredient.nutrition.protein || 0}g | 
-                      C: {ingredient.nutrition.carbs || 0}g | F: {ingredient.nutrition.fat || 0}g
+                      {ingredient.nutrition.calories.toFixed(2)} cal | P:{" "}
+                      {ingredient.nutrition.protein?.toFixed(2) || 0}g | C:{" "}
+                      {ingredient.nutrition.carbs?.toFixed(2) || 0}g | F:{" "}
+                      {ingredient.nutrition.fat?.toFixed(2) || 0}g
                     </Text>
                   </View>
                 ))}
@@ -181,8 +187,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBluegrey3,
   },
   modalTitle: {
     fontSize: 20,
@@ -223,7 +227,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   dishItem: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 8,
     padding: 12,
     marginBottom: 15,
@@ -246,8 +250,6 @@ const styles = StyleSheet.create({
   },
   ingredientItem: {
     paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBluegrey3,
   },
   ingredientName: {
     fontSize: 14,

@@ -9,20 +9,18 @@ import {
   SafeAreaView, 
   StatusBar,
   Animated,
-  ActivityIndicator,
-  TextInput,
-  Modal
+  ActivityIndicator
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { AppContext } from '../context/AppContext';
-import { fetchImageCalories, IngredientData } from '../services/openai';
+import { fetchImageCalories } from '../services/openai';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '../components/Header';
+import QuantityEditModal from '../components/QuantityEditModal';
 import { v4 as uuidv4 } from 'uuid';
 import { Dish, MealIngredient } from "../../types";
 import { COLORS } from '../constants';
+import { FynkoAIButton, FynkoDatePicker, FynkoImagePicker, FynkoTextInput } from '../components/common';
 
 // Local interface for dish info with quantity
 interface DishInfo {
@@ -32,17 +30,32 @@ interface DishInfo {
     carbs: number | undefined;
     fat: number | undefined;
   };
-  calories: number;
-  quantity: number;
-  ingredients?: IngredientData[];
+  baseCalories: number; // Base calories per unit (e.g., per 1 roti)
+  quantity: number; // Always 1 (one serving)
+  estimatedQuantity: string; // What AI detected (e.g., "5 rotis")
+  detectedCount: number; // Numeric count detected by AI (e.g., 5)
+  currentCount: number; // Current count set by user (e.g., 3)
 }
+
+// Helper function to extract numeric quantity from estimated quantity string
+const parseEstimatedQuantity = (estimatedQuantity?: string): number => {
+  if (!estimatedQuantity) return 1;
+  
+  // Extract number from strings like "5 rotis", "2 servings", "3 pieces", etc.
+  const match = estimatedQuantity.match(/(\d+(?:\.\d+)?)/);
+  if (match) {
+    const quantity = parseFloat(match[1]);
+    return quantity > 0 ? quantity : 1;
+  }
+  
+  return 1;
+};
 
 const Upload: React.FC = () => {
   const { addPhotoMeal } = useContext(AppContext);
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [originalImageUri, setOriginalImageUri] = useState<string | null>(null);
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
   const [isScrolled, setIsScrolled] = useState(false);
@@ -52,7 +65,6 @@ const Upload: React.FC = () => {
   const [dishesInfo, setDishesInfo] = useState<DishInfo[]>([]);
   const [editingDishIndex, setEditingDishIndex] = useState<number | null>(null);
   const [quantityModalVisible, setQuantityModalVisible] = useState(false);
-  const [newQuantity, setNewQuantity] = useState('1');
 
   // Function to optimize image for API processing
   const optimizeImage = async (uri: string): Promise<string> => {
@@ -75,43 +87,6 @@ const Upload: React.FC = () => {
     }
   };
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8, // Lower quality for initial selection
-    });
-
-    if (!result.canceled) {
-      setOriginalImageUri(result.assets[0].uri);
-      const optimizedUri = await optimizeImage(result.assets[0].uri);
-      setImageUri(optimizedUri);
-      setCalories(null); // Reset calories when new image is selected
-    }
-  };
-
-  const takePhoto = async () => {
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Sorry, we need camera permissions to make this work!');
-      return;
-    }
-
-    const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.8, // Lower quality for initial capture
-    });
-
-    if (!result.canceled) {
-      setOriginalImageUri(result.assets[0].uri);
-      const optimizedUri = await optimizeImage(result.assets[0].uri);
-      setImageUri(optimizedUri);
-      setCalories(null); // Reset calories when new image is taken
-    }
-  };
-
   const analyzeImage = async () => {
     setLoading(true);
     setDishesInfo([]);
@@ -125,23 +100,31 @@ const Upload: React.FC = () => {
     try {
       const result = await fetchImageCalories(imageUri, description);
       
-      // Calculate total calories from all identified dishes
-      const totalCalories = result.reduce((sum, dish) => sum + dish.calories, 0);
-      
-      setCalories(totalCalories);
-      
       // Process dishes with their ingredients
-      setDishesInfo(result.map(dish => ({
-        name: dish.name || 'Unknown Dish',
-        calories: dish.calories || 0,
-        macros: {
-          protein: dish.protein || 0,
-          carbs: dish.carbs || 0,
-          fat: dish.fat || 0,
-        },
-        quantity: 1,
-        ingredients: dish.ingredients || []
-      })));
+      const processedDishes = result.map(dish => {
+        const detectedCount = parseEstimatedQuantity(dish.estimatedQuantity);
+        const baseCalories = detectedCount > 0 ? (dish.calories || 0) / detectedCount : (dish.calories || 0);
+        
+        return {
+          name: dish.name || 'Unknown Dish',
+          baseCalories: baseCalories,
+          macros: {
+            protein: dish.protein || 0,
+            carbs: dish.carbs || 0,
+            fat: dish.fat || 0,
+          },
+          quantity: 1, // Always 1 serving
+          estimatedQuantity: dish.estimatedQuantity || '1 serving',
+          detectedCount: detectedCount,
+          currentCount: detectedCount // Start with the detected count
+        };
+      });
+      
+      setDishesInfo(processedDishes);
+      
+      // Calculate total calories from all identified dishes with their current counts
+      const totalCalories = processedDishes.reduce((sum, dish) => sum + (dish.baseCalories * dish.currentCount), 0);
+      setCalories(totalCalories);
       
     } catch (error) {
       console.error('Image analysis error:', error);
@@ -154,28 +137,22 @@ const Upload: React.FC = () => {
 
   const openQuantityModal = (index: number) => {
     setEditingDishIndex(index);
-    setNewQuantity(dishesInfo[index].quantity.toString());
     setQuantityModalVisible(true);
   };
 
-  const updateDishQuantity = () => {
+  const updateDishQuantity = (newCount: number) => {
     if (editingDishIndex === null) return;
-    
-    const quantity = parseFloat(newQuantity);
-    if (isNaN(quantity) || quantity <= 0) {
-      Alert.alert('Invalid quantity', 'Please enter a valid number greater than 0');
-      return;
-    }
 
     setDishesInfo(current => {
       const updated = [...current];
-      updated[editingDishIndex].quantity = quantity;
+      updated[editingDishIndex].currentCount = newCount;
       return updated;
     });
     
     // Recalculate total calories
-    const newTotalCalories = dishesInfo.reduce((sum, dish) => {
-      return sum + (dish.calories * (dish.quantity || 1));
+    const newTotalCalories = dishesInfo.reduce((sum, dish, index) => {
+      const currentCount = index === editingDishIndex ? newCount : dish.currentCount;
+      return sum + (dish.baseCalories * currentCount);
     }, 0);
     
     setCalories(newTotalCalories);
@@ -196,49 +173,30 @@ const Upload: React.FC = () => {
 
     setLoading(true);
     try {
-      // Create dishes and ingredients from the analysis, accounting for quantities
+      // Create dishes from the analysis, accounting for multipliers
       const dishes: Dish[] = dishesInfo.map(dishInfo => {
-        // Create ingredients array for this dish
-        const ingredients: MealIngredient[] = dishInfo.ingredients?.map(ing => ({
+        // Create a single ingredient representing the entire dish
+        const dishIngredient: MealIngredient = {
           id: uuidv4(),
-          name: ing.name,
-          unit: ing.unit,
-          quantity: ing.quantity * dishInfo.quantity, // Adjust quantity by dish quantity
+          name: dishInfo.name,
+          unit: 'serving',
+          quantity: dishInfo.currentCount,
           nutrition: {
-            calories: ing.calories,
-            protein: ing.protein,
-            carbs: ing.carbs,
-            fat: ing.fat
+            calories: dishInfo.baseCalories * dishInfo.currentCount,
+            protein: dishInfo.macros.protein || 0,
+            carbs: dishInfo.macros.carbs || 0,
+            fat: dishInfo.macros.fat || 0
           }
-        })) || [];
+        };
         
-        // If no ingredients were detected, create a default ingredient
-        if (ingredients.length === 0) {
-          ingredients.push({
-            id: uuidv4(),
-            name: dishInfo.name,
-            unit: 'serving',
-            quantity: dishInfo.quantity,
-            nutrition: {
-              calories: dishInfo.calories,
-              protein: dishInfo.macros.protein || 0,
-              carbs: dishInfo.macros.carbs || 0,
-              fat: dishInfo.macros.fat || 0
-            }
-          });
-        }
-        
-        // Create the dish with this ingredient, multiply calories by quantity
+        // Create the dish with this single ingredient, multiply calories by multiplier
         return {
           id: uuidv4(),
           name: dishInfo.name,
-          ingredients: ingredients,
-          totalCalories: dishInfo.calories * dishInfo.quantity
+          ingredients: [dishIngredient],
+          totalCalories: dishInfo.baseCalories * dishInfo.currentCount
         };
       });
-      
-      // Create a flat list of all ingredients for the meal
-      const allIngredients = dishes.flatMap(dish => dish.ingredients);
 
       // Create a meal name using the time of day as HH:MM
       const mealName = `Photo Meal: ${new Date().toLocaleTimeString("en-US", {
@@ -246,17 +204,17 @@ const Upload: React.FC = () => {
         minute: "2-digit",
       })}`;
 
-      // Recalculate total calories based on quantities
-      const totalCaloriesWithQuantities = dishesInfo.reduce((sum, dish) => 
-        sum + (dish.calories * dish.quantity), 0);
+      // Recalculate total calories based on multipliers
+      const totalCaloriesWithMultipliers = dishesInfo.reduce((sum, dish) => 
+        sum + (dish.baseCalories * dish.currentCount), 0);
 
-      // Save the meal with all dishes and ingredients
+      // Save the meal with all dishes
       await addPhotoMeal(
-        originalImageUri, 
-        date.toISOString().split('T')[0], 
-        totalCaloriesWithQuantities, 
-        dishes, 
-        allIngredients,
+        originalImageUri,
+        date.toISOString().split("T")[0],
+        totalCaloriesWithMultipliers,
+        dishes,
+        [],
         mealName
       );
       
@@ -275,13 +233,13 @@ const Upload: React.FC = () => {
     }
   };
 
-  // Calculate total calories including quantities
-  const totalCaloriesWithQuantity = calories ? 
-    dishesInfo.reduce((sum, dish) => sum + (dish.calories * dish.quantity), 0) : null;
+  // Calculate total calories including multipliers
+  const totalCaloriesWithMultiplier = calories ? 
+    dishesInfo.reduce((sum, dish) => sum + (dish.baseCalories * dish.currentCount), 0) : null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
       
       <Header title="Upload Meal" showHeaderBackground={isScrolled} />
 
@@ -310,44 +268,23 @@ const Upload: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Meal Date</Text>
           
-          <TouchableOpacity 
-            style={styles.dateButton} 
-            onPress={() => setShowDatePicker(true)}
-          >
-            <Ionicons name="calendar-outline" size={24} color={COLORS.buttonColor} />
-            <Text style={styles.dateText}>
-              {date.toLocaleDateString(undefined, { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric'
-              })}
-            </Text>
-          </TouchableOpacity>
-          
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="default"
-              onChange={(event, selectedDate) => {
-                setShowDatePicker(false);
-                if (selectedDate) setDate(selectedDate);
-              }}
-            />
-          )}
+          <FynkoDatePicker
+            date={date}
+            onDateChange={(newDate) => setDate(newDate)}
+          />
         </View>
 
         {/* Description Input */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Meal Description (Optional)</Text>
-          <TextInput
-            style={styles.descriptionInput}
-            placeholder="Describe your meal (e.g., Lunch at Joe's Cafe)"
+          <FynkoTextInput
+            placeholder="Describe your meal"
             value={description}
             onChangeText={setDescription}
-            multiline={false}
             maxLength={50}
+            showCharacterCount={true}
+            helperText="Help AI better identify your meal"
+            leftIcon="restaurant-outline"
           />
         </View>
 
@@ -355,42 +292,21 @@ const Upload: React.FC = () => {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Meal Photo</Text>
 
-          <View style={styles.imageContainer}>
-            {imageUri ? (
-              <>
-                <Image source={{ uri: imageUri }} style={styles.image} />
-                <TouchableOpacity 
-                  style={styles.changeImageButton}
-                  onPress={() => setImageUri(null)}
-                >
-                  <Ionicons name="close-circle" size={28} color={COLORS.white} />
-                </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.uploadPlaceholder}>
-                <Ionicons name="image-outline" size={60} color={COLORS.blueGrey} />
-                <Text style={styles.placeholderText}>No image selected</Text>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity 
-              style={[styles.uploadButton, styles.galleryButton]} 
-              onPress={pickImage}
-            >
-              <Ionicons name="images-outline" size={20} color={COLORS.white} />
-              <Text style={styles.buttonText}>Gallery</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.uploadButton, styles.cameraButton]} 
-              onPress={takePhoto}
-            >
-              <Ionicons name="camera-outline" size={20} color={COLORS.white} />
-              <Text style={styles.buttonText}>Camera</Text>
-            </TouchableOpacity>
-          </View>
+          <FynkoImagePicker
+            selectedImage={imageUri}
+            onImageSelected={async (uri) => {
+              setOriginalImageUri(uri);
+              const optimizedUri = await optimizeImage(uri);
+              setImageUri(optimizedUri);
+              setCalories(null); // Reset calories when new image is selected
+            }}
+            onImageRemoved={() => {
+              setImageUri(null);
+              setOriginalImageUri(null);
+              setCalories(null);
+            }}
+            placeholder="Select meal photo"
+          />
         </View>
 
         {/* Analysis Section */}
@@ -401,7 +317,7 @@ const Upload: React.FC = () => {
             {calories ? (
               <View style={styles.calorieResult}>
                 <View style={styles.calorieCircle}>
-                  <Text style={styles.calorieValue}>{totalCaloriesWithQuantity}</Text>
+                  <Text style={styles.calorieValue}>{totalCaloriesWithMultiplier}</Text>
                   <Text style={styles.calorieLabel}>calories</Text>
                 </View>
                 
@@ -416,54 +332,41 @@ const Upload: React.FC = () => {
                             onPress={() => openQuantityModal(index)}
                           >
                             <Text style={styles.quantityText}>
-                              {dish.quantity}× 
+                              {dish.currentCount} {dish.estimatedQuantity.replace(/^\d+(\.\d+)?\s*/, '') || 'items'}
                             </Text>
                             <Ionicons name="create-outline" size={14} color={COLORS.primary} />
                           </TouchableOpacity>
                         </View>
                         
+                        <Text style={styles.estimatedQuantityText}>
+                          AI detected: {dish.estimatedQuantity}
+                        </Text>
+                        
                         <Text style={styles.dishCalories}>
-                          {Math.round(dish.calories * dish.quantity)} calories 
-                          {dish.quantity !== 1 && ` (${Math.round(dish.calories)} × ${dish.quantity})`}
+                          {Math.round(dish.baseCalories * dish.currentCount)} calories
+                          {dish.currentCount !== dish.detectedCount && ` (${Math.round(dish.baseCalories)} per unit × ${dish.currentCount})`}
                         </Text>
                         
                         <View style={styles.macroInfo}>
                           <View style={styles.macroItem}>
                             <Text style={styles.macroLabel}>Protein</Text>
                             <Text style={styles.macroValue}>
-                              {Math.round((dish.macros.protein || 0) * dish.quantity)}g
+                              {Math.round((dish.macros.protein || 0) * dish.currentCount)}g
                             </Text>
                           </View>
                           <View style={styles.macroItem}>
                             <Text style={styles.macroLabel}>Carbs</Text>
                             <Text style={styles.macroValue}>
-                              {Math.round((dish.macros.carbs || 0) * dish.quantity)}g
+                              {Math.round((dish.macros.carbs || 0) * dish.currentCount)}g
                             </Text>
                           </View>
                           <View style={styles.macroItem}>
                             <Text style={styles.macroLabel}>Fat</Text>
                             <Text style={styles.macroValue}>
-                              {Math.round((dish.macros.fat || 0) * dish.quantity)}g
+                              {Math.round((dish.macros.fat || 0) * dish.currentCount)}g
                             </Text>
                           </View>
                         </View>
-                        
-                        {/* Ingredients List */}
-                        {dish.ingredients && dish.ingredients.length > 0 && (
-                          <View style={styles.ingredientsContainer}>
-                            <Text style={styles.ingredientsTitle}>Ingredients:</Text>
-                            {dish.ingredients.map((ingredient, ingIndex) => (
-                              <View key={ingIndex} style={styles.ingredientItem}>
-                                <Text style={styles.ingredientName}>
-                                  • {ingredient.name} ({ingredient.quantity} {ingredient.unit})
-                                </Text>
-                                <Text style={styles.ingredientCalories}>
-                                  {Math.round(ingredient.calories * dish.quantity)} cal
-                                </Text>
-                              </View>
-                            ))}
-                          </View>
-                        )}
                       </View>
                     ))}
                   </View>
@@ -477,27 +380,17 @@ const Upload: React.FC = () => {
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity
-                style={[styles.analyzeButton, analyzing && styles.disabledButton]}
+              <FynkoAIButton
+                title="Analyze Photo"
                 onPress={analyzeImage}
+                loading={analyzing}
                 disabled={analyzing}
-              >
-                {analyzing ? (
-                  <>
-                    <ActivityIndicator size="small" color={COLORS.white} />
-                    <Text style={styles.buttonText}>Analyzing...</Text>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="nutrition-outline" size={20} color={COLORS.white} />
-                    <Text style={styles.buttonText}>Analyze Photo</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                icon="nutrition-outline"
+              />
             )}
             
             <Text style={styles.infoText}>
-              Our AI will analyze your food photo and estimate the calories and nutrients.
+              Our AI analyzes your food photo and estimates the quantity and calories. You can edit the quantity directly if the AI count is incorrect.
             </Text>
           </View>
         )}
@@ -521,48 +414,16 @@ const Upload: React.FC = () => {
         )}
 
         {/* Quantity Edit Modal */}
-        <Modal
+        <QuantityEditModal
           visible={quantityModalVisible}
-          transparent={true}
-          animationType="fade"
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <Text style={styles.modalTitle}>Edit Quantity</Text>
-              
-              {editingDishIndex !== null && dishesInfo[editingDishIndex] && (
-                <Text style={styles.modalIngredientName}>{dishesInfo[editingDishIndex].name}</Text>
-              )}
-              
-              <View style={styles.quantityInputContainer}>
-                <TextInput
-                  style={styles.quantityInput}
-                  value={newQuantity}
-                  onChangeText={setNewQuantity}
-                  keyboardType="numeric"
-                  autoFocus
-                />
-                <Text style={styles.unitText}>servings</Text>
-              </View>
-              
-              <View style={styles.modalActions}>
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.cancelButton]}
-                  onPress={() => setQuantityModalVisible(false)}
-                >
-                  <Text style={styles.cancelButtonText}>Cancel</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.modalButton, styles.updateButton]}
-                  onPress={updateDishQuantity}
-                >
-                  <Text style={styles.updateButtonText}>Update</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
-        </Modal>
+          dishInfo={editingDishIndex !== null && dishesInfo[editingDishIndex] ? {
+            name: dishesInfo[editingDishIndex].name,
+            estimatedQuantity: dishesInfo[editingDishIndex].estimatedQuantity,
+            currentCount: dishesInfo[editingDishIndex].currentCount
+          } : null}
+          onClose={() => setQuantityModalVisible(false)}
+          onUpdate={updateDishQuantity}
+        />
 
         <View style={styles.bottomPadding} />
       </Animated.ScrollView>
@@ -769,7 +630,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   dishesContainer: {
-    width: '100%',
+    width: "100%",
     marginTop: 20,
   },
   dishCard: {
@@ -780,27 +641,27 @@ const styles = StyleSheet.create({
   },
   dishName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
   dishCalories: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
     marginBottom: 10,
   },
   macroInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
     marginTop: 8,
     backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     padding: 10,
   },
   macroItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   macroLabel: {
     fontSize: 14,
@@ -809,18 +670,18 @@ const styles = StyleSheet.create({
   },
   macroValue: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textSecondary,
   },
   dishHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 4,
   },
   quantityButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: COLORS.background,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -829,105 +690,13 @@ const styles = StyleSheet.create({
   quantityText: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    fontWeight: '600',
+    fontWeight: "600",
     marginRight: 4,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: COLORS.opaqueBlack,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    backgroundColor: COLORS.cardBackground,
-    borderRadius: 16,
-    padding: 20,
-    width: '80%',
-    maxWidth: 320,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalIngredientName: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  quantityInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 20,
-  },
-  quantityInput: {
-    flex: 1,
-    fontSize: 16,
-    padding: 4,
-  },
-  unitText: {
-    fontSize: 16,
-    color: COLORS.textSecondary,
-    marginLeft: 8,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  modalButton: {
-    flex: 0.48,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButton: {
-    backgroundColor: COLORS.background,
-  },
-  updateButton: {
-    backgroundColor: COLORS.primary,
-  },
-  cancelButtonText: {
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-  updateButtonText: {
-    color: COLORS.white,
-    fontWeight: '500',
-  },
-  ingredientsContainer: {
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: COLORS.grey4,
-  },
-  ingredientsTitle: {
+  estimatedQuantityText: {
     fontSize: 14,
-    fontWeight: '600',
     color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  ingredientItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 2,
-    paddingLeft: 4,
-  },
-  ingredientName: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    flex: 1,
-  },
-  ingredientCalories: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
+    marginBottom: 10,
   },
 });
 

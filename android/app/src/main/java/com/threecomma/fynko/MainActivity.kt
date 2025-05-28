@@ -1,4 +1,4 @@
-package com.hiteshmodi0624.Fynko
+package com.threecomma.fynko
 
 import android.os.Build
 import android.os.Bundle

@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   historyDayCard: {
     flexDirection: 'row',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     marginBottom: 10,
     padding: 15,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
   },
   historyProgressBar: {
     height: 6,
-    backgroundColor: COLORS.cardBackground2,
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 4,

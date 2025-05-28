@@ -5,7 +5,6 @@ import {
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
-  TextInput,
   Alert,
   KeyboardAvoidingView,
   Platform,
@@ -13,9 +12,10 @@ import {
   Keyboard
 } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { Meal, MealIngredient } from '../../../types';
 import { COLORS } from '../meals/ingredients/constants';
+import { FynkoTextInput, FynkoDatePicker } from '../common';
+import { roundToTwoDecimals } from '../../utils/nutrition';
 
 interface MealEditScreenProps {
   visible: boolean;
@@ -28,7 +28,6 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
   // State variables for editing the meal
   const [mealName, setMealName] = useState('');
   const [mealDate, setMealDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [editingIngredient, setEditingIngredient] = useState<MealIngredient | null>(null);
   const [editIngredientQuantity, setEditIngredientQuantity] = useState('');
   const [editIngredientIndex, setEditIngredientIndex] = useState<number>(-1);
@@ -50,14 +49,6 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
   if (!meal || !mealData) {
     return null;
   }
-
-  // Function to handle date change
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setMealDate(selectedDate);
-    }
-  };
 
   // Function to start editing an ingredient
   const handleEditIngredient = (ingredient: MealIngredient, index: number, dishIndex: number = -1) => {
@@ -102,10 +93,10 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
         
         // Update ingredient quantity and nutrition
         ingredient.quantity = quantity;
-        ingredient.nutrition.calories = Math.round(ingredient.nutrition.calories * changeFactor);
-        ingredient.nutrition.protein = Math.round((ingredient.nutrition.protein || 0) * changeFactor);
-        ingredient.nutrition.carbs = Math.round((ingredient.nutrition.carbs || 0) * changeFactor);
-        ingredient.nutrition.fat = Math.round((ingredient.nutrition.fat || 0) * changeFactor);
+        ingredient.nutrition.calories = roundToTwoDecimals(ingredient.nutrition.calories * changeFactor);
+        ingredient.nutrition.protein = roundToTwoDecimals((ingredient.nutrition.protein || 0) * changeFactor);
+        ingredient.nutrition.carbs = roundToTwoDecimals((ingredient.nutrition.carbs || 0) * changeFactor);
+        ingredient.nutrition.fat = roundToTwoDecimals((ingredient.nutrition.fat || 0) * changeFactor);
         
         // Recalculate dish total calories
         dish.totalCalories = dish.ingredients.reduce((sum: number, ing: MealIngredient) => sum + ing.nutrition.calories, 0);
@@ -123,10 +114,10 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
         
         // Update ingredient quantity and nutrition
         ingredient.quantity = quantity;
-        ingredient.nutrition.calories = Math.round(ingredient.nutrition.calories * changeFactor);
-        ingredient.nutrition.protein = Math.round((ingredient.nutrition.protein || 0) * changeFactor);
-        ingredient.nutrition.carbs = Math.round((ingredient.nutrition.carbs || 0) * changeFactor);
-        ingredient.nutrition.fat = Math.round((ingredient.nutrition.fat || 0) * changeFactor);
+        ingredient.nutrition.calories = roundToTwoDecimals(ingredient.nutrition.calories * changeFactor);
+        ingredient.nutrition.protein = roundToTwoDecimals((ingredient.nutrition.protein || 0) * changeFactor);
+        ingredient.nutrition.carbs = roundToTwoDecimals((ingredient.nutrition.carbs || 0) * changeFactor);
+        ingredient.nutrition.fat = roundToTwoDecimals((ingredient.nutrition.fat || 0) * changeFactor);
         
         // Remove any duplicate ingredients with the same name from dishes
         if (updatedMeal.dishes) {
@@ -220,7 +211,7 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Edit Meal</Text>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
+              <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -231,54 +222,125 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
             <ScrollView
               style={styles.scrollContent}
               contentContainerStyle={styles.scrollContentContainer}
-              showsVerticalScrollIndicator={true}
+              showsVerticalScrollIndicator={false}
             >
               {/* Meal Basic Info Section */}
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Basic Information</Text>
 
                 <Text style={styles.inputLabel}>Meal Name:</Text>
-                <TextInput
+                <FynkoTextInput
                   style={styles.input}
                   value={mealName}
                   onChangeText={setMealName}
                   placeholder="Enter meal name"
+                  backgroundColor={COLORS.cardBackground}
                 />
 
                 <Text style={styles.inputLabel}>Date:</Text>
-                <TouchableOpacity
-                  style={styles.dateButton}
-                  onPress={() => setShowDatePicker(true)}
-                >
-                  <Text style={styles.dateText}>{mealDate.toDateString()}</Text>
-                  <Ionicons name="calendar-outline" size={24} color={COLORS.secondary} />
-                </TouchableOpacity>
-
-                {showDatePicker && (
-                  <DateTimePicker
-                    value={mealDate}
-                    mode="date"
-                    display="default"
-                    onChange={handleDateChange}
-                  />
-                )}
-
-                <Text style={styles.mealCalories}>
-                  Total: {mealData.totalCalories} calories
-                </Text>
+                <FynkoDatePicker
+                  date={mealDate}
+                  onDateChange={setMealDate}
+                  style={styles.datePickerStyle}
+                />
               </View>
+
+              {/* Meal-level Ingredients Section */}
+              {mealData.ingredients && mealData.ingredients.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Ingredients</Text>
+
+                  {mealData.ingredients.map((ingredient, ingIndex) => (
+                    <View key={ingredient.id} style={styles.ingredientItem}>
+                      <View style={styles.ingredientRow}>
+                        <Text style={styles.ingredientName}>
+                          {ingredient.quantity} {ingredient.unit}{" "}
+                          {ingredient.name}
+                        </Text>
+                        <TouchableOpacity
+                          style={styles.editButton}
+                          onPress={() =>
+                            handleEditIngredient(ingredient, ingIndex)
+                          }
+                        >
+                          <FontAwesome
+                            name="pencil"
+                            size={16}
+                            color={COLORS.primary}
+                          />
+                        </TouchableOpacity>
+                      </View>
+                      <Text style={styles.ingredientNutrition}>
+                        {Math.round(ingredient.nutrition.calories)} cal | P:{" "}
+                        {Math.round(ingredient.nutrition.protein || 0)}g | C:{" "}
+                        {Math.round(ingredient.nutrition.carbs || 0)}g | F:{" "}
+                        {Math.round(ingredient.nutrition.fat || 0)}g
+                      </Text>
+
+                      {/* Inline editing form for this ingredient */}
+                      {editingIngredient &&
+                        editingDishIndex === -1 &&
+                        editIngredientIndex === ingIndex && (
+                          <View style={styles.inlineEditForm}>
+                            <View style={styles.quantityInputRow}>
+                              <FynkoTextInput
+                                style={styles.quantityInput}
+                                value={editIngredientQuantity}
+                                onChangeText={setEditIngredientQuantity}
+                                keyboardType="decimal-pad"
+                                placeholder="Enter quantity"
+                              />
+                              <Text style={styles.quantityUnit}>
+                                {editingIngredient.unit}
+                              </Text>
+                            </View>
+
+                            <View style={styles.editFormButtons}>
+                              <TouchableOpacity
+                                style={[
+                                  styles.editFormButton,
+                                  styles.cancelButton,
+                                ]}
+                                onPress={cancelIngredientEdit}
+                              >
+                                <Text style={styles.cancelButtonText}>
+                                  Cancel
+                                </Text>
+                              </TouchableOpacity>
+                              <TouchableOpacity
+                                style={[
+                                  styles.editFormButton,
+                                  styles.updateButton,
+                                ]}
+                                onPress={handleSaveIngredientEdit}
+                              >
+                                <Text style={styles.updateButtonText}>
+                                  Update
+                                </Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+                    </View>
+                  ))}
+                </View>
+              )}
 
               {/* Dishes Section */}
               {mealData.dishes && mealData.dishes.length > 0 && (
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Dishes</Text>
+                  <Text style={styles.sectionTitle}>
+                    Dishes ({Math.round(mealData.totalCalories)} calories)
+                  </Text>
 
                   {mealData.dishes.map((dish, dishIndex) => (
                     <View key={dish.id} style={styles.dishItem}>
-                      <Text style={styles.dishName}>{dish.name}</Text>
-                      <Text style={styles.dishCalories}>
-                        {dish.totalCalories} calories
-                      </Text>
+                      <View style={styles.dishHeader}>
+                        <Text style={styles.dishName}>{dish.name}</Text>
+                        <Text style={styles.dishCalories}>
+                          {Math.round(dish.totalCalories)} cal
+                        </Text>
+                      </View>
 
                       <View style={styles.dishIngredients}>
                         {dish.ingredients.map((ingredient, ingIndex) => (
@@ -304,15 +366,16 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
                                 <FontAwesome
                                   name="pencil"
                                   size={16}
-                                  color={COLORS.blue}
+                                  color={COLORS.primary}
                                 />
                               </TouchableOpacity>
                             </View>
                             <Text style={styles.ingredientNutrition}>
-                              {ingredient.nutrition.calories} cal | P:{" "}
-                              {ingredient.nutrition.protein || 0}g | C:{" "}
-                              {ingredient.nutrition.carbs || 0}g | F:{" "}
-                              {ingredient.nutrition.fat || 0}g
+                              {Math.round(ingredient.nutrition.calories)} cal |
+                              P: {Math.round(ingredient.nutrition.protein || 0)}
+                              g | C:{" "}
+                              {Math.round(ingredient.nutrition.carbs || 0)}g |
+                              F: {Math.round(ingredient.nutrition.fat || 0)}g
                             </Text>
 
                             {/* Inline editing form for this ingredient */}
@@ -320,10 +383,8 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
                               editingDishIndex === dishIndex &&
                               editIngredientIndex === ingIndex && (
                                 <View style={styles.inlineEditForm}>
-                                  <View
-                                    style={styles.quantityInputRow}
-                                  >
-                                    <TextInput
+                                  <View style={styles.quantityInputRow}>
+                                    <FynkoTextInput
                                       style={styles.quantityInput}
                                       value={editIngredientQuantity}
                                       onChangeText={setEditIngredientQuantity}
@@ -373,18 +434,20 @@ const MealEditScreen: React.FC<MealEditScreenProps> = ({ visible, meal, onClose,
             </ScrollView>
 
             {/* Save Button */}
-            <TouchableOpacity
-              style={[
-                styles.saveButton,
-                isLoading && styles.saveButtonDisabled,
-              ]}
-              onPress={handleSaveChanges}
-              disabled={isLoading}
-            >
-              <Text style={styles.saveButtonText}>
-                {isLoading ? "Saving..." : "Save Changes"}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.saveButtonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.saveButton,
+                  isLoading && styles.saveButtonDisabled,
+                ]}
+                onPress={handleSaveChanges}
+                disabled={isLoading}
+              >
+                <Text style={styles.saveButtonText}>
+                  {isLoading ? "Saving..." : "Save Changes"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </KeyboardAvoidingView>
         </View>
       </View>
@@ -396,14 +459,14 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: COLORS.opaqueBlack,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: '90%',
-    width: '100%',
+    height: "90%",
+    width: "100%",
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
@@ -414,20 +477,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     paddingBottom: 12,
-    borderBottomWidth: .2,
-    borderBottomColor: COLORS.lightBluegrey3,
     backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textPrimary,
   },
   closeButton: {
@@ -441,7 +502,7 @@ const styles = StyleSheet.create({
     paddingBottom: 100, // Extra padding for the save button
   },
   section: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
@@ -453,7 +514,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textPrimary,
     marginBottom: 12,
   },
@@ -463,42 +524,45 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   input: {
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
     borderRadius: 8,
-    padding: 12,
     fontSize: 16,
     marginBottom: 16,
   },
-  dateButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
+  datePickerStyle: {
+    marginBottom: 16,
+    backgroundColor: COLORS.cardBackground,
+  },
+  caloriesContainer: {
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
-  },
-  dateText: {
-    fontSize: 16,
-    color: COLORS.textPrimary,
   },
   mealCalories: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
     color: COLORS.secondary,
     marginTop: 8,
   },
   dishItem: {
-    backgroundColor: COLORS.cardBackground3,
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  dishHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   dishName: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textPrimary,
   },
   dishCalories: {
@@ -508,19 +572,17 @@ const styles = StyleSheet.create({
   },
   dishIngredients: {
     borderTopWidth: 1,
-    borderTopColor: COLORS.grey4,
-    paddingTop: 8,
-    marginTop: 8,
+    borderTopColor: COLORS.grey3,
+    paddingTop: 12,
+    marginTop: 12,
   },
   ingredientItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBluegrey3,
+    paddingVertical: 12,
   },
   ingredientRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   ingredientName: {
     fontSize: 14,
@@ -536,31 +598,32 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   inlineEditForm: {
-    backgroundColor: COLORS.background,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 12,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   sectionDescription: {
     fontSize: 14,
     color: COLORS.textSecondary,
     marginBottom: 12,
-    fontStyle: 'italic',
+    fontStyle: "italic",
   },
   quantityInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 16,
   },
   quantityInput: {
     flex: 0.7,
-    borderWidth: 1,
-    borderColor: COLORS.grey3,
     borderRadius: 8,
-    padding: 10,
     backgroundColor: COLORS.cardBackground,
+    marginBottom: 0,
   },
   quantityUnit: {
     flex: 0.3,
@@ -569,52 +632,53 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   editFormButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
   editFormButton: {
     flex: 0.48,
     borderRadius: 8,
     padding: 12,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cancelButton: {
-    backgroundColor: COLORS.cardBackground3,
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
+    backgroundColor: COLORS.background,
   },
   cancelButtonText: {
     color: COLORS.textSecondary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   updateButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
   },
   updateButtonText: {
     color: COLORS.white,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   bottomPadding: {
     height: 40,
   },
-  saveButton: {
-    backgroundColor: COLORS.secondary,
-    margin: 16,
-    padding: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    position: 'absolute',
+  saveButtonContainer: {
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
   },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    margin: 16,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
   saveButtonDisabled: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.grey3,
+    opacity: 0.6,
   },
   saveButtonText: {
     color: COLORS.white,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });
 

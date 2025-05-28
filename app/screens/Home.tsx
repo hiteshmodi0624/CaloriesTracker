@@ -15,6 +15,7 @@ import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { AppContext } from "../context/AppContext";
 import { COLORS } from "../constants";
+import { formatNutritionValue } from "../utils/nutrition";
 
 type RootTabParamList = {
   Home: undefined;
@@ -96,30 +97,60 @@ const Home: React.FC = () => {
 
   // Calculate macros for today
   const totalProtein = todayMeals.reduce(
-    (sum, meal) =>
-      sum +
-      meal.ingredients.reduce(
+    (sum, meal) => {
+      // Get protein from individual ingredients
+      const ingredientsProtein = meal.ingredients.reduce(
         (mealSum, ing) => mealSum + (ing.nutrition.protein || 0),
         0
-      ),
+      );
+      
+      // Get protein from dishes
+      const dishesProtein = (meal.dishes || []).reduce((dishesSum, dish) => {
+        return dishesSum + dish.ingredients.reduce(
+          (dishSum, ing) => dishSum + (ing.nutrition.protein || 0), 0
+        );
+      }, 0);
+      
+      return sum + ingredientsProtein + dishesProtein;
+    },
     0
   );
   const totalCarbs = todayMeals.reduce(
-    (sum, meal) =>
-      sum +
-      meal.ingredients.reduce(
+    (sum, meal) => {
+      // Get carbs from individual ingredients
+      const ingredientsCarbs = meal.ingredients.reduce(
         (mealSum, ing) => mealSum + (ing.nutrition.carbs || 0),
         0
-      ),
+      );
+      
+      // Get carbs from dishes
+      const dishesCarbs = (meal.dishes || []).reduce((dishesSum, dish) => {
+        return dishesSum + dish.ingredients.reduce(
+          (dishSum, ing) => dishSum + (ing.nutrition.carbs || 0), 0
+        );
+      }, 0);
+      
+      return sum + ingredientsCarbs + dishesCarbs;
+    },
     0
   );
   const totalFat = todayMeals.reduce(
-    (sum, meal) =>
-      sum +
-      meal.ingredients.reduce(
+    (sum, meal) => {
+      // Get fat from individual ingredients
+      const ingredientsFat = meal.ingredients.reduce(
         (mealSum, ing) => mealSum + (ing.nutrition.fat || 0),
         0
-      ),
+      );
+      
+      // Get fat from dishes
+      const dishesFat = (meal.dishes || []).reduce((dishesSum, dish) => {
+        return dishesSum + dish.ingredients.reduce(
+          (dishSum, ing) => dishSum + (ing.nutrition.fat || 0), 0
+        );
+      }, 0);
+      
+      return sum + ingredientsFat + dishesFat;
+    },
     0
   );
 
@@ -195,7 +226,7 @@ const Home: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <Animated.View
@@ -243,7 +274,7 @@ const Home: React.FC = () => {
               <View style={styles.calorieTextContainer}>
                 <Text style={styles.calorieTitle}>Today's Calories</Text>
                 <View style={styles.calorieRow}>
-                  <Text style={styles.calorieMainValue}>{totalCalories}</Text>
+                  <Text style={styles.calorieMainValue}>{formatNutritionValue(totalCalories)}</Text>
                   <Text style={styles.calorieUnit}>kcal</Text>
                 </View>
                 <Text
@@ -258,8 +289,8 @@ const Home: React.FC = () => {
                   ]}
                 >
                   {remainingCalories >= 0
-                    ? `${remainingCalories} kcal remaining`
-                    : `${Math.abs(remainingCalories)} kcal over goal`}
+                    ? `${formatNutritionValue(remainingCalories)} kcal remaining`
+                    : `${formatNutritionValue(Math.abs(remainingCalories))} kcal over goal`}
                 </Text>
               </View>
 
@@ -296,7 +327,7 @@ const Home: React.FC = () => {
                   <Text style={styles.macroLabel}>Protein</Text>
                 </View>
                 <Text style={styles.macroValue}>
-                  {Math.round(totalProtein)}g
+                  {formatNutritionValue(totalProtein)}g
                 </Text>
                 <View style={styles.macroBarContainer}>
                   <View
@@ -321,7 +352,7 @@ const Home: React.FC = () => {
                   />
                   <Text style={styles.macroLabel}>Carbs</Text>
                 </View>
-                <Text style={styles.macroValue}>{Math.round(totalCarbs)}g</Text>
+                <Text style={styles.macroValue}>{formatNutritionValue(totalCarbs)}g</Text>
                 <View style={styles.macroBarContainer}>
                   <View
                     style={[
@@ -345,7 +376,7 @@ const Home: React.FC = () => {
                   />
                   <Text style={styles.macroLabel}>Fat</Text>
                 </View>
-                <Text style={styles.macroValue}>{Math.round(totalFat)}g</Text>
+                <Text style={styles.macroValue}>{formatNutritionValue(totalFat)}g</Text>
                 <View style={styles.macroBarContainer}>
                   <View
                     style={[
@@ -428,7 +459,7 @@ const Home: React.FC = () => {
                   <View style={styles.mealInfo}>
                     <Text style={styles.mealName}>{meal.name}</Text>
                     <Text style={styles.mealCalories}>
-                      {Math.round(meal.totalCalories)} kcal
+                      {formatNutritionValue(meal.totalCalories)} kcal
                     </Text>
                   </View>
                   <Ionicons
@@ -483,7 +514,7 @@ const Home: React.FC = () => {
                   <View key={index} style={styles.weeklyBarItem}>
                     <View style={styles.barContainer}>
                       <Text style={styles.weeklyBarValue}>
-                        {day.calories > 0 ? day.calories : ""}
+                        {day.calories > 0 ? day.calories.toFixed(0) : ""}
                       </Text>
                       <View style={styles.barBackground}>
                         <View
@@ -623,7 +654,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     justifyContent: "center",
     alignItems: "center",
     padding: 5,
@@ -631,7 +662,7 @@ const styles = StyleSheet.create({
   circleBackground: {
     width: "100%",
     height: 10,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 5,
     overflow: "hidden",
     transform: [{ rotateZ: "-90deg" }],
@@ -679,7 +710,7 @@ const styles = StyleSheet.create({
   },
   macroBarContainer: {
     height: 6,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 3,
     overflow: "hidden",
   },
@@ -764,8 +795,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey5,
+    backgroundColor: COLORS.background,
+    padding: 15,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   mealIconContainer: {
     width: 36,
@@ -793,7 +826,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 12,
+    paddingBottom: 12,
     marginTop: 5,
   },
   addMealText: {
@@ -868,7 +901,7 @@ const styles = StyleSheet.create({
   },
   barBackground: {
     width: 10,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 5,
     overflow: "hidden",
     alignItems: "center",
@@ -880,7 +913,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   weeklyBarDay: {
-    fontSize: 12,
+    fontSize: 10,
     color: COLORS.textSecondary,
     marginTop: 8,
     textAlign: "center",

@@ -45,7 +45,7 @@ const UpdateModal: React.FC<UpdateModalProps> = ({ visible, onDismiss }) => {
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <View style={styles.iconContainer}>
-            <Ionicons name="refresh-circle" size={60} color={COLORS.darkPurple} />
+            <Ionicons name="refresh-circle" size={60} color={COLORS.primary} />
           </View>
           
           <Text style={styles.title}>Update Recommended</Text>
@@ -138,10 +138,10 @@ const styles = StyleSheet.create({
     marginHorizontal: 5
   },
   primaryButton: {
-    backgroundColor: COLORS.darkPurple
+    backgroundColor: COLORS.primary
   },
   secondaryButton: {
-    backgroundColor: COLORS.cardBackground3
+    backgroundColor: COLORS.cardBackground2
   },
   primaryButtonText: {
     color: COLORS.white,

@@ -1,171 +1,115 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
-  Modal,
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
+  Modal,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Ingredient } from '../../../types';
 import { COLORS } from '../../constants';
+import { Ingredient } from '../../../types';
+import { FynkoTextInput } from '../common';
+
 interface QuantityModalProps {
   visible: boolean;
   ingredient: Ingredient | null;
-  quantity: string;
-  onQuantityChange: (quantity: string) => void;
-  onCancel: () => void;
-  onSave: () => void;
-  isDishIngredient?: boolean; // Flag to indicate if adding to dish or meal
+  onSave: (quantity: number) => void;
+  onClose: () => void;
 }
 
 const QuantityModal: React.FC<QuantityModalProps> = ({
   visible,
   ingredient,
-  quantity,
-  onQuantityChange,
-  onCancel,
   onSave,
-  isDishIngredient = false
+  onClose
 }) => {
-  if (!ingredient) return null;
+  const [quantity, setQuantity] = useState('');
 
-  // Helper function to determine base quantity for a unit
-  const getBaseQuantityForUnit = (unit: string): number => {
-    // Default values for common units
-    switch (unit.toLowerCase()) {
-      case 'g':
-      case 'gram':
-      case 'grams':
-        return 100;
-      case 'kg':
-      case 'kilogram':
-      case 'kilograms':
-        return 0.1;
-      case 'ml':
-      case 'milliliter':
-      case 'milliliters':
-        return 100;
-      case 'l':
-      case 'liter':
-      case 'liters':
-        return 0.25;
-      case 'cup':
-      case 'cups':
-        return 1;
-      case 'tbsp':
-      case 'tablespoon':
-      case 'tablespoons':
-        return 2;
-      case 'tsp':
-      case 'teaspoon':
-      case 'teaspoons':
-        return 3;
-      case 'oz':
-      case 'ounce':
-      case 'ounces':
-        return 3;
-      case 'lb':
-      case 'pound':
-      case 'pounds':
-        return 0.5;
-      case 'piece':
-      case 'pieces':
-      case 'slice':
-      case 'slices':
-        return 1;
-      default:
-        return 1;
+  const handleSave = () => {
+    const qty = parseFloat(quantity);
+    if (!isNaN(qty) && qty > 0) {
+      onSave(qty);
+      setQuantity('');
     }
   };
 
-  const suggestedQuantities = [
-    getBaseQuantityForUnit(ingredient.unit) * 0.5,  // Half serving
-    getBaseQuantityForUnit(ingredient.unit),        // Standard serving
-    getBaseQuantityForUnit(ingredient.unit) * 2,    // Double serving
-  ];
-
-  // Calculate estimated calories based on current quantity
-  const estimatedCalories = quantity 
-    ? (ingredient.nutrition.calories * parseFloat(quantity)) / getBaseQuantityForUnit(ingredient.unit)
-    : 0;
+  if (!ingredient) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="slide"
       transparent={true}
-      onRequestClose={onCancel}
+      onRequestClose={onClose}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.centeredView}
+        style={styles.modalContainer}
       >
-        <View style={styles.modalView}>
+        <View style={styles.modalContent}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add Quantity</Text>
-            <TouchableOpacity onPress={onCancel} style={styles.closeButton}>
-              <Ionicons name="close" size={24} color={COLORS.blue} />
+            <Text style={styles.modalTitle}>Enter Quantity</Text>
+            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+              <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.ingredientName}>{ingredient.name}</Text>
-          
-          <View style={styles.nutritionInfo}>
-            <Text style={styles.nutritionText}>
-              {ingredient.nutrition.calories} cal per {getBaseQuantityForUnit(ingredient.unit)} {ingredient.unit}
+          <View style={styles.content}>
+            <Text style={styles.ingredientName}>{ingredient.name}</Text>
+            <Text style={styles.unitText}>
+              Enter the amount in {ingredient.unit} (e.g., 150 for 150{ingredient.unit})
             </Text>
-          </View>
-          
-          <Text style={styles.inputLabel}>Enter quantity ({ingredient.unit}):</Text>
-          <TextInput
-            style={styles.quantityInput}
-            keyboardType="numeric"
-            value={quantity}
-            onChangeText={onQuantityChange}
-            placeholder={`e.g., ${getBaseQuantityForUnit(ingredient.unit)}`}
-            autoFocus
-          />
-          
-          <View style={styles.quickValues}>
-            <Text style={styles.quickValuesLabel}>Quick Selections:</Text>
-            <View style={styles.quickValueButtons}>
-              {suggestedQuantities.map((value, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickValueButton}
-                  onPress={() => onQuantityChange(value.toString())}
-                >
-                  <Text style={styles.quickValueText}>{value} {ingredient.unit}</Text>
-                </TouchableOpacity>
-              ))}
+
+            <View style={styles.inputContainer}>
+              <FynkoTextInput
+                style={styles.input}
+                placeholder={`Amount in ${ingredient.unit}`}
+                value={quantity}
+                onChangeText={setQuantity}
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+              <Text style={styles.unitLabel}>{ingredient.unit}</Text>
             </View>
-          </View>
-          
-          {!!quantity && !isNaN(parseFloat(quantity)) && (
-            <View style={styles.estimatedCalories}>
-              <Text style={styles.estimatedCaloriesText}>
-                {Math.round((ingredient.nutrition.calories * parseFloat(quantity)) / getBaseQuantityForUnit(ingredient.unit))} estimated calories
+
+            <View style={styles.nutritionPreview}>
+              <Text style={styles.previewTitle}>Nutrition Preview:</Text>
+              <Text style={styles.previewText}>
+                {quantity ? (
+                  <>
+                    {Math.round(parseFloat(quantity) * ingredient.nutrition.calories)} calories
+                    {' • '}
+                    P: {(parseFloat(quantity) * (ingredient.nutrition.protein || 0)).toFixed(1)}g
+                    {' • '}
+                    C: {(parseFloat(quantity) * (ingredient.nutrition.carbs || 0)).toFixed(1)}g
+                    {' • '}
+                    F: {(parseFloat(quantity) * (ingredient.nutrition.fat || 0)).toFixed(1)}g
+                  </>
+                ) : (
+                  'Enter quantity to see nutrition info'
+                )}
               </Text>
             </View>
-          )}
-          
-          <View style={styles.flowHint}>
-            <Text style={styles.flowHintText}>
-              After adding this ingredient, you'll be returned to continue creating your meal.
-            </Text>
           </View>
-          
-          <TouchableOpacity
-            style={[styles.addButton, !quantity && styles.disabledButton]}
-            onPress={onSave}
-            disabled={!quantity}
-          >
-            <Text style={styles.addButtonText}>Add Ingredient</Text>
-          </TouchableOpacity>
+
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={[styles.button, styles.cancelButton]}
+              onPress={onClose}
+            >
+              <Text style={styles.buttonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.button, styles.saveButton]}
+              onPress={handleSave}
+              disabled={!quantity || isNaN(parseFloat(quantity)) || parseFloat(quantity) <= 0}
+            >
+              <Text style={[styles.buttonText, styles.saveButtonText]}>Add</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -173,132 +117,108 @@ const QuantityModal: React.FC<QuantityModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  centeredView: {
+  modalContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: COLORS.opaqueBlack,
-    padding: 20,
+    justifyContent: "flex-end",
   },
-  modalView: {
+  modalContent: {
     backgroundColor: COLORS.cardBackground,
-    borderRadius: 15,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     padding: 20,
-    width: '100%',
-    shadowColor: COLORS.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.lightBluegrey3,
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     color: COLORS.textPrimary,
   },
   closeButton: {
-    padding: 5,
+    padding: 8,
+  },
+  content: {
+    marginBottom: 20,
   },
   ingredientName: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: COLORS.textPrimary,
-    marginBottom: 10,
-  },
-  nutritionInfo: {
-    backgroundColor: COLORS.cardBackground3,
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  nutritionText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  inputLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginBottom: 5,
-  },
-  quantityInput: {
-    borderWidth: 1,
-    borderColor: COLORS.grey4,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 20,
-  },
-  quickValues: {
-    marginBottom: 20,
-  },
-  quickValuesLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
     marginBottom: 8,
   },
-  quickValueButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  unitText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
   },
-  quickValueButton: {
-    backgroundColor: COLORS.lightBluegrey3,
-    paddingVertical: 8,
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
     paddingHorizontal: 12,
-    borderRadius: 6,
-    flex: 1,
-    marginHorizontal: 4,
-    alignItems: 'center',
+    marginBottom: 16,
   },
-  quickValueText: {
-    fontSize: 13,
+  input: {
+    flex: 1,
+    height: 42,
+    fontSize: 18,
+    color: COLORS.textPrimary,
+    marginBottom: 0,
+  },
+  unitLabel: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+    marginLeft: 8,
+  },
+  nutritionPreview: {
+    backgroundColor: COLORS.background,
+    borderRadius: 8,
+    padding: 12,
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  previewText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  buttonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    height: 48,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cancelButton: {
+    backgroundColor: COLORS.cardBackground2,
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "600",
     color: COLORS.textPrimary,
   },
-  addButton: {
-    backgroundColor: COLORS.blue,
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  addButtonText: {
+  saveButtonText: {
     color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 16,
-  },
-  disabledButton: {
-    backgroundColor: COLORS.cardBackground,
-  },
-  estimatedCalories: {
-    backgroundColor: COLORS.background,
-    padding: 10,
-    borderRadius: 8,
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  estimatedCaloriesText: {
-    fontSize: 15,
-    color: COLORS.blue,
-    fontWeight: '500',
-  },
-  flowHint: {
-    marginBottom: 15,
-    padding: 10,
-    backgroundColor: COLORS.cardBackground3,
-    borderRadius: 8,
-  },
-  flowHintText: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
   },
 });
 

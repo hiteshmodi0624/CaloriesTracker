@@ -24,18 +24,17 @@ export const calculateGoals = (
 
   /* ---------- BMR & TDEE (India-adjusted) ---------- */
   // Mifflin-St Jeor with ≈-10 % correction seen in Indian cohorts
-  const BASE_BMR =
+  const bmr =
     gender === "male"
       ? 10 * weightKg + 6.25 * heightCm - 5 * ageYears + 5
       : 10 * weightKg + 6.25 * heightCm - 5 * ageYears - 161;
-  const bmr = BASE_BMR * 0.9; // India adjustment
 
   const activityMultipliers: Record<ActivityLevel, number> = {
-    sedentary: 1.15,
-    "lightly active": 1.3,
-    "moderately active": 1.45,
-    "very active": 1.6,
-    "extra active": 1.75,
+    sedentary: 1.2,
+    "lightly active": 1.35,
+    "moderately active": 1.5,
+    "very active": 1.75,
+    "extra active": 2,
   };
 
   const tdee = bmr * (activityMultipliers[activityLevel] ?? 1.3);
@@ -44,53 +43,27 @@ export const calculateGoals = (
   let calories: number;
   switch (goalType) {
     case "lose weight":
-      calories = Math.round(tdee * 0.85); // ~15 % deficit
+      const deficit = Math.min(500, Math.round(tdee * 0.15)); // 15% deficit
+      calories = Math.max(1200, Math.round(tdee - deficit)); // 1200 kcal is the minimum calorie intake
       break;
     case "gain weight":
-      calories = Math.round(tdee * 1.08); // ~8 % surplus
+      const surplus = Math.min(300, Math.round(tdee * 0.15)); // 15% surplus
+      calories = Math.round(tdee + surplus);
       break;
     case "build muscle":
-      calories = Math.round(tdee * 1.05); // mild surplus
+      const muscleSurplus = Math.min(500, Math.round(tdee * 0.1)); // 10% surplus
+      calories = Math.round(tdee + muscleSurplus); 
       break;
     default:
       calories = Math.round(tdee); // maintain
   }
-
-  /* ---------- protein target (activity × goal) ---------- */
-  const activityProteinBase: Record<ActivityLevel, number> = {
-    sedentary: 1.0,
-    "lightly active": 1.2,
-    "moderately active": 1.4,
-    "very active": 1.6,
-    "extra active": 1.8,
-  };
-
-  const baseProt = activityProteinBase[activityLevel] ?? 1.2;
-  let proteinPerKg: number;
-
-  switch (goalType) {
-    case "lose weight":
-      proteinPerKg = Math.max(baseProt, 1.3); // boost a little for satiety
-      break;
-    case "gain weight":
-      proteinPerKg = Math.max(baseProt + 0.2, 1.6);
-      break;
-    case "build muscle":
-      proteinPerKg = Math.max(baseProt + 0.4, 1.8);
-      break;
-    default: // maintain
-      proteinPerKg = baseProt;
-  }
-
-  const protein = Math.round(weightKg * proteinPerKg); // g
+  
+  const protein = Math.round(weightKg * 1.5); // 1.5 g/kg
 
   /* ---------- fats & carbs ---------- */
   const fatRatio = goalType === "lose weight" ? 0.3 : 0.25; // 25–30 % kcal
   const fat = Math.round((calories * fatRatio) / 9); // g
-  const carbs = Math.max(
-    0,
-    Math.round((calories - protein * 4 - fat * 9) / 4)
-  ); // g
+  const carbs = Math.max(0, Math.round((calories - protein * 4 - fat * 9) / 4)); // g
 
   return { calories, protein, fat, carbs };
 };

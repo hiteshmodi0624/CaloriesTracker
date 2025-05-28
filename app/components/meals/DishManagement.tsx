@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   dishCount: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   emptyActionButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     padding: 15,
     borderRadius: 12,
     flex: 0.31,
@@ -296,7 +296,7 @@ const styles = StyleSheet.create({
   quickIdeaCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,

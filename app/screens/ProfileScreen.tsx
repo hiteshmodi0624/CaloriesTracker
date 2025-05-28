@@ -4,7 +4,6 @@ import {
   Text, 
   StyleSheet, 
   TouchableOpacity, 
-  TextInput, 
   ScrollView, 
   Platform, 
   Alert,
@@ -18,6 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { AppContext } from '../context/AppContext';
 import Header from '../components/Header';
 import { COLORS } from '../constants';
+import { FynkoTextInput } from '../components/common';
 const ProfileScreen = () => {
   const navigation = useNavigation();
   const { goals, setGoals, markProfileCompleted } = useContext(AppContext);
@@ -98,7 +98,7 @@ const ProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
       <Header title="Profile" showBackButton={true} />
       
       <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -118,7 +118,7 @@ const ProfileScreen = () => {
           
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Name</Text>
-            <TextInput
+            <FynkoTextInput
               style={styles.input}
               value={name}
               onChangeText={setName}
@@ -129,7 +129,7 @@ const ProfileScreen = () => {
           
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email</Text>
-            <TextInput
+            <FynkoTextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
@@ -147,7 +147,7 @@ const ProfileScreen = () => {
           <View style={styles.inputRow}>
             <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
               <Text style={styles.inputLabel}>Weight (kg)</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.input}
                 value={weight}
                 onChangeText={setWeight}
@@ -159,7 +159,7 @@ const ProfileScreen = () => {
             
             <View style={[styles.inputGroup, {flex: 1}]}>
               <Text style={styles.inputLabel}>Height (cm)</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.input}
                 value={height}
                 onChangeText={setHeight}
@@ -173,7 +173,7 @@ const ProfileScreen = () => {
           <View style={styles.inputRow}>
             <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
               <Text style={styles.inputLabel}>Age</Text>
-              <TextInput
+              <FynkoTextInput
                 style={styles.input}
                 value={age}
                 onChangeText={setAge}
@@ -243,12 +243,12 @@ const ProfileScreen = () => {
           </TouchableOpacity>
           
           {/* <TouchableOpacity style={styles.menuItem}>
-            <Ionicons name="help-circle-outline" size={24} color=COLORS.primary style={styles.menuIcon} />
+            <Ionicons name="help-circle-outline" size={24} color={COLORS.primary} style={styles.menuIcon} />
             <View style={styles.menuTextContainer}>
               <Text style={styles.menuText}>Help Center</Text>
               <Text style={styles.menuSubText}>Frequently asked questions</Text>
             </View>
-            <Ionicons name="chevron-forward" size={24} color=COLORS.grey3 />
+            <Ionicons name="chevron-forward" size={24} color={COLORS.grey3} />
           </TouchableOpacity> */}
         </View>
         
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   segmentedControl: {
     flexDirection: 'row',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 8,
     overflow: 'hidden',
   },

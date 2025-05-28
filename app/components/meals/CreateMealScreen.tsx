@@ -1,245 +1,101 @@
-import React, { useState, useContext, useEffect, useMemo } from 'react';
-import { 
-  View, 
-  StyleSheet, 
-  ScrollView,
-  Alert,
+import React, { useState, useContext, useEffect } from 'react';
+import {
+  View,
+  StyleSheet,
   SafeAreaView,
   StatusBar,
   Animated,
-  Platform,
-  Modal,
   Text,
   TouchableOpacity,
-  FlatList
-} from 'react-native';
+} from "react-native";
 import { AppContext } from '../../context/AppContext';
 import { MealIngredient, Ingredient, Dish, Meal } from '../../../types';
 import Header from '../../components/Header';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '../../constants';
-// Import our modular components
-import {
-  Snackbar,
-  QuantityModal,
-  IngredientSelectionModal,
-  SavedDishesModal,
-  getBaseQuantityForUnit,
-  addQuickDish as addQuickDishHelper
-} from './index';
+import { Snackbar } from './index';
+import IngredientSelectionModal from './IngredientSelectionModal';
+import QuantityModal from './QuantityModal';
+import SavedDishesModal from './SavedDishesModal';
+import { FynkoDatePicker, FynkoTextInput, FynkoDropdown, DropdownOption } from '../common';
+import { multiplyNutrition, formatNutritionValue } from '../../utils/nutrition';
 
-// Import new modular components
-import SaveMealButton from './SaveMealButton';
-import MealForm from './MealForm';
-import DishManagement from './DishManagement';
-import CreateDishModal from './CreateDishModal';
-import MealHistory from '../dashboard/MealHistory';
+const MEAL_TYPES = [
+  'Breakfast',
+  'Lunch',
+  'Brunch',
+  'Dinner',
+  'Pre-workout',
+  'Post-workout',
+  'Snacks'
+] as const;
 
-// Component to show meals for a specific day
-interface DayMealsSelectionModalProps {
-  visible: boolean;
-  onClose: () => void;
-  date: string;
-  meals: Meal[];
-  onSelectMeal: (meal: Meal) => void;
-}
+type MealType = typeof MEAL_TYPES[number];
 
-const DayMealsSelectionModal: React.FC<DayMealsSelectionModalProps> = ({ 
-  visible, 
-  onClose, 
-  date, 
-  meals, 
-  onSelectMeal 
-}) => {
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      weekday: 'long',
-      month: 'long', 
-      day: 'numeric'
-    });
-  };
-
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <View style={styles.modalTitleContainer}>
-              <Text style={styles.modalTitle}>Select Meal</Text>
-              <Text style={styles.modalSubtitle}>{formatDate(date)}</Text>
-            </View>
-            <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
-            </TouchableOpacity>
-          </View>
-
-          <FlatList
-            data={meals}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.mealListContainer}
-            renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.mealCard}
-                onPress={() => onSelectMeal(item)}
-              >
-                <View style={styles.mealInfo}>
-                  <Text style={styles.mealName}>{item.name}</Text>
-                  <Text style={styles.mealCalories}>
-                    {Math.round(item.totalCalories)} calories
-                  </Text>
-
-                  {item.dishes && (
-                    <Text style={styles.dishesCount}>
-                      {item.dishes.length}{" "}
-                      {item.dishes.length === 1 ? "dish" : "dishes"}
-                    </Text>
-                  )}
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.grey3} />
-              </TouchableOpacity>
-            )}
-          />
-        </View>
-      </View>
-    </Modal>
-  );
-};
+// Create dropdown options for meal types
+const mealTypeOptions: DropdownOption[] = MEAL_TYPES.map(type => ({
+  label: type,
+  value: type
+}));
 
 const CreateMealScreen: React.FC = () => {
   const { 
     addMeal, 
-    ingredients, 
-    getPastMeals,
+    ingredients,
     savedDishes,
-    saveDish,
-    deleteSavedDish: removeSavedDish,
     addCustomIngredient
   } = useContext(AppContext);
   
-  // Add scrollY for header animation
-  const [scrollY] = useState(new Animated.Value(0));
-  
-  // Meal state
-  const [name, setName] = useState('');
+  // Basic meal state
+  const [mealType, setMealType] = useState<MealType>('Breakfast');
   const [date, setDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [mealIngredients, setMealIngredients] = useState<MealIngredient[]>([]);
-  
-  // Dish state
   const [dishes, setDishes] = useState<Dish[]>([]);
-  const [currentDishName, setCurrentDishName] = useState('');
-  const [currentDishIngredients, setCurrentDishIngredients] = useState<MealIngredient[]>([]);
-  const [showDishCreateModal, setShowDishCreateModal] = useState(false);
-  const [activeTabInDishModal, setActiveTabInDishModal] = useState<'ingredients' | 'quickDish'>('ingredients');
   
-  // Quick dish entry state
-  const [quickDishName, setQuickDishName] = useState('');
-  const [quickDishServings, setQuickDishServings] = useState('1');
-  const [quickDishServingsMultiplier, setQuickDishServingsMultiplier] = useState(1);
-  const [isAddingQuickDish, setIsAddingQuickDish] = useState(false);
-  
-  // Ingredient selection state
-  const [showIngredientSelectionModal, setShowIngredientSelectionModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [returnToDishModal, setReturnToDishModal] = useState(false);
-  
-  // Quantity modal state
+  // UI state
+  const [scrollY] = useState(new Animated.Value(0));
+  const [showIngredientModal, setShowIngredientModal] = useState(false);
   const [showQuantityModal, setShowQuantityModal] = useState(false);
-  const [selectedIngredientForQuantity, setSelectedIngredientForQuantity] = useState<Ingredient | null>(null);
-  const [tempQuantity, setTempQuantity] = useState('');
-
-  // Past meals modal state
-  const [showPastMeals, setShowPastMeals] = useState(false);
-  const [pastMeals, setPastMeals] = useState<Meal[]>([]);
-  
-  // Saved dishes modal state
-  const [showSavedDishesModal, setShowSavedDishesModal] = useState(false);
-  
-  // Snackbar state
+  const [selectedIngredient, setSelectedIngredient] = useState<Ingredient | null>(null);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarType, setSnackbarType] = useState<'error' | 'success' | 'warning' | 'info'>('error');
+  const [snackbarType, setSnackbarType] = useState<'error' | 'success' | 'info'>('info');
 
-  // Add new state for day meals selection
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedDayMeals, setSelectedDayMeals] = useState<Meal[]>([]);
-  const [showDayMealsModal, setShowDayMealsModal] = useState(false);
+  // Add state for saved dishes modal
+  const [showSavedDishesModal, setShowSavedDishesModal] = useState(false);
 
-  // Helper function to show snackbar
-  const showSnackbar = (message: string, type: 'error' | 'success' | 'warning' | 'info' = 'error') => {
+  // Calculate total nutrition
+  const totalNutrition = {
+    calories: mealIngredients.reduce((sum, ing) => sum + ing.nutrition.calories, 0) +
+              dishes.reduce((sum, dish) => sum + dish.totalCalories, 0),
+    protein: mealIngredients.reduce((sum, ing) => sum + (ing.nutrition.protein || 0), 0) +
+             dishes.reduce((sum, dish) => sum + dish.ingredients.reduce((p, i) => p + (i.nutrition.protein || 0), 0), 0),
+    carbs: mealIngredients.reduce((sum, ing) => sum + (ing.nutrition.carbs || 0), 0) +
+           dishes.reduce((sum, dish) => sum + dish.ingredients.reduce((c, i) => c + (i.nutrition.carbs || 0), 0), 0),
+    fat: mealIngredients.reduce((sum, ing) => sum + (ing.nutrition.fat || 0), 0) +
+         dishes.reduce((sum, dish) => sum + dish.ingredients.reduce((f, i) => f + (i.nutrition.fat || 0), 0), 0),
+  };
+
+  const showSnackbar = (message: string, type: 'error' | 'success' | 'info' = 'info') => {
     setSnackbarMessage(message);
     setSnackbarType(type);
     setSnackbarVisible(true);
   };
 
-  // Hide snackbar
-  const hideSnackbar = () => {
-    setSnackbarVisible(false);
-  };
-
-  // Calculate total nutrition for the meal including all dishes
-  const mealNutrition = useMemo(() => {
-    const ingredientsNutrition = mealIngredients.reduce((sum, ing) => {
-      return {
-        calories: sum.calories + ing.nutrition.calories,
-        protein: sum.protein + (ing.nutrition.protein || 0),
-        carbs: sum.carbs + (ing.nutrition.carbs || 0),
-        fat: sum.fat + (ing.nutrition.fat || 0),
-      };
-    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-    
-    const dishesNutrition = dishes.reduce((sum, dish) => {
-      return {
-        calories: sum.calories + dish.totalCalories,
-        protein: sum.protein + dish.ingredients.reduce((p, i) => p + (i.nutrition.protein || 0), 0),
-        carbs: sum.carbs + dish.ingredients.reduce((c, i) => c + (i.nutrition.carbs || 0), 0),
-        fat: sum.fat + dish.ingredients.reduce((f, i) => f + (i.nutrition.fat || 0), 0),
-      };
-    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
-    
-    return {
-      calories: ingredientsNutrition.calories + dishesNutrition.calories,
-      protein: ingredientsNutrition.protein + dishesNutrition.protein,
-      carbs: ingredientsNutrition.carbs + dishesNutrition.carbs,
-      fat: ingredientsNutrition.fat + dishesNutrition.fat,
-    };
-  }, [mealIngredients, dishes]);
-
-  // Load past meals when the component mounts
-  useEffect(() => {
-    const recentMeals = getPastMeals(10); // Get 10 most recent meals
-    setPastMeals(recentMeals);
-  }, [getPastMeals]);
-
-  // Handle date picker
-  const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(selectedDate);
-    }
-  };
-
-  // Handle saving the meal
   const handleSaveMeal = async () => {
-    if (!name) {
-      showSnackbar('Please enter a meal name');
+    if (!mealType) {
+      showSnackbar('Please select a meal type', 'error');
       return;
     }
 
-    if (dishes.length === 0) {
-      showSnackbar('Please add at least one dish');
+    if (dishes.length === 0 && mealIngredients.length === 0) {
+      showSnackbar('Please add at least one dish or ingredient', 'error');
       return;
     }
 
     try {
       await addMeal({
-        name,
+        name: mealType,
         date: date.toISOString().split('T')[0],
         ingredients: mealIngredients,
         dishes: dishes,
@@ -247,521 +103,65 @@ const CreateMealScreen: React.FC = () => {
       
       showSnackbar('Meal saved successfully', 'success');
       
-      // Reset the form
-      setName('');
+      // Reset form
+      setMealType('Breakfast');
       setDate(new Date());
       setMealIngredients([]);
       setDishes([]);
     } catch (error) {
       console.error('Error saving meal:', error);
-      showSnackbar('Failed to save meal');
+      showSnackbar('Failed to save meal', 'error');
     }
   };
 
-  // Handle selecting an ingredient
-  const onSelectIngredient = (ingredient: Ingredient) => {
-    setSelectedIngredientForQuantity(ingredient);
-    setTempQuantity('');
+  const handleAddIngredient = (ingredient: Ingredient) => {
+    setSelectedIngredient(ingredient);
     setShowQuantityModal(true);
-    setShowIngredientSelectionModal(false);
+    setShowIngredientModal(false);
   };
 
-  // Handle adding a quick dish using AI to generate estimated ingredients
-  const handleAddQuickDish = async () => {
-    if (!quickDishName.trim()) {
-      showSnackbar('Please enter a dish name');
-      return;
-    }
-    
-    if (isAddingQuickDish) return;
+  const handleSaveIngredient = (qty: number) => {
+    if (!selectedIngredient) return;
 
-    try {
-      // Use the new addQuickDish helper function that leverages OpenAI
-      addQuickDishHelper(
-        quickDishName,
-        setCurrentDishIngredients,
-        setCurrentDishName,
-        setIsAddingQuickDish
-      );
-      
-      // Show success message when complete
-      showSnackbar(`Analyzing "${quickDishName}"...`, 'info');
-    } catch (error) {
-      console.error('Error adding quick dish:', error);
-      showSnackbar('Failed to analyze dish. Please try again or add ingredients manually.');
-      setIsAddingQuickDish(false);
-    }
-  };
-
-  // Add ingredient with quantity
-  const addIngredientWithQuantity = () => {
-    try {
-      if (!selectedIngredientForQuantity) {
-        showSnackbar('No ingredient selected');
-        return;
-      }
-      
-      if (!tempQuantity) {
-        showSnackbar('Please enter a quantity');
-        return;
-      }
-
-      const quantity = parseFloat(tempQuantity);
-      if (isNaN(quantity) || quantity <= 0) {
-        showSnackbar('Please enter a valid quantity');
-        return;
-      }
-      
-      const ingredient = selectedIngredientForQuantity;
-
-      // Scale nutrition based on quantity and unit type
-      const baseQuantity = getBaseQuantityForUnit(ingredient.unit);
-      const scaleFactor = quantity / baseQuantity; 
-      
-      const scaledNutrition = {
-        calories: (ingredient.nutrition.calories || 0) * scaleFactor,
-        protein: (ingredient.nutrition.protein || 0) * scaleFactor,
-        carbs: (ingredient.nutrition.carbs || 0) * scaleFactor,
-        fat: (ingredient.nutrition.fat || 0) * scaleFactor,
-      };
-
-      const newIngredient: MealIngredient = {
-        id: Date.now().toString(),
-        ingredientId: ingredient.id,
-        name: ingredient.name,
-        unit: ingredient.unit,
-        quantity,
-        nutrition: scaledNutrition,
-      };
-
-      // Check if we need to return to dish modal
-      if (returnToDishModal) {
-        // Add to current dish ingredients
-        setCurrentDishIngredients(prevIngredients => [...prevIngredients, newIngredient]);
-        showSnackbar(`Added ${quantity} ${ingredient.unit} of ${ingredient.name} to dish`, 'success');
-        
-        // Show dish modal again
-        setTimeout(() => {
-          setShowDishCreateModal(true);
-        }, 300);
-      } else {
-        // Add the new ingredient to the meal
-        setMealIngredients(prev => [...prev, newIngredient]);
-        showSnackbar(`Added ${quantity} ${ingredient.unit} of ${ingredient.name} to meal`, 'success');
-        
-        // Show hint about next steps
-        setTimeout(() => {
-          showSnackbar('You can now add more ingredients or save the meal', 'info');
-        }, 3000);
-      }
-      
-      // Close modal and reset
-      setShowQuantityModal(false);
-      setSelectedIngredientForQuantity(null);
-      setTempQuantity('');
-      setReturnToDishModal(false);
-    } catch (error) {
-      console.error('Error adding ingredient with quantity:', error);
-      showSnackbar('Failed to add ingredient');
-    }
-  };
-
-  // Open ingredient selection modal
-  const openIngredientSelection = (returnToDish = false) => {
-    setSearchTerm('');
-    setReturnToDishModal(returnToDish);
-    setShowIngredientSelectionModal(true);
-    setShowDishCreateModal(false);
-  };
-
-  // Save dish to the current meal
-  const saveDishToMeal = () => {
-    try {
-      if (!currentDishName) {
-        showSnackbar('Please enter a dish name');
-        return;
-      }
-      
-      if (currentDishIngredients.length === 0) {
-        showSnackbar('Please add at least one ingredient to the dish');
-        return;
-      }
-      // Calculate total calories for the dish
-      const totalCalories = currentDishIngredients.reduce(
-        (sum, ing) => sum + ing.nutrition.calories, 
-        0
-      );
-      
-      // Create new dish
-      const newDish: Dish = {
-        id: Date.now().toString(),
-        name: currentDishName,
-        ingredients: currentDishIngredients,
-        totalCalories
-      };
-      
-      // Add to dishes array
-      setDishes(prev => [...prev, newDish]);
-      
-      // Show success message
-      showSnackbar(`Added "${currentDishName}" to meal`, 'success');
-      
-      // Reset dish creation state
-      setCurrentDishName('');
-      setCurrentDishIngredients([]);
-      setQuickDishName('');
-      setQuickDishServings('1');
-      handleSaveDishForReuse();
-      // Close the modal
-      setShowDishCreateModal(false);
-      
-      // Show next steps hint
-      setTimeout(() => {
-        showSnackbar('You can now add more dishes or save the meal', 'info');
-      }, 2000);
-    } catch (error) {
-      console.error('Error saving dish to meal:', error);
-      showSnackbar('Failed to add dish to meal');
-    }
-  };
-
-  // Save dish for reuse without adding to meal
-  const handleSaveDishForReuse = () => {
-    if (!currentDishName) {
-      showSnackbar('Please provide a name for the dish');
-      return;
-    }
-    
-    if (currentDishIngredients.length === 0) {
-      showSnackbar('Please add at least one ingredient to the dish');
-      return;
-    }
-    
-    const totalCalories = currentDishIngredients.reduce(
-      (sum, ing) => sum + ing.nutrition.calories, 0
-    );
-    
-    // Save the dish to context storage
-    saveDish({
-      name: currentDishName,
-      ingredients: currentDishIngredients,
-      totalCalories
-    }).then(success => {
-      if (success) {
-        showSnackbar(`Dish "${currentDishName}" saved for future use`, 'success');
-      } else {
-        showSnackbar('Failed to save dish', 'error');
-      }
-    });
-  };
-  
-  // Handle editing a dish 
-  const editDish = (dish: Dish) => {
-    setCurrentDishName(dish.name);
-    setCurrentDishIngredients([...dish.ingredients]);
-    setShowDishCreateModal(true);
-    removeDishFromMeal(dish.id);
-  };
-  
-  // Remove dish from meal
-  const removeDishFromMeal = (dishId: string) => {
-    setDishes(dishes.filter(dish => dish.id !== dishId));
-  };
-  
-  // Edit dish ingredient quantity
-  const editDishIngredientQuantity = (dishId: string, ingredientId: string, newQuantity: number) => {
-    if (isNaN(newQuantity) || newQuantity <= 0) {
-      showSnackbar('Please enter a valid quantity');
-      return;
-    }
-    
-    // Find the dish
-    const updatedDishes = dishes.map(dish => {
-      if (dish.id === dishId) {
-        // Update the ingredient in this dish
-        const updatedIngredients = dish.ingredients.map(ing => {
-          if (ing.id === ingredientId) {
-            // Calculate scale factor
-            const scaleFactor = newQuantity / ing.quantity;
-            
-            // Scale nutrition values
-            const updatedNutrition = {
-              calories: ing.nutrition.calories * scaleFactor,
-              protein: (ing.nutrition.protein || 0) * scaleFactor,
-              carbs: (ing.nutrition.carbs || 0) * scaleFactor,
-              fat: (ing.nutrition.fat || 0) * scaleFactor,
-            };
-            
-            return {
-              ...ing,
-              quantity: newQuantity,
-              nutrition: updatedNutrition,
-            };
-          }
-          return ing;
-        });
-        
-        // Calculate new total calories
-        const newTotalCalories = updatedIngredients.reduce(
-          (sum, ing) => sum + ing.nutrition.calories, 0
-        );
-        
-        return {
-          ...dish,
-          ingredients: updatedIngredients,
-          totalCalories: newTotalCalories
-        };
-      }
-      return dish;
-    });
-    
-    setDishes(updatedDishes);
-    showSnackbar('Ingredient quantity updated', 'success');
-  };
-  
-  // Edit current dish ingredient quantity and nutrition values
-  const editCurrentDishIngredient = (ingredientId: string, newQuantity: number, newNutrition: {
-    calories: number;
-    protein: number;
-    carbs: number;
-    fat: number;
-  }) => {
-    if (isNaN(newQuantity) || newQuantity <= 0) {
-      showSnackbar('Please enter a valid quantity');
-      return;
-    }
-    
-    // Update the ingredient in the current dish
-    const updatedIngredients = currentDishIngredients.map(ing => {
-      if (ing.id === ingredientId) {
-        // Find the original ingredient to check if we need to scale nutrition
-        const originalIngredient = currentDishIngredients.find(i => i.id === ingredientId);
-        
-        if (originalIngredient) {
-          // Calculate scale factor based on quantity change
-          const scaleFactor = newQuantity / originalIngredient.quantity;
-          
-          // Determine if nutrition values were explicitly changed or should be scaled
-          // We'll assume if all values match scaled values, then only quantity changed
-          const scaledNutrition = {
-            calories: originalIngredient.nutrition.calories * scaleFactor,
-            protein: (originalIngredient.nutrition.protein || 0) * scaleFactor,
-            carbs: (originalIngredient.nutrition.carbs || 0) * scaleFactor,
-            fat: (originalIngredient.nutrition.fat || 0) * scaleFactor,
-          };
-          
-          // Check if nutrition was explicitly changed by comparing with scaled values
-          // Allow for small rounding differences (0.1)
-          const nutritionExplicitlyChanged = 
-            Math.abs(newNutrition.calories - scaledNutrition.calories) > 0.1 ||
-            Math.abs(newNutrition.protein - scaledNutrition.protein) > 0.1 ||
-            Math.abs(newNutrition.carbs - scaledNutrition.carbs) > 0.1 ||
-            Math.abs(newNutrition.fat - scaledNutrition.fat) > 0.1;
-          
-          return {
-            ...ing,
-            quantity: newQuantity,
-            nutrition: nutritionExplicitlyChanged ? newNutrition : scaledNutrition,
-          };
-        }
-        
-        // Fallback if original ingredient not found
-        return {
-          ...ing,
-          quantity: newQuantity,
-          nutrition: newNutrition,
-        };
-      }
-      return ing;
-    });
-    
-    setCurrentDishIngredients(updatedIngredients);
-    showSnackbar('Ingredient updated', 'success');
-  };
-  
-  const editCurrentDishIngredients = (ingredients: MealIngredient[]) => {
-    setCurrentDishIngredients(ingredients);
-    showSnackbar('Ingredient updated', 'success');
-  };
-
-  // Remove ingredient from current dish
-  const removeIngredientFromCurrentDish = (id: string) => {
-    setCurrentDishIngredients(currentDishIngredients.filter(i => i.id !== id));
-  };
-
-  // Add saved dish to meal
-  const addSavedDishToMeal = (dish: Dish) => {
-    // Create a copy with new IDs to avoid conflicts
-    const dishCopy: Dish = {
+    const newIngredient: MealIngredient = {
       id: Date.now().toString(),
-      name: dish.name,
-      ingredients: dish.ingredients.map(ing => ({
-        ...ing,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-      })),
-      totalCalories: dish.totalCalories
+      ingredientId: selectedIngredient.id,
+      name: selectedIngredient.name,
+      unit: selectedIngredient.unit,
+      quantity: qty,
+      nutrition: multiplyNutrition(selectedIngredient.nutrition, qty),
     };
-    
-    setDishes([...dishes, dishCopy]);
-    showSnackbar(`Added "${dish.name}" to meal`, 'success');
+
+    setMealIngredients([...mealIngredients, newIngredient]);
+    setShowQuantityModal(false);
+    setSelectedIngredient(null);
+  };
+
+  const handleRemoveIngredient = (id: string) => {
+    setMealIngredients(mealIngredients.filter(i => i.id !== id));
+  };
+
+  const handleAddSavedDish = (dish: Dish) => {
+    setDishes([...dishes, { ...dish, id: Date.now().toString() }]);
+  };
+
+  const handleRemoveDish = (id: string) => {
+    setDishes(dishes.filter(d => d.id !== id));
+  };
+
+  const handleSelectSavedDish = (dish: Dish) => {
+    handleAddSavedDish(dish);
     setShowSavedDishesModal(false);
-  };
-  
-  // Delete saved dish
-  const handleDeleteSavedDish = async (dishId: string) => {
-    try {
-      await removeSavedDish(dishId);
-      showSnackbar('Dish deleted', 'success');
-    } catch (error) {
-      console.error('Failed to delete dish:', error);
-      showSnackbar('Failed to delete dish', 'error');
-    }
-  };
-
-  // Handle adding a new custom ingredient
-  const handleAddCustomIngredient = async (newIngredient: Omit<Ingredient, 'id'>) => {
-    try {
-      // Save the ingredient to the app context
-      const success = await addCustomIngredient(newIngredient);
-      
-      if (success) {
-        showSnackbar(`Custom ingredient "${newIngredient.name}" has been added`, 'success');
-      } else {
-        showSnackbar('Failed to save custom ingredient', 'error');
-      }
-    } catch (error) {
-      console.error('Error adding custom ingredient:', error);
-      showSnackbar('An error occurred while adding the ingredient', 'error');
-    }
-  };
-
-  // Helper function to process meals into days for MealHistory
-  const getMealDays = (mealsData: Meal[]) => {
-    const dayMap = new Map<string, {
-      date: string;
-      meals: Meal[];
-      totalCalories: number;
-      macros: {
-        protein: number;
-        carbs: number;
-        fat: number;
-      }
-    }>();
-
-    mealsData.forEach(meal => {
-      const day = meal.date;
-      if (!dayMap.has(day)) {
-        dayMap.set(day, {
-          date: day,
-          meals: [],
-          totalCalories: 0,
-          macros: {
-            protein: 0,
-            carbs: 0,
-            fat: 0
-          }
-        });
-      }
-
-      const dayData = dayMap.get(day)!;
-      dayData.meals.push(meal);
-      dayData.totalCalories += meal.totalCalories;
-
-      meal.ingredients.forEach(ing => {
-        dayData.macros.protein += ing.nutrition.protein || 0;
-        dayData.macros.carbs += ing.nutrition.carbs || 0;
-        dayData.macros.fat += ing.nutrition.fat || 0;
-      });
-
-      if (meal.dishes) {
-        meal.dishes.forEach(dish => {
-          dish.ingredients.forEach(ing => {
-            dayData.macros.protein += ing.nutrition.protein || 0;
-            dayData.macros.carbs += ing.nutrition.carbs || 0;
-            dayData.macros.fat += ing.nutrition.fat || 0;
-          });
-        });
-      }
-    });
-
-    return Array.from(dayMap.values()).sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-  };
-
-  // Process past meals into day format
-  const pastMealDays = useMemo(() => {
-    return getMealDays(pastMeals);
-  }, [pastMeals]);
-
-  // Modified function to handle selecting a day from history
-  const handleSelectMealFromHistory = (day: {
-    date: string;
-    meals: Meal[];
-    totalCalories: number;
-    macros: {
-      protein: number;
-      carbs: number;
-      fat: number;
-    }
-  }) => {
-    // If there's only one meal for this day, use it directly
-    if (day.meals && day.meals.length === 1) {
-      applyMealTemplate(day.meals[0]);
-    } else if (day.meals && day.meals.length > 1) {
-      // If there are multiple meals, show the selection modal
-      setSelectedDay(day.date);
-      setSelectedDayMeals(day.meals);
-      setShowDayMealsModal(true);
-      setShowPastMeals(false);
-    }
-  };
-
-  // New function to handle selecting a specific meal
-  const handleSelectSpecificMeal = (meal: Meal) => {
-    applyMealTemplate(meal);
-    setShowDayMealsModal(false);
-  };
-
-  // Function to apply a selected meal as a template
-  const applyMealTemplate = (selectedMeal: Meal) => {
-    // Pre-fill the form with the selected meal data
-    // TODO: Add a unique ID to the meal name (strip any existing HH:MM) and add the current time in HH:MM format
-    setName(
-      selectedMeal.name.replace(/ \([0-9]{2}:[0-9]{2}\)$/, "") +
-        ` (${new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        })})`
-    );
-    
-    if (selectedMeal.dishes) {
-      // Clone dishes to avoid reference issues
-      const clonedDishes = selectedMeal.dishes.map((dish: Dish) => ({
-        ...dish,
-        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-        ingredients: dish.ingredients.map((ing: MealIngredient) => ({
-          ...ing,
-          id: Date.now().toString() + Math.random().toString(36).substr(2, 9)
-        }))
-      }));
-      setDishes(clonedDishes);
-    }
-    
-    // Close the modal
-    setShowPastMeals(false);
-    showSnackbar('Meal template loaded', 'success');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
-      
+      <StatusBar barStyle="light-content" />
       <Header title="Create Meal" />
-      
-      <View style={styles.outerContainer}>
-        <Animated.ScrollView 
-          style={styles.container}
+
+      <View style={styles.container}>
+        <Animated.ScrollView
+          style={styles.scrollView}
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
@@ -770,117 +170,152 @@ const CreateMealScreen: React.FC = () => {
           )}
           scrollEventThrottle={16}
         >
-          <MealForm 
-            name={name}
-            setName={setName}
-            date={date}
-            showDatePicker={showDatePicker}
-            setShowDatePicker={setShowDatePicker}
-            handleDateChange={handleDateChange}
-            setShowPastMeals={setShowPastMeals}
-          />
+          {/* Basic Info Section */}
 
-          {/* Dish Management Section */}
-          <DishManagement 
-            dishes={dishes}
-            mealNutrition={mealNutrition}
-            editDish={editDish}
-            removeDishFromMeal={removeDishFromMeal}
-            editDishIngredientQuantity={editDishIngredientQuantity}
-            setShowSavedDishesModal={setShowSavedDishesModal}
-            setCurrentDishName={setCurrentDishName}
-            setCurrentDishIngredients={setCurrentDishIngredients}
-            setActiveTabInDishModal={setActiveTabInDishModal}
-            setShowDishCreateModal={setShowDishCreateModal}
-          />
+          <Text style={styles.sectionTitle}>Meal Details</Text>
+          {/* Meal Type Card */}
+          <View style={styles.card}>
+            <View style={styles.cardRow}>
+              <Text style={styles.cardTitle}>Meal Type</Text>
+              <FynkoDropdown
+                options={mealTypeOptions}
+                selectedValue={mealType}
+                onValueChange={(value) => setMealType(value as MealType)}
+                placeholder="Select meal type"
+              />
+            </View>
+            <View style={styles.cardRow}>
+              <Text style={styles.cardTitle}>Date</Text>
+              <FynkoDatePicker
+                date={date}
+                onDateChange={(newDate) => setDate(newDate)}
+              />
+            </View>
+          </View>
 
-          {/* Save Meal Button */}
-          <SaveMealButton 
-            name={name}
-            dishes={dishes}
-            handleSaveMeal={handleSaveMeal}
-          />
+          {/* Nutrition Summary */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Nutrition Summary</Text>
+            <View style={styles.nutritionCard}>
+              <Text style={styles.caloriesText}>
+                {formatNutritionValue(totalNutrition.calories)} calories
+              </Text>
+              <View style={styles.macrosContainer}>
+                <Text style={styles.macroText}>
+                  P: {formatNutritionValue(totalNutrition.protein)}g
+                </Text>
+                <Text style={styles.macroText}>
+                  C: {formatNutritionValue(totalNutrition.carbs)}g
+                </Text>
+                <Text style={styles.macroText}>
+                  F: {formatNutritionValue(totalNutrition.fat)}g
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Ingredients Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Ingredients</Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowIngredientModal(true)}
+              >
+                <Ionicons name="add-circle" size={24} color={COLORS.primary} />
+                <Text style={styles.addButtonText}>Add Ingredient</Text>
+              </TouchableOpacity>
+            </View>
+
+            {mealIngredients.map((ingredient) => (
+              <View key={ingredient.id} style={styles.ingredientItem}>
+                <View style={styles.ingredientInfo}>
+                  <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                  <Text style={styles.ingredientDetails}>
+                    {ingredient.quantity} {ingredient.unit} •{" "}
+                    {formatNutritionValue(Math.round(ingredient.nutrition.calories))} cal
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handleRemoveIngredient(ingredient.id)}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={COLORS.error}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          {/* Dishes Section */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Dishes</Text>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowSavedDishesModal(true)}
+              >
+                <Ionicons name="add-circle" size={24} color={COLORS.primary} />
+                <Text style={styles.addButtonText}>Add Dish</Text>
+              </TouchableOpacity>
+            </View>
+
+            {dishes.map((dish) => (
+              <View key={dish.id} style={styles.dishItem}>
+                <View style={styles.dishInfo}>
+                  <Text style={styles.dishName}>{dish.name}</Text>
+                  <Text style={styles.dishCalories}>
+                    {formatNutritionValue(Math.round(dish.totalCalories))} calories
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => handleRemoveDish(dish.id)}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={COLORS.error}
+                  />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+
+          {/* Save Button */}
+          <TouchableOpacity style={styles.saveButton} onPress={handleSaveMeal}>
+            <Text style={styles.saveButtonText}>Save Meal</Text>
+          </TouchableOpacity>
         </Animated.ScrollView>
-        
+
         {/* Modals */}
-        <CreateDishModal
-          visible={showDishCreateModal}
-          dishName={currentDishName}
-          onDishNameChange={setCurrentDishName}
-          ingredients={currentDishIngredients}
-          onAddIngredient={() => openIngredientSelection(true)}
-          onRemoveIngredient={removeIngredientFromCurrentDish}
-          editCurrentDishIngredient={editCurrentDishIngredient}
-          editCurrentDishIngredients={editCurrentDishIngredients}
-          onSaveDish={saveDishToMeal}
-          onClose={() => setShowDishCreateModal(false)}
-          activeTab={activeTabInDishModal}
-          onTabChange={setActiveTabInDishModal}
-          quickDishName={quickDishName}
-          onQuickDishNameChange={setQuickDishName}
-          quickDishServings={quickDishServings}
-          onQuickDishServingsChange={setQuickDishServings}
-          isAddingQuickDish={isAddingQuickDish}
-          onAddQuickDish={handleAddQuickDish}
-          quickDishServingsMultiplier={quickDishServingsMultiplier}
-          onQuickDishServingsMultiplierChange={setQuickDishServingsMultiplier}
-        />
-        
-        <SavedDishesModal 
-          visible={showSavedDishesModal}
-          savedDishes={savedDishes}
-          onClose={() => setShowSavedDishesModal(false)}
-          onAddDishToMeal={addSavedDishToMeal}
-          onDeleteDish={handleDeleteSavedDish}
-        />
-        
         <IngredientSelectionModal
-          visible={showIngredientSelectionModal}
+          visible={showIngredientModal}
           ingredients={ingredients}
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onSelectIngredient={onSelectIngredient}
-          onAddNewIngredient={handleAddCustomIngredient}
-          onClose={() => {
-            setShowIngredientSelectionModal(false);
-            if (returnToDishModal) {
-              setTimeout(() => setShowDishCreateModal(true), 300);
-            }
-          }}
-          getBaseQuantityForUnit={getBaseQuantityForUnit}
+          onSelectIngredient={handleAddIngredient}
+          onClose={() => setShowIngredientModal(false)}
         />
-        
+
         <QuantityModal
           visible={showQuantityModal}
-          ingredient={selectedIngredientForQuantity}
-          quantity={tempQuantity}
-          onQuantityChange={setTempQuantity}
-          onSave={addIngredientWithQuantity}
-          onCancel={() => {
+          ingredient={selectedIngredient}
+          onSave={handleSaveIngredient}
+          onClose={() => {
             setShowQuantityModal(false);
-            if (returnToDishModal) {
-              setTimeout(() => setShowDishCreateModal(true), 300);
-            }
+            setSelectedIngredient(null);
           }}
         />
-        
-        {/* Past Meals Modal */}
-        <MealHistory 
-          visible={showPastMeals}
-          onClose={() => setShowPastMeals(false)}
-          days={pastMealDays}
-          onSelectDay={handleSelectMealFromHistory}
+
+        <SavedDishesModal
+          visible={showSavedDishesModal}
+          dishes={savedDishes}
+          onSelectDish={handleSelectSavedDish}
+          onClose={() => setShowSavedDishesModal(false)}
         />
-        
-        {/* Day Meals Selection Modal */}
-        <DayMealsSelectionModal 
-          visible={showDayMealsModal}
-          onClose={() => setShowDayMealsModal(false)}
-          date={selectedDay || ''}
-          meals={selectedDayMeals}
-          onSelectMeal={handleSelectSpecificMeal}
-        />
-        
+
         <Snackbar
           visible={snackbarVisible}
           message={snackbarMessage}
@@ -897,96 +332,252 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  outerContainer: {
-    flex: 1,
-    position: 'relative',
-    marginTop: 80, // Account for header + status bar on iOS
-  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    backgroundColor: COLORS.background,
+    marginTop: 80, // Account for header + status bar
+  },
+  scrollView: {
+    flex: 1,
   },
   contentContainer: {
-    paddingBottom: 30,
+    padding: 20,
+    paddingBottom: 40,
   },
-  modalContainer: {
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: COLORS.textPrimary,
+    marginBottom: 12,
+  },
+  label: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.grey3,
+  },
+  pickerButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.grey3,
+  },
+  cardRow: {
+    marginVertical: 0,
+  },
+  pickerButtonText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    fontWeight: "500",
+  },
+  pickerContainer: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.grey3,
+    overflow: "hidden",
+  },
+  picker: {
+    height: 50,
+    color: COLORS.textPrimary,
+    backgroundColor: COLORS.cardBackground,
+  },
+  modalOverlay: {
     flex: 1,
     backgroundColor: COLORS.opaqueBlack,
     justifyContent: "flex-end",
   },
-  modalContent: {
+  pickerModalContent: {
     backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: "70%",
     shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 16,
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  modalHeader: {
+  pickerModalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
-    paddingBottom: 12,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.lightBluegrey3,
+    backgroundColor: COLORS.cardBackground,
   },
-  modalTitleContainer: {
-    flexDirection: 'column',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
+  pickerModalTitle: {
+    fontSize: 18,
+    fontWeight: "600",
     color: COLORS.textPrimary,
   },
-  modalSubtitle: {
+  pickerModalButton: {
+    padding: 8,
+    minWidth: 60,
+    alignItems: "center",
+  },
+  pickerModalButtonText: {
+    fontSize: 16,
+    color: COLORS.textSecondary,
+  },
+  pickerModalButtonDone: {
+    color: COLORS.primary,
+    fontWeight: "600",
+  },
+  iosPicker: {
+    backgroundColor: COLORS.cardBackground,
+    height: 200,
+  },
+  androidPickerItem: {
+    color: COLORS.textPrimary,
+    fontSize: 16,
+    height: 50,
+    backgroundColor: COLORS.cardBackground,
+  },
+  dateButton: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.grey3,
+  },
+  dateText: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+  },
+  nutritionCard: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  caloriesText: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: COLORS.orange,
+    marginBottom: 8,
+  },
+  macrosContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  macroText: {
     fontSize: 14,
     color: COLORS.textSecondary,
-    marginTop: 4,
   },
-  closeButton: {
-    padding: 8,
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
   },
-  mealListContainer: {
-    paddingBottom: 20,
+  addButtonText: {
+    fontSize: 14,
+    color: COLORS.primary,
+    marginLeft: 4,
   },
-  mealCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: COLORS.cardBackground3,
-    borderRadius: 12,
-    marginBottom: 10,
-    padding: 15,
-    shadowColor: COLORS.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 1,
+  ingredientItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
   },
-  mealInfo: {
+  ingredientInfo: {
     flex: 1,
   },
-  mealName: {
+  ingredientName: {
     fontSize: 16,
-    fontWeight: '500',
     color: COLORS.textPrimary,
     marginBottom: 4,
   },
-  mealCalories: {
+  ingredientDetails: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+  },
+  dishItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  dishInfo: {
+    flex: 1,
+  },
+  dishName: {
+    fontSize: 16,
+    color: COLORS.textPrimary,
+    marginBottom: 4,
+  },
+  dishCalories: {
     fontSize: 14,
     color: COLORS.orange,
-    marginBottom: 2,
   },
-  dishesCount: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  }
+  removeButton: {
+    padding: 8,
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    padding: 16,
+    alignItems: "center",
+    marginTop: 16,
+  },
+  saveButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  card: {
+    backgroundColor: COLORS.cardBackground,
+    borderRadius: 15,
+    padding: 20,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: COLORS.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
 });
 
 export default CreateMealScreen; 

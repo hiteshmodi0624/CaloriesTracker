@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants';
+import { formatNutritionValue } from '../../utils/nutrition';
 
 interface NutritionSummaryProps {
   nutrition: {
@@ -22,7 +23,7 @@ const NutritionSummary: React.FC<NutritionSummaryProps> = ({ nutrition }) => {
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Nutrition Summary</Text>
-        <Text style={styles.calories}>{Math.round(nutrition.calories)} calories</Text>
+        <Text style={styles.calories}>{formatNutritionValue(nutrition.calories)} calories</Text>
       </View>
       
       <View style={styles.macrosContainer}>
@@ -56,7 +57,7 @@ const NutritionSummary: React.FC<NutritionSummaryProps> = ({ nutrition }) => {
             <View>
               <Text style={styles.macroLabel}>Protein</Text>
               <Text style={styles.macroValue}>
-                {nutrition.protein.toFixed(1)}g ({proteinPct}%)
+                {formatNutritionValue(nutrition.protein)}g ({proteinPct}%)
               </Text>
             </View>
           </View>
@@ -66,7 +67,7 @@ const NutritionSummary: React.FC<NutritionSummaryProps> = ({ nutrition }) => {
             <View>
               <Text style={styles.macroLabel}>Carbs</Text>
               <Text style={styles.macroValue}>
-                {nutrition.carbs.toFixed(1)}g ({carbsPct}%)
+                {formatNutritionValue(nutrition.carbs)}g ({carbsPct}%)
               </Text>
             </View>
           </View>
@@ -76,7 +77,7 @@ const NutritionSummary: React.FC<NutritionSummaryProps> = ({ nutrition }) => {
             <View>
               <Text style={styles.macroLabel}>Fat</Text>
               <Text style={styles.macroValue}>
-                {nutrition.fat.toFixed(1)}g ({fatPct}%)
+                {formatNutritionValue(nutrition.fat)}g ({fatPct}%)
               </Text>
             </View>
           </View>
@@ -129,7 +130,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   proteinBar: {
-    backgroundColor: COLORS.darkPurple,
+    backgroundColor: COLORS.purple,
   },
   carbsBar: {
     backgroundColor: COLORS.orange,
@@ -153,7 +154,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   proteinIndicator: {
-    backgroundColor: COLORS.darkPurple,
+    backgroundColor: COLORS.purple,
   },
   carbsIndicator: {
     backgroundColor: COLORS.orange,

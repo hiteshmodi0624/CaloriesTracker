@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({
             <Ionicons
               name="chevron-back"
               size={24}
-              color={showHeaderBackground ? COLORS.white : COLORS.textSecondary}
+              color={COLORS.textPrimary}
             />
           </TouchableOpacity>
         ) : (
@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
   },
   transparentHeader: {
     backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey3,
+    borderBottomWidth: .5,
+    borderBottomColor: COLORS.darkGrey,
   },
   title: {
     fontSize: 18,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     color: COLORS.textPrimary,
   },
   lightText: {
-    color: COLORS.white,
+    color: COLORS.textPrimary,
   },
   backButton: {
     width: 40,

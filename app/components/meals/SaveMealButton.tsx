@@ -1,23 +1,28 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Dish } from '../../../types';
+import { Dish, MealIngredient } from '../../../types';
 import { COLORS } from '../../constants';
 
 interface SaveMealButtonProps {
   name: string;
   dishes: Dish[];
+  mealIngredients: MealIngredient[];
   handleSaveMeal: () => void;
 }
 
 const SaveMealButton: React.FC<SaveMealButtonProps> = ({
   name,
   dishes,
+  mealIngredients,
   handleSaveMeal
 }) => {
+  // Check if the meal has either dishes or direct ingredients
+  const hasContent = dishes.length > 0 || mealIngredients.length > 0;
+  
   return (
     <View style={styles.saveButtonContainer}>
-      {(!name || dishes.length === 0) && (
+      {(!name || !hasContent) && (
         <View style={styles.saveRequirementsContainer}>
           <Ionicons
             name="information-circle"
@@ -39,14 +44,14 @@ const SaveMealButton: React.FC<SaveMealButtonProps> = ({
             <Text
               style={[
                 styles.saveRequirementItem,
-                dishes.length > 0
+                hasContent
                   ? styles.saveRequirementComplete
                   : styles.saveRequirementIncomplete,
               ]}
             >
-              {dishes.length > 0
-                ? `✓ ${dishes.length} dish(es) added`
-                : "• Add at least one dish"}
+              {hasContent
+                ? `✓ ${dishes.length > 0 ? `${dishes.length} dish(es)` : ''}${(dishes.length > 0 && mealIngredients.length > 0) ? ' and ' : ''}${mealIngredients.length > 0 ? `${mealIngredients.length} ingredient(s)` : ''} added`
+                : "• Add at least one dish or ingredient"}
             </Text>
           </View>
         </View>
@@ -54,10 +59,10 @@ const SaveMealButton: React.FC<SaveMealButtonProps> = ({
       <TouchableOpacity
         style={[
           styles.saveButton,
-          (!name || dishes.length === 0) && styles.disabledButton,
+          (!name || !hasContent) && styles.disabledButton,
         ]}
         onPress={handleSaveMeal}
-        disabled={!name || dishes.length === 0}
+        disabled={!name || !hasContent}
       >
         <View style={styles.saveButtonContent}>
           <Ionicons

@@ -10,6 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Meal } from '../../../types';
 import { COLORS } from '../../constants';
+import { formatNutritionValue } from '../../utils/nutrition';
 
 interface DayDetailProps {
   visible: boolean;
@@ -71,7 +72,7 @@ const DayDetailModal: React.FC<DayDetailProps> = ({
               )}
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
+              <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -161,7 +162,6 @@ const DayDetailModal: React.FC<DayDetailProps> = ({
           <Text style={styles.dayMealsTitle}>Meals</Text>
 
           <View style={styles.dayMealsSectionCard}>
-            <Text style={styles.daySectionTitle}>Meals</Text>
 
             {day.meals.length === 0 ? (
               <View style={styles.emptyMealsContainer}>
@@ -189,13 +189,13 @@ const DayDetailModal: React.FC<DayDetailProps> = ({
                     <View style={styles.dayMealInfo}>
                       <Text style={styles.dayMealName}>{item.name}</Text>
                       <Text style={styles.dayMealCalories}>
-                        {Math.round(item.totalCalories)} calories
+                        {formatNutritionValue(item.totalCalories)} calories
                       </Text>
 
                       <View style={styles.dayMealMacros}>
                         <Text style={styles.dayMealMacroText}>
                           P:{" "}
-                          {Math.round(
+                          {formatNutritionValue(
                             item.ingredients.reduce(
                               (sum, ing) => sum + (ing.nutrition.protein || 0),
                               0
@@ -215,7 +215,7 @@ const DayDetailModal: React.FC<DayDetailProps> = ({
                         </Text>
                         <Text style={styles.dayMealMacroText}>
                           C:{" "}
-                          {Math.round(
+                          {formatNutritionValue(
                             item.ingredients.reduce(
                               (sum, ing) => sum + (ing.nutrition.carbs || 0),
                               0
@@ -235,7 +235,7 @@ const DayDetailModal: React.FC<DayDetailProps> = ({
                         </Text>
                         <Text style={styles.dayMealMacroText}>
                           F:{" "}
-                          {Math.round(
+                          {formatNutritionValue(
                             item.ingredients.reduce(
                               (sum, ing) => sum + (ing.nutrition.fat || 0),
                               0
@@ -295,8 +295,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.lightBluegrey3,
   },
   modalTitleContainer: {
     flexDirection: 'row',

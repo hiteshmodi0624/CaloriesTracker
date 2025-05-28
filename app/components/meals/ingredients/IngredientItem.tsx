@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ingredientUnit: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 4,

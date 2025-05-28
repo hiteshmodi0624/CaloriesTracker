@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, TextInput } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Dish } from '../../../types';
 import { COLORS } from '../../constants';
+import { FynkoTextInput } from '../common';
 
 interface DishItemProps {
   dish: Dish;
@@ -187,7 +188,7 @@ const DishItem: React.FC<DishItemProps> = ({
             )}
             
             <View style={styles.quantityInputContainer}>
-              <TextInput
+              <FynkoTextInput
                 style={styles.quantityInput}
                 value={newQuantity}
                 onChangeText={setNewQuantity}
@@ -252,7 +253,7 @@ const styles = StyleSheet.create({
   macroDistribution: {
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     flexDirection: 'row',
     overflow: 'hidden',
   },
@@ -292,7 +293,7 @@ const styles = StyleSheet.create({
   macroSummary: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -364,7 +365,7 @@ const styles = StyleSheet.create({
   quantityButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   updateButton: {
     backgroundColor: COLORS.primary,

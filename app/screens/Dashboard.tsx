@@ -86,7 +86,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
       
       <Header title="Dashboard" />
 

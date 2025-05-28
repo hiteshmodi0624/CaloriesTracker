@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,6 @@ import {
   Modal, 
   TouchableOpacity,
   ScrollView,
-  TextInput,
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,6 +13,7 @@ import { AppContext } from '../../context/AppContext';
 import { COLORS } from '../../constants';
 import { calculateGoals, ActivityLevel, GoalType, createNutritionGoals } from '../../utils/calculators';
 import { NutritionGoals } from '../../../types';
+import { FynkoTextInput } from '../common';
 
 // Constants for activity levels and goals
 const ACTIVITY_LEVELS = [
@@ -62,6 +62,19 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
   const [manualCarbs, setManualCarbs] = useState(goals?.carbs ? goals.carbs.toString() : '200');
   const [manualFat, setManualFat] = useState(goals?.fat ? goals.fat.toString() : '70');
   
+  // Track which field was last changed to determine calculation direction
+  const [lastChangedField, setLastChangedField] = useState<'calories' | 'macros'>('macros');
+  
+  // Lock states for manual entry
+  const [lockedFields, setLockedFields] = useState({
+    protein: false,
+    carbs: false,
+    fat: false,
+  });
+  
+  // Ref to prevent circular updates
+  const isUpdatingRef = useRef(false);
+
   const [calculatedGoals, setCalculatedGoals] = useState({
     calories: goals?.calories || 0,
     protein: goals?.protein || 0,
@@ -88,6 +101,8 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
         carbs: goals.carbs || 0,
         fat: goals.fat || 0,
       });
+      // Reset the last changed field when goals are loaded externally
+      setLastChangedField('macros');
     }
   }, [goals]);
 
@@ -142,6 +157,11 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
           return;
         }
         
+        if (weightNum <= 0 || heightNum <= 0 || ageNum <= 0) {
+          Alert.alert('Input Error', 'Weight, height, and age must be positive numbers');
+          return;
+        }
+        
         // Use the shared utility to create a consistent goals object
         newGoals = createNutritionGoals({
           weight: weightNum,
@@ -160,6 +180,40 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
         
         if (isNaN(caloriesNum) || isNaN(proteinNum) || isNaN(carbsNum) || isNaN(fatNum)) {
           Alert.alert('Input Error', 'Please enter valid numbers for all nutrition goals');
+          return;
+        }
+        
+        // Check for negative values
+        if (caloriesNum < 0 || proteinNum < 0 || carbsNum < 0 || fatNum < 0) {
+          Alert.alert('Validation Error', 'All nutrition values must be positive numbers. Please check your inputs.');
+          return;
+        }
+        
+        // Check if calories add up correctly (with 5% tolerance for rounding)
+        const calculatedCalories = calculateCaloriesFromMacros(proteinNum, carbsNum, fatNum);
+        const calorieDifference = Math.abs(calculatedCalories - caloriesNum);
+        const tolerance = Math.max(caloriesNum * 0.05, 10); // 5% tolerance or minimum 10 calories
+        
+        if (calorieDifference > tolerance) {
+          Alert.alert(
+            'Calorie Mismatch', 
+            `The macros don't match the calories:\n\n` +
+            `• Entered calories: ${caloriesNum}\n` +
+            `• Calculated from macros: ${calculatedCalories}\n` +
+            `• Difference: ${calorieDifference} calories\n\n` +
+            `Please adjust your values so they match more closely.`
+          );
+          return;
+        }
+        
+        // Check for unrealistic values
+        if (caloriesNum > 10000) {
+          Alert.alert('Validation Error', 'Calorie target seems too high (over 10,000). Please enter a realistic value.');
+          return;
+        }
+        
+        if (proteinNum > 1000 || carbsNum > 2000 || fatNum > 500) {
+          Alert.alert('Validation Error', 'One or more macro values seem unrealistically high. Please check your inputs.');
           return;
         }
         
@@ -191,6 +245,303 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
     }
   };
 
+  // Helper functions for manual entry calculations
+  const calculateCaloriesFromMacros = (protein: number, carbs: number, fat: number): number => {
+    // Protein: 4 cal/g, Carbs: 4 cal/g, Fat: 9 cal/g
+    return Math.round((protein * 4) + (carbs * 4) + (fat * 9));
+  };
+
+  const calculateMacrosFromCalories = (calories: number, currentProtein: number, currentCarbs: number, currentFat: number) => {
+    // Calculate calories from locked macros
+    const lockedCalories = 
+      (lockedFields.protein ? currentProtein * 4 : 0) +
+      (lockedFields.carbs ? currentCarbs * 4 : 0) +
+      (lockedFields.fat ? currentFat * 9 : 0);
+    
+    // Remaining calories to distribute among unlocked macros
+    const remainingCalories = calories - lockedCalories;
+    
+    // Count unlocked fields
+    const unlockedFields = [];
+    if (!lockedFields.protein) unlockedFields.push('protein');
+    if (!lockedFields.carbs) unlockedFields.push('carbs');
+    if (!lockedFields.fat) unlockedFields.push('fat');
+    
+    if (unlockedFields.length === 0) {
+      // All fields are locked, return current values
+      return {
+        protein: currentProtein,
+        carbs: currentCarbs,
+        fat: currentFat
+      };
+    }
+    
+    // If locked macros exceed total calories, set unlocked macros to 0
+    if (lockedCalories > calories) {
+      return {
+        protein: lockedFields.protein ? currentProtein : 0,
+        carbs: lockedFields.carbs ? currentCarbs : 0,
+        fat: lockedFields.fat ? currentFat : 0
+      };
+    }
+    
+    // Calculate current calories from unlocked macros only
+    const currentUnlockedCalories = 
+      (!lockedFields.protein ? currentProtein * 4 : 0) +
+      (!lockedFields.carbs ? currentCarbs * 4 : 0) +
+      (!lockedFields.fat ? currentFat * 9 : 0);
+    
+    if (currentUnlockedCalories === 0) {
+      // No current unlocked macros, use standard ratios for unlocked fields
+      const proteinRatio = !lockedFields.protein ? 0.30 : 0;
+      const carbsRatio = !lockedFields.carbs ? 0.40 : 0;
+      const fatRatio = !lockedFields.fat ? 0.30 : 0;
+      const totalRatio = proteinRatio + carbsRatio + fatRatio;
+      
+      if (totalRatio === 0) {
+        return {
+          protein: currentProtein,
+          carbs: currentCarbs,
+          fat: currentFat
+        };
+      }
+      
+      return {
+        protein: lockedFields.protein ? currentProtein : Math.round((remainingCalories * (proteinRatio / totalRatio)) / 4),
+        carbs: lockedFields.carbs ? currentCarbs : Math.round((remainingCalories * (carbsRatio / totalRatio)) / 4),
+        fat: lockedFields.fat ? currentFat : Math.round((remainingCalories * (fatRatio / totalRatio)) / 9)
+      };
+    }
+    
+    // Scale unlocked macros proportionally based on remaining calories
+    const ratio = remainingCalories / currentUnlockedCalories;
+    
+    return {
+      protein: lockedFields.protein ? currentProtein : Math.round(currentProtein * ratio),
+      carbs: lockedFields.carbs ? currentCarbs : Math.round(currentCarbs * ratio),
+      fat: lockedFields.fat ? currentFat : Math.round(currentFat * ratio)
+    };
+  };
+
+  const toggleLock = (field: 'protein' | 'carbs' | 'fat') => {
+    setLockedFields(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  const handleManualProteinChange = (value: string) => {
+    // Only allow positive numbers
+    const numValue = parseFloat(value);
+    if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+      setManualProtein(value);
+      
+      // Prevent circular updates
+      if (!isUpdatingRef.current) {
+        isUpdatingRef.current = true;
+        setLastChangedField('macros');
+        
+        const protein = parseFloat(value) || 0;
+        const carbs = parseFloat(manualCarbs) || 0;
+        const fat = parseFloat(manualFat) || 0;
+        
+        const newCalories = calculateCaloriesFromMacros(protein, carbs, fat);
+        setManualCalories(newCalories.toString());
+        
+        // Reset the flag after a brief delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 10);
+      }
+    }
+  };
+
+  const handleManualCarbsChange = (value: string) => {
+    // Only allow positive numbers
+    const numValue = parseFloat(value);
+    if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+      setManualCarbs(value);
+      
+      // Prevent circular updates
+      if (!isUpdatingRef.current) {
+        isUpdatingRef.current = true;
+        setLastChangedField('macros');
+        
+        const protein = parseFloat(manualProtein) || 0;
+        const carbs = parseFloat(value) || 0;
+        const fat = parseFloat(manualFat) || 0;
+        
+        const newCalories = calculateCaloriesFromMacros(protein, carbs, fat);
+        setManualCalories(newCalories.toString());
+        
+        // Reset the flag after a brief delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 10);
+      }
+    }
+  };
+
+  const handleManualFatChange = (value: string) => {
+    // Only allow positive numbers
+    const numValue = parseFloat(value);
+    if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+      setManualFat(value);
+      
+      // Prevent circular updates
+      if (!isUpdatingRef.current) {
+        isUpdatingRef.current = true;
+        setLastChangedField('macros');
+        
+        const protein = parseFloat(manualProtein) || 0;
+        const carbs = parseFloat(manualCarbs) || 0;
+        const fat = parseFloat(value) || 0;
+        
+        const newCalories = calculateCaloriesFromMacros(protein, carbs, fat);
+        setManualCalories(newCalories.toString());
+        
+        // Reset the flag after a brief delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 10);
+      }
+    }
+  };
+
+  const handleManualCaloriesChange = (value: string) => {
+    // Only allow positive numbers
+    const numValue = parseFloat(value);
+    if (value === '' || (!isNaN(numValue) && numValue >= 0)) {
+      setManualCalories(value);
+      
+      // Prevent circular updates
+      if (!isUpdatingRef.current) {
+        isUpdatingRef.current = true;
+        setLastChangedField('calories');
+        
+        const calories = parseFloat(value) || 0;
+        const currentProtein = parseFloat(manualProtein) || 0;
+        const currentCarbs = parseFloat(manualCarbs) || 0;
+        const currentFat = parseFloat(manualFat) || 0;
+        
+        const newMacros = calculateMacrosFromCalories(calories, currentProtein, currentCarbs, currentFat);
+        setManualProtein(newMacros.protein.toString());
+        setManualCarbs(newMacros.carbs.toString());
+        setManualFat(newMacros.fat.toString());
+        
+        // Reset the flag after a brief delay
+        setTimeout(() => {
+          isUpdatingRef.current = false;
+        }, 10);
+      }
+    }
+  };
+
+  // Helper function to check if locked macros exceed calorie target
+  const getLockedCaloriesWarning = () => {
+    if (activeTab !== 'manual') return null;
+    
+    const protein = parseFloat(manualProtein) || 0;
+    const carbs = parseFloat(manualCarbs) || 0;
+    const fat = parseFloat(manualFat) || 0;
+    const calories = parseFloat(manualCalories) || 0;
+    
+    const lockedCalories = 
+      (lockedFields.protein ? protein * 4 : 0) +
+      (lockedFields.carbs ? carbs * 4 : 0) +
+      (lockedFields.fat ? fat * 9 : 0);
+    
+    if (lockedCalories > calories && (lockedFields.protein || lockedFields.carbs || lockedFields.fat)) {
+      return (
+        <View style={styles.warningContainer}>
+          <Ionicons name="warning" size={16} color={COLORS.error} />
+          <Text style={styles.warningText}>
+            Locked macros ({lockedCalories} cal) exceed total calories ({calories} cal). 
+            Unlock some macros or increase calories.
+          </Text>
+        </View>
+      );
+    }
+    
+    return null;
+  };
+
+  // Helper function to get validation errors for manual entry
+  const getValidationErrors = () => {
+    if (activeTab !== 'manual') return null;
+    
+    const protein = parseFloat(manualProtein) || 0;
+    const carbs = parseFloat(manualCarbs) || 0;
+    const fat = parseFloat(manualFat) || 0;
+    const calories = parseFloat(manualCalories) || 0;
+    
+    const errors = [];
+    
+    // Check for negative values
+    if (protein < 0 || carbs < 0 || fat < 0 || calories < 0) {
+      errors.push('All values must be positive numbers');
+    }
+    
+    // Check calorie mismatch
+    const calculatedCalories = calculateCaloriesFromMacros(protein, carbs, fat);
+    const calorieDifference = Math.abs(calculatedCalories - calories);
+    const tolerance = Math.max(calories * 0.05, 10);
+    
+    if (calorieDifference > tolerance && calories > 0) {
+      errors.push(`Calorie mismatch: ${calories} entered vs ${calculatedCalories} calculated`);
+    }
+    
+    // Check for unrealistic values
+    if (calories > 10000) {
+      errors.push('Calorie target seems too high (over 10,000)');
+    }
+    
+    if (protein > 1000 || carbs > 2000 || fat > 500) {
+      errors.push('One or more macro values seem unrealistically high');
+    }
+    
+    if (errors.length > 0) {
+      return (
+        <View style={styles.errorContainer}>
+          <Ionicons name="alert-circle" size={16} color={COLORS.error} />
+          <View style={styles.errorTextContainer}>
+            {errors.map((error, index) => (
+              <Text key={index} style={styles.errorText}>• {error}</Text>
+            ))}
+          </View>
+        </View>
+      );
+    }
+    
+    return null;
+  };
+
+  // Helper function to check if save should be disabled
+  const isSaveDisabled = () => {
+    if (activeTab !== 'manual') return false;
+    
+    const protein = parseFloat(manualProtein) || 0;
+    const carbs = parseFloat(manualCarbs) || 0;
+    const fat = parseFloat(manualFat) || 0;
+    const calories = parseFloat(manualCalories) || 0;
+    
+    // Check for negative values
+    if (protein < 0 || carbs < 0 || fat < 0 || calories < 0) return true;
+    
+    // Check calorie mismatch
+    const calculatedCalories = calculateCaloriesFromMacros(protein, carbs, fat);
+    const calorieDifference = Math.abs(calculatedCalories - calories);
+    const tolerance = Math.max(calories * 0.05, 10);
+    
+    if (calorieDifference > tolerance && calories > 0) return true;
+    
+    // Check for unrealistic values
+    if (calories > 10000) return true;
+    if (protein > 1000 || carbs > 2000 || fat > 500) return true;
+    
+    return false;
+  };
+
   return (
     <Modal
       visible={visible}
@@ -205,7 +556,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
               <Text style={styles.modalTitle}>Nutrition Goals</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Ionicons name="close" size={24} color={COLORS.darkGrey} />
+              <Ionicons name="close" size={24} color={COLORS.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -252,11 +603,10 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
 
                 <View style={styles.infoCard}>
                   <View style={styles.inputRow}>
-                    <View
-                      style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}
-                    >
-                      <Text style={styles.inputLabel}>Weight (kg)</Text>
-                      <TextInput
+                    <View style={[{ flex: 1, marginRight: 10 }]}>
+                      <FynkoTextInput
+                        backgroundColor={COLORS.cardBackground}
+                        label="Weight (kg)"
                         style={styles.input}
                         value={weight}
                         onChangeText={setWeight}
@@ -265,9 +615,10 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
 
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
-                      <Text style={styles.inputLabel}>Height (cm)</Text>
-                      <TextInput
+                    <View style={[{ flex: 1 }]}>
+                      <FynkoTextInput
+                        backgroundColor={COLORS.cardBackground}
+                        label="Height (cm)"
                         style={styles.input}
                         value={height}
                         onChangeText={setHeight}
@@ -278,11 +629,10 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                   </View>
 
                   <View style={styles.inputRow}>
-                    <View
-                      style={[styles.inputGroup, { flex: 1, marginRight: 10 }]}
-                    >
-                      <Text style={styles.inputLabel}>Age</Text>
-                      <TextInput
+                    <View style={[{ flex: 1, marginRight: 10 }]}>
+                      <FynkoTextInput
+                        backgroundColor={COLORS.cardBackground}
+                        label="Age"
                         style={styles.input}
                         value={age}
                         onChangeText={setAge}
@@ -291,7 +641,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
 
-                    <View style={[styles.inputGroup, { flex: 1 }]}>
+                    <View style={[{ flex: 1 }]}>
                       <Text style={styles.inputLabel}>Gender</Text>
                       <View style={styles.segmentedControl}>
                         <TouchableOpacity
@@ -441,114 +791,95 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
               // Manual Entry Tab
               <View style={styles.manualEntryContainer}>
                 <Text style={styles.sectionHeader}>Set Custom Targets</Text>
+                
+                <View style={styles.infoTextContainer}>
+                  <Ionicons name="information-circle" size={16} color={COLORS.blue} />
+                  <Text style={styles.infoText}>
+                    Values are automatically synchronized. Change macros to update calories, or change calories to adjust macros proportionally. Use lock icons to keep specific values fixed.
+                  </Text>
+                </View>
 
                 <View style={styles.infoCard}>
-                  <View style={styles.inputGroup}>
-                    <View style={styles.inputLabelRow}>
-                      <Text style={styles.inputLabel}>Daily Calories</Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            "About Calories",
-                            "Calories are a measure of energy from food. Your body needs calories to function properly."
-                          )
-                        }
-                      >
-                        <Ionicons
-                          name="information-circle"
-                          size={18}
-                          color={COLORS.blueGrey}
-                        />
-                      </TouchableOpacity>
+                  <FynkoTextInput
+                    label="Daily Calories"
+                    style={styles.input}
+                    value={manualCalories}
+                    onChangeText={handleManualCaloriesChange}
+                    keyboardType="numeric"
+                    placeholder="e.g., 2000"
+                    backgroundColor={COLORS.cardBackground}
+                  />
+
+                  <View style={styles.inputWithLock}>
+                    <View style={styles.inputContainer}>
+                      <FynkoTextInput
+                        label="Protein (g)"
+                        style={styles.input}
+                        value={manualProtein}
+                        onChangeText={handleManualProteinChange}
+                        keyboardType="numeric"
+                        placeholder="e.g., 150"
+                        backgroundColor={COLORS.cardBackground}
+                      />
                     </View>
-                    <TextInput
-                      style={styles.input}
-                      value={manualCalories}
-                      onChangeText={setManualCalories}
-                      keyboardType="numeric"
-                      placeholder="e.g., 2000"
-                    />
+                    <TouchableOpacity
+                      style={[styles.lockButton, lockedFields.protein && styles.lockButtonActive]}
+                      onPress={() => toggleLock('protein')}
+                    >
+                      <Ionicons
+                        name={lockedFields.protein ? "lock-closed" : "lock-open"}
+                        size={20}
+                        color={lockedFields.protein ? COLORS.white : COLORS.textSecondary}
+                      />
+                    </TouchableOpacity>
                   </View>
 
-                  <View style={styles.inputGroup}>
-                    <View style={styles.inputLabelRow}>
-                      <Text style={styles.inputLabel}>Protein (g)</Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            "About Protein",
-                            "Protein is essential for building muscle and repairing tissues. It's recommended to consume 0.8-2.0g per kg of body weight."
-                          )
-                        }
-                      >
-                        <Ionicons
-                          name="information-circle"
-                          size={18}
-                          color={COLORS.blueGrey}
-                        />
-                      </TouchableOpacity>
+                  <View style={styles.inputWithLock}>
+                    <View style={styles.inputContainer}>
+                      <FynkoTextInput
+                        label="Carbs (g)"
+                        style={styles.input}
+                        value={manualCarbs}
+                        onChangeText={handleManualCarbsChange}
+                        keyboardType="numeric"
+                        placeholder="e.g., 250"
+                        backgroundColor={COLORS.cardBackground}
+                      />
                     </View>
-                    <TextInput
-                      style={styles.input}
-                      value={manualProtein}
-                      onChangeText={setManualProtein}
-                      keyboardType="numeric"
-                      placeholder="e.g., 150"
-                    />
+                    <TouchableOpacity
+                      style={[styles.lockButton, lockedFields.carbs && styles.lockButtonActive]}
+                      onPress={() => toggleLock('carbs')}
+                    >
+                      <Ionicons
+                        name={lockedFields.carbs ? "lock-closed" : "lock-open"}
+                        size={20}
+                        color={lockedFields.carbs ? COLORS.white : COLORS.textSecondary}
+                      />
+                    </TouchableOpacity>
                   </View>
 
-                  <View style={styles.inputGroup}>
-                    <View style={styles.inputLabelRow}>
-                      <Text style={styles.inputLabel}>Carbs (g)</Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            "About Carbohydrates",
-                            "Carbohydrates are your body's main energy source. They typically make up 45-65% of your total daily calories."
-                          )
-                        }
-                      >
-                        <Ionicons
-                          name="information-circle"
-                          size={18}
-                          color={COLORS.blueGrey}
-                        />
-                      </TouchableOpacity>
+                  <View style={styles.inputWithLock}>
+                    <View style={styles.inputContainer}>
+                      <FynkoTextInput
+                        label="Fat (g)"
+                        style={styles.input}
+                        value={manualFat}
+                        onChangeText={handleManualFatChange}
+                        keyboardType="numeric"
+                        placeholder="e.g., 70"
+                        backgroundColor={COLORS.cardBackground}
+                      />
                     </View>
-                    <TextInput
-                      style={styles.input}
-                      value={manualCarbs}
-                      onChangeText={setManualCarbs}
-                      keyboardType="numeric"
-                      placeholder="e.g., 250"
-                    />
-                  </View>
-
-                  <View style={styles.inputGroup}>
-                    <View style={styles.inputLabelRow}>
-                      <Text style={styles.inputLabel}>Fat (g)</Text>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            "About Fat",
-                            "Dietary fat is essential for hormone production and nutrient absorption. It typically makes up 20-35% of your total daily calories."
-                          )
-                        }
-                      >
-                        <Ionicons
-                          name="information-circle"
-                          size={18}
-                          color={COLORS.blueGrey}
-                        />
-                      </TouchableOpacity>
-                    </View>
-                    <TextInput
-                      style={styles.input}
-                      value={manualFat}
-                      onChangeText={setManualFat}
-                      keyboardType="numeric"
-                      placeholder="e.g., 70"
-                    />
+                    <TouchableOpacity
+                      style={[styles.lockButton, lockedFields.fat && styles.lockButtonActive]}
+                      onPress={() => toggleLock('fat')}
+                    >
+                      <Ionicons
+                        name={lockedFields.fat ? "lock-closed" : "lock-open"}
+                        size={20}
+                        color={lockedFields.fat ? COLORS.white : COLORS.textSecondary}
+                      />
+                    </TouchableOpacity>
                   </View>
                 </View>
               </View>
@@ -603,11 +934,24 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
               </View>
             </View>
 
+            {getLockedCaloriesWarning()}
+
+            {getValidationErrors()}
+
             <TouchableOpacity
-              style={styles.saveGoalsButton}
+              style={[
+                styles.saveGoalsButton,
+                isSaveDisabled() && styles.saveGoalsButtonDisabled
+              ]}
               onPress={saveGoals}
+              disabled={isSaveDisabled()}
             >
-              <Text style={styles.saveGoalsText}>Save Goals</Text>
+              <Text style={[
+                styles.saveGoalsText,
+                isSaveDisabled() && styles.saveGoalsTextDisabled
+              ]}>
+                Save Goals
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -623,7 +967,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   goalModalContent: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: "90%",
@@ -634,8 +978,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey3,
   },
   modalTitleContainer: {
     flexDirection: "row",
@@ -654,7 +996,7 @@ const styles = StyleSheet.create({
   },
   goalTabsContainer: {
     flexDirection: "row",
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
     borderRadius: 10,
     padding: 4,
     marginBottom: 20,
@@ -671,7 +1013,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeGoalTab: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.primary,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
@@ -684,7 +1026,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   activeGoalTabText: {
-    color: COLORS.secondary,
+    color: COLORS.textPrimary,
     fontWeight: "600",
   },
   sectionHeader: {
@@ -695,19 +1037,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   infoCard: {
-    backgroundColor: COLORS.cardBackground,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 15,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: COLORS.grey3,
   },
   inputRow: {
     flexDirection: "row",
-    marginBottom: 10,
   },
   inputGroup: {
-    marginBottom: 15,
+    marginBottom: 12,
   },
   inputLabelRow: {
     flexDirection: "row",
@@ -716,23 +1054,20 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    color: COLORS.textSecondary,
-    marginBottom: 8,
+    color: COLORS.textPrimary,
+    marginBottom: 12,
     fontWeight: "500",
   },
   input: {
-    backgroundColor: COLORS.cardBackground3,
-    borderWidth: 1,
-    borderColor: COLORS.grey3,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
     fontSize: 16,
     color: COLORS.textPrimary,
+    marginBottom: 0,
   },
   segmentedControl: {
     flexDirection: "row",
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     overflow: "hidden",
   },
@@ -742,7 +1077,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   segmentedOptionSelected: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
   },
   segmentedOptionText: {
     fontSize: 14,
@@ -759,9 +1094,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: COLORS.cardBackground3,
-    borderWidth: 1,
-    borderColor: COLORS.grey3,
+    backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
@@ -775,22 +1108,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.cardBackground,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: COLORS.grey3,
+    borderColor: COLORS.grey,
     shadowColor: COLORS.black,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    zIndex: 10
+    zIndex: 10,
   },
   pickerOption: {
     paddingVertical: 12,
     paddingHorizontal: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.grey3,
   },
   pickerOptionSelected: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.cardBackground2,
   },
   pickerOptionText: {
     fontSize: 16,
@@ -804,7 +1135,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   resultsContainer: {
-    backgroundColor: COLORS.cardBackground3,
+    backgroundColor: COLORS.background,
     borderRadius: 12,
     padding: 20,
     marginTop: 10,
@@ -840,7 +1171,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
   },
   saveGoalsButton: {
-    backgroundColor: COLORS.secondary,
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -850,6 +1181,60 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 18,
     fontWeight: "600",
+  },
+  infoTextContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  infoText: {
+    fontSize: 14,
+    color: COLORS.textPrimary,
+    marginLeft: 5,
+  },
+  inputWithLock: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  inputContainer: {
+    flex: 1,
+  },
+  lockButton: {
+    padding: 8,
+    marginLeft: 8,
+    borderRadius: 6,
+    backgroundColor: COLORS.background,
+  },
+  lockButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  warningContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  warningText: {
+    fontSize: 14,
+    color: COLORS.error,
+    marginLeft: 5,
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  errorTextContainer: {
+    marginLeft: 5,
+  },
+  errorText: {
+    fontSize: 14,
+    color: COLORS.error,
+  },
+  saveGoalsButtonDisabled: {
+    backgroundColor: COLORS.grey,
+  },
+  saveGoalsTextDisabled: {
+    color: COLORS.textSecondary,
   },
 });
 
