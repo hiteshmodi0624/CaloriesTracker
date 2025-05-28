@@ -100,7 +100,8 @@ const OnboardingNotification: React.FC = () => {
             id: 'setup-goals',
             text: 'Set Nutrition Goals',
             action: 'navigate',
-            link: 'Dashboard'
+            link: 'Dashboard',
+            params: { openGoalsModal: true }
           }
         ],
         dismissible: false

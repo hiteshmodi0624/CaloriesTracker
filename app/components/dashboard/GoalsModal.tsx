@@ -8,6 +8,7 @@ import {
   ScrollView,
   Alert
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { AppContext } from '../../context/AppContext';
 import { COLORS } from '../../constants';
@@ -74,6 +75,9 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
   
   // Ref to prevent circular updates
   const isUpdatingRef = useRef(false);
+  
+  // Track if profile data has been loaded from AsyncStorage
+  const [profileDataLoaded, setProfileDataLoaded] = useState(false);
 
   const [calculatedGoals, setCalculatedGoals] = useState({
     calories: goals?.calories || 0,
@@ -82,13 +86,50 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
     fat: goals?.fat || 0,
   });
 
+  // Load profile information from AsyncStorage when modal opens
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (visible && !profileDataLoaded) {
+        try {
+          // Try to load profile data from AsyncStorage first
+          const storedWeight = await AsyncStorage.getItem('user_weight');
+          const storedHeight = await AsyncStorage.getItem('user_height');
+          const storedAge = await AsyncStorage.getItem('user_age');
+          const storedGender = await AsyncStorage.getItem('user_gender');
+          
+          // If we have stored profile data, use it
+          if (storedWeight || storedHeight || storedAge || storedGender) {
+            if (storedWeight && !goals?.weight) setWeight(storedWeight);
+            if (storedHeight && !goals?.height) setHeight(storedHeight);
+            if (storedAge && !goals?.age) setAge(storedAge);
+            if (storedGender && !goals?.gender) setGender(storedGender as 'male' | 'female');
+          }
+          
+          setProfileDataLoaded(true);
+        } catch (error) {
+          console.error('Error loading profile data:', error);
+          setProfileDataLoaded(true);
+        }
+      }
+    };
+    
+    loadProfileData();
+  }, [visible, profileDataLoaded, goals]);
+
+  // Reset profile data loaded flag when modal is closed
+  useEffect(() => {
+    if (!visible) {
+      setProfileDataLoaded(false);
+    }
+  }, [visible]);
+
   // Update state when goals change externally
   useEffect(() => {
     if (goals) {
-      setWeight(goals.weight ? goals.weight.toString() : '70');
-      setHeight(goals.height ? goals.height.toString() : '170');
-      setAge(goals.age ? goals.age.toString() : '30');
-      setGender(goals.gender || 'male');
+      setWeight(goals.weight ? goals.weight.toString() : (weight || '70'));
+      setHeight(goals.height ? goals.height.toString() : (height || '170'));
+      setAge(goals.age ? goals.age.toString() : (age || '30'));
+      setGender(goals.gender || gender || 'male');
       setActivityLevel((goals.activityLevel as ActivityLevel) || 'moderately active');
       setGoalType((goals.goal as GoalType) || 'maintain');
       setManualCalories(goals.calories ? goals.calories.toString() : '2000');
@@ -641,7 +682,7 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
 
-                    <View style={[{ flex: 1 }]}>
+                    <View style={[{ flex: 1, paddingHorizontal: 8 }]}>
                       <Text style={styles.inputLabel}>Gender</Text>
                       <View style={styles.segmentedControl}>
                         <TouchableOpacity
@@ -791,11 +832,18 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
               // Manual Entry Tab
               <View style={styles.manualEntryContainer}>
                 <Text style={styles.sectionHeader}>Set Custom Targets</Text>
-                
+
                 <View style={styles.infoTextContainer}>
-                  <Ionicons name="information-circle" size={16} color={COLORS.blue} />
+                  <Ionicons
+                    name="information-circle"
+                    size={16}
+                    color={COLORS.blue}
+                  />
                   <Text style={styles.infoText}>
-                    Values are automatically synchronized. Change macros to update calories, or change calories to adjust macros proportionally. Use lock icons to keep specific values fixed.
+                    Values are automatically synchronized. Change macros to
+                    update calories, or change calories to adjust macros
+                    proportionally. Use lock icons to keep specific values
+                    fixed.
                   </Text>
                 </View>
 
@@ -823,13 +871,22 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
                     <TouchableOpacity
-                      style={[styles.lockButton, lockedFields.protein && styles.lockButtonActive]}
-                      onPress={() => toggleLock('protein')}
+                      style={[
+                        styles.lockButton,
+                        lockedFields.protein && styles.lockButtonActive,
+                      ]}
+                      onPress={() => toggleLock("protein")}
                     >
                       <Ionicons
-                        name={lockedFields.protein ? "lock-closed" : "lock-open"}
+                        name={
+                          lockedFields.protein ? "lock-closed" : "lock-open"
+                        }
                         size={20}
-                        color={lockedFields.protein ? COLORS.white : COLORS.textSecondary}
+                        color={
+                          lockedFields.protein
+                            ? COLORS.white
+                            : COLORS.textSecondary
+                        }
                       />
                     </TouchableOpacity>
                   </View>
@@ -847,13 +904,20 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
                     <TouchableOpacity
-                      style={[styles.lockButton, lockedFields.carbs && styles.lockButtonActive]}
-                      onPress={() => toggleLock('carbs')}
+                      style={[
+                        styles.lockButton,
+                        lockedFields.carbs && styles.lockButtonActive,
+                      ]}
+                      onPress={() => toggleLock("carbs")}
                     >
                       <Ionicons
                         name={lockedFields.carbs ? "lock-closed" : "lock-open"}
                         size={20}
-                        color={lockedFields.carbs ? COLORS.white : COLORS.textSecondary}
+                        color={
+                          lockedFields.carbs
+                            ? COLORS.white
+                            : COLORS.textSecondary
+                        }
                       />
                     </TouchableOpacity>
                   </View>
@@ -871,13 +935,18 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
                       />
                     </View>
                     <TouchableOpacity
-                      style={[styles.lockButton, lockedFields.fat && styles.lockButtonActive]}
-                      onPress={() => toggleLock('fat')}
+                      style={[
+                        styles.lockButton,
+                        lockedFields.fat && styles.lockButtonActive,
+                      ]}
+                      onPress={() => toggleLock("fat")}
                     >
                       <Ionicons
                         name={lockedFields.fat ? "lock-closed" : "lock-open"}
                         size={20}
-                        color={lockedFields.fat ? COLORS.white : COLORS.textSecondary}
+                        color={
+                          lockedFields.fat ? COLORS.white : COLORS.textSecondary
+                        }
                       />
                     </TouchableOpacity>
                   </View>
@@ -941,15 +1010,17 @@ const GoalsModal: React.FC<GoalsModalProps> = ({ visible, onClose }) => {
             <TouchableOpacity
               style={[
                 styles.saveGoalsButton,
-                isSaveDisabled() && styles.saveGoalsButtonDisabled
+                isSaveDisabled() && styles.saveGoalsButtonDisabled,
               ]}
               onPress={saveGoals}
               disabled={isSaveDisabled()}
             >
-              <Text style={[
-                styles.saveGoalsText,
-                isSaveDisabled() && styles.saveGoalsTextDisabled
-              ]}>
+              <Text
+                style={[
+                  styles.saveGoalsText,
+                  isSaveDisabled() && styles.saveGoalsTextDisabled,
+                ]}
+              >
                 Save Goals
               </Text>
             </TouchableOpacity>
@@ -1053,17 +1124,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   inputLabel: {
-    fontSize: 14,
-    color: COLORS.textPrimary,
-    marginBottom: 12,
+    color: COLORS.textSecondary,
     fontWeight: "500",
+    marginBottom: 8,
   },
   input: {
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16,
     color: COLORS.textPrimary,
-    marginBottom: 0,
   },
   segmentedControl: {
     flexDirection: "row",

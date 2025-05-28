@@ -30,8 +30,12 @@ const AppWithNotifications: React.FC = () => {
         // Call the regular button handler first
         await handleNotificationButtonPress(notificationId, buttonId);
         
-        // Then navigate
-        navigationRef.current.navigate(button.link);
+        // Then navigate with params if available
+        if (button.params) {
+          navigationRef.current.navigate(button.link, button.params);
+        } else {
+          navigationRef.current.navigate(button.link);
+        }
         await handleDismissNotification(notificationId);
       } catch (error) {
         console.error('Navigation error:', error);

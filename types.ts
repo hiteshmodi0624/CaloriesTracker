@@ -56,6 +56,7 @@ export interface NotificationButton {
   text: string;
   action?: 'dismiss' | 'update' | 'custom' | 'navigate';
   link?: string;
+  params?: any;
   onPress?: () => void;
 }
 

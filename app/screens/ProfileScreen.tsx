@@ -37,16 +37,33 @@ const ProfileScreen = () => {
       try {
         const storedName = await AsyncStorage.getItem('user_name');
         const storedEmail = await AsyncStorage.getItem('user_email');
+        const storedWeight = await AsyncStorage.getItem('user_weight');
+        const storedHeight = await AsyncStorage.getItem('user_height');
+        const storedAge = await AsyncStorage.getItem('user_age');
+        const storedGender = await AsyncStorage.getItem('user_gender');
         
         if (storedName) setName(storedName);
         if (storedEmail) setEmail(storedEmail);
+        
+        // Load profile data from individual keys or from goals
+        if (storedWeight) setWeight(storedWeight);
+        else if (goals?.weight) setWeight(goals.weight.toString());
+        
+        if (storedHeight) setHeight(storedHeight);
+        else if (goals?.height) setHeight(goals.height.toString());
+        
+        if (storedAge) setAge(storedAge);
+        else if (goals?.age) setAge(goals.age.toString());
+        
+        if (storedGender) setGender(storedGender as 'male' | 'female');
+        else if (goals?.gender) setGender(goals.gender);
       } catch (error) {
         console.error('Error loading user profile:', error);
       }
     };
     
     loadUserProfile();
-  }, []);
+  }, [goals]);
   
   const saveProfile = async () => {
     setIsSaving(true);
@@ -55,6 +72,12 @@ const ProfileScreen = () => {
       // Save basic user info
       await AsyncStorage.setItem('user_name', name);
       await AsyncStorage.setItem('user_email', email);
+      
+      // Save individual profile fields for GoalsModal to use
+      if (weight) await AsyncStorage.setItem('user_weight', weight);
+      if (height) await AsyncStorage.setItem('user_height', height);
+      if (age) await AsyncStorage.setItem('user_age', age);
+      await AsyncStorage.setItem('user_gender', gender);
       
       // Update goals with user metrics
       if (goals) {
@@ -117,8 +140,8 @@ const ProfileScreen = () => {
           <Text style={styles.sectionTitle}>Personal Information</Text>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Name</Text>
             <FynkoTextInput
+              label="Name"
               style={styles.input}
               value={name}
               onChangeText={setName}
@@ -128,8 +151,8 @@ const ProfileScreen = () => {
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Email</Text>
             <FynkoTextInput
+              label="Email"
               style={styles.input}
               value={email}
               onChangeText={setEmail}
@@ -146,8 +169,8 @@ const ProfileScreen = () => {
           
           <View style={styles.inputRow}>
             <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
-              <Text style={styles.inputLabel}>Weight (kg)</Text>
               <FynkoTextInput
+                label="Weight (kg)"
                 style={styles.input}
                 value={weight}
                 onChangeText={setWeight}
@@ -158,8 +181,8 @@ const ProfileScreen = () => {
             </View>
             
             <View style={[styles.inputGroup, {flex: 1}]}>
-              <Text style={styles.inputLabel}>Height (cm)</Text>
               <FynkoTextInput
+                label="Height (cm)"
                 style={styles.input}
                 value={height}
                 onChangeText={setHeight}
@@ -172,8 +195,8 @@ const ProfileScreen = () => {
           
           <View style={styles.inputRow}>
             <View style={[styles.inputGroup, {flex: 1, marginRight: 10}]}>
-              <Text style={styles.inputLabel}>Age</Text>
               <FynkoTextInput
+                label="Age"
                 style={styles.input}
                 value={age}
                 onChangeText={setAge}
@@ -335,14 +358,10 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   input: {
-    backgroundColor: COLORS.background,
-    borderWidth: .8,
-    borderColor: COLORS.grey3,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
     fontSize: 16,
     color: COLORS.textPrimary,
+    marginBottom: 0,
   },
   segmentedControl: {
     flexDirection: 'row',

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -31,8 +31,16 @@ import {
 } from '../utils/dashboard';
 import { Meal, NutritionGoals } from '../../types';
 
+interface DashboardProps {
+  route?: {
+    params?: {
+      openGoalsModal?: boolean;
+    };
+  };
+}
+
 // Main Dashboard Component
-const Dashboard: React.FC = () => {
+const Dashboard: React.FC<DashboardProps> = ({ route }) => {
   const { meals, goals, deleteMeal, updateMeal } = useContext(AppContext);
   const [scrollY] = useState(new Animated.Value(0));
   
@@ -42,6 +50,13 @@ const Dashboard: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState<DayDataSummary | null>(null);
   const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
   const [mealToEdit, setMealToEdit] = useState<Meal | null>(null);
+  
+  // Check if we should open goals modal from navigation params
+  useEffect(() => {
+    if (route?.params?.openGoalsModal) {
+      setShowGoalsModal(true);
+    }
+  }, [route?.params?.openGoalsModal]);
   
   // Get today's meals
   const todayMeals = getTodayMeals(meals);
